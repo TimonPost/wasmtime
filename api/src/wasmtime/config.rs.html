@@ -2034,6 +2034,16 @@
 <a href="#2034" id="2034">2034</a>
 <a href="#2035" id="2035">2035</a>
 <a href="#2036" id="2036">2036</a>
+<a href="#2037" id="2037">2037</a>
+<a href="#2038" id="2038">2038</a>
+<a href="#2039" id="2039">2039</a>
+<a href="#2040" id="2040">2040</a>
+<a href="#2041" id="2041">2041</a>
+<a href="#2042" id="2042">2042</a>
+<a href="#2043" id="2043">2043</a>
+<a href="#2044" id="2044">2044</a>
+<a href="#2045" id="2045">2045</a>
+<a href="#2046" id="2046">2046</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::memory::MemoryCreator;
 <span class="kw">use </span><span class="kw">crate</span>::trampoline::MemoryCreatorProxy;
 <span class="kw">use </span>anyhow::{bail, <span class="prelude-ty">Result</span>};
@@ -2101,6 +2111,16 @@
 <span class="kw">impl </span>Default <span class="kw">for </span>ModuleVersionStrategy {
     <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
         ModuleVersionStrategy::WasmtimeVersion
+    }
+}
+
+<span class="kw">impl </span>std::hash::Hash <span class="kw">for </span>ModuleVersionStrategy {
+    <span class="kw">fn </span>hash&lt;H: std::hash::Hasher&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, hasher: <span class="kw-2">&amp;mut </span>H) {
+        <span class="kw">match </span><span class="self">self </span>{
+            <span class="self">Self</span>::WasmtimeVersion =&gt; <span class="macro">env!</span>(<span class="string">&quot;CARGO_PKG_VERSION&quot;</span>).hash(hasher),
+            <span class="self">Self</span>::Custom(s) =&gt; s.hash(hasher),
+            <span class="self">Self</span>::None =&gt; {}
+        };
     }
 }
 

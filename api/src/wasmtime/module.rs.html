@@ -2347,7 +2347,7 @@
         config.features.hash(hasher);
 
         <span class="comment">// Catch accidental bugs of reusing across crate versions.
-        </span><span class="macro">env!</span>(<span class="string">&quot;CARGO_PKG_VERSION&quot;</span>).hash(hasher);
+        </span>config.module_version.hash(hasher);
     }
 }
 
