@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["get_stdio"],"struct":["StdioPreopens"],"type":["Descriptor","InputStream","OutputStream"]};
+window.SIDEBAR_ITEMS = {"type":["Descriptor"]};

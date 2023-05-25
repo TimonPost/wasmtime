@@ -998,6 +998,16 @@
 <a href="#998" id="998">998</a>
 <a href="#999" id="999">999</a>
 <a href="#1000" id="1000">1000</a>
+<a href="#1001" id="1001">1001</a>
+<a href="#1002" id="1002">1002</a>
+<a href="#1003" id="1003">1003</a>
+<a href="#1004" id="1004">1004</a>
+<a href="#1005" id="1005">1005</a>
+<a href="#1006" id="1006">1006</a>
+<a href="#1007" id="1007">1007</a>
+<a href="#1008" id="1008">1008</a>
+<a href="#1009" id="1009">1009</a>
+<a href="#1010" id="1010">1010</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::preview2::filesystem::{Dir, File, TableFsExt};
 <span class="kw">use </span><span class="kw">crate</span>::preview2::stream::TableStreamExt;
 <span class="kw">use </span><span class="kw">crate</span>::preview2::{wasi, DirPerms, FilePerms, Table, TableError, WasiView};
@@ -1639,6 +1649,16 @@
         }
         d.dir.remove_file_or_symlink(<span class="kw-2">&amp;</span>path)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
+    }
+
+    <span class="kw">async fn </span>access_at(
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+        _fd: wasi::filesystem::Descriptor,
+        _path_flags: wasi::filesystem::PathFlags,
+        _path: String,
+        _access: wasi::filesystem::AccessType,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), wasi::filesystem::Error&gt; {
+        <span class="macro">todo!</span>()
     }
 
     <span class="kw">async fn </span>change_file_permissions_at(

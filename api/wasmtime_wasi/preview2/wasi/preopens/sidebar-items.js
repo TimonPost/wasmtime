@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["add_to_linker"],"struct":["StdioPreopens"],"trait":["Host"],"type":["Descriptor","InputStream","OutputStream"]};
+window.SIDEBAR_ITEMS = {"fn":["add_to_linker"],"trait":["Host"],"type":["Descriptor","InputStream","OutputStream"]};

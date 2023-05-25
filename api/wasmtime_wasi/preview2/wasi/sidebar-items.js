@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["command","environment","exit","filesystem","monotonic_clock","poll","preopens","random","streams","timezone","wall_clock"]};
+window.SIDEBAR_ITEMS = {"mod":["command","environment","exit","filesystem","insecure_random","insecure_random_seed","monotonic_clock","poll","preopens","random","stderr","stdin","stdout","streams","timezone","wall_clock"]};

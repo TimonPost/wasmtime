@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["drop_resolve_address_stream","non_blocking","resolve_addresses","resolve_next_address","set_non_blocking","subscribe"],"type":["Error","IpAddress","IpAddressFamily","Network","Pollable","ResolveAddressStream"]};
+window.SIDEBAR_ITEMS = {"fn":["drop_resolve_address_stream","resolve_addresses","resolve_next_address","subscribe"],"type":["ErrorCode","IpAddress","IpAddressFamily","Network","Pollable","ResolveAddressStream"]};

@@ -4023,6 +4023,8 @@
 <a href="#4023" id="4023">4023</a>
 <a href="#4024" id="4024">4024</a>
 <a href="#4025" id="4025">4025</a>
+<a href="#4026" id="4026">4026</a>
+<a href="#4027" id="4027">4027</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::binemit::{Addend, Reloc};
 <span class="kw">use </span><span class="kw">crate</span>::ir::immediates::{Ieee32, Ieee64};
 <span class="kw">use </span><span class="kw">crate</span>::ir::TrapCode;
@@ -6760,24 +6762,26 @@
         }
         | Inst::XmmRmREvex3 {
             op,
-            src1,
-            src2,
+            src1: <span class="kw">_</span>, <span class="comment">// `dst` reuses `src1`.
+            </span>src2: src1,
+            src3: src2,
             dst,
-            <span class="comment">// `dst` reuses `src3`.
-            </span>..
         } =&gt; {
-            <span class="kw">let </span>dst = allocs.next(dst.to_reg().to_reg());
-            <span class="kw">let </span>src2 = allocs.next(src2.to_reg());
-            <span class="kw">if let </span>Inst::XmmRmREvex3 { src3, .. } = inst {
-                <span class="kw">let </span>src3 = allocs.next(src3.to_reg());
-                <span class="macro">debug_assert_eq!</span>(src3, dst);
-            }
-            <span class="kw">let </span>src1 = <span class="kw">match </span>src1.clone().to_reg_mem().with_allocs(allocs) {
+            <span class="kw">let </span>reused_src = <span class="kw">match </span>inst {
+                Inst::XmmRmREvex3 { src1, .. } =&gt; <span class="prelude-val">Some</span>(allocs.next(src1.to_reg())),
+                <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
+            };
+            <span class="kw">let </span>src1 = allocs.next(src1.to_reg());
+            <span class="kw">let </span>src2 = <span class="kw">match </span>src2.clone().to_reg_mem().with_allocs(allocs) {
                 RegMem::Reg { reg } =&gt; {
                     RegisterOrAmode::Register(reg.to_real_reg().unwrap().hw_enc().into())
                 }
                 RegMem::Mem { addr } =&gt; RegisterOrAmode::Amode(addr.finalize(state, sink)),
             };
+            <span class="kw">let </span>dst = allocs.next(dst.to_reg().to_reg());
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(src1) = reused_src {
+                <span class="macro">debug_assert_eq!</span>(src1, dst);
+            }
 
             <span class="kw">let </span>(w, opcode) = <span class="kw">match </span>op {
                 Avx512Opcode::Vpermi2b =&gt; (<span class="bool-val">false</span>, <span class="number">0x75</span>),
@@ -6792,8 +6796,8 @@
                 .opcode(opcode)
                 .tuple_type(op.tuple_type())
                 .reg(dst.to_real_reg().unwrap().hw_enc())
-                .rm(src1)
-                .vvvvv(src2.to_real_reg().unwrap().hw_enc())
+                .vvvvv(src1.to_real_reg().unwrap().hw_enc())
+                .rm(src2)
                 .encode(sink);
         }
 

@@ -418,6 +418,8 @@
 <a href="#418" id="418">418</a>
 <a href="#419" id="419">419</a>
 <a href="#420" id="420">420</a>
+<a href="#421" id="421">421</a>
+<a href="#422" id="422">422</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::bindings::streams::{<span class="self">self</span>, InputStream, OutputStream};
 <span class="kw">use </span><span class="kw">crate</span>::bindings::{filesystem, tcp};
 <span class="kw">use crate</span>::{set_stderr_stream, BumpArena, File, ImportAlloc, TrappingUnwrap, WasmStr};
@@ -560,24 +562,26 @@
             preopens: Cell::new(<span class="prelude-val">None</span>),
         };
 
-        <span class="kw">let </span>stdio = <span class="kw">crate</span>::bindings::preopens::get_stdio();
-        <span class="kw">unsafe </span>{ set_stderr_stream(stdio.stderr) };
+        <span class="kw">let </span>stdin = <span class="kw">crate</span>::bindings::stdin::get_stdin();
+        <span class="kw">let </span>stdout = <span class="kw">crate</span>::bindings::stdout::get_stdout();
+        <span class="kw">let </span>stderr = <span class="kw">crate</span>::bindings::stderr::get_stderr();
+        <span class="kw">unsafe </span>{ set_stderr_stream(stderr) };
 
         d.push(Descriptor::Streams(Streams {
-            input: Cell::new(<span class="prelude-val">Some</span>(stdio.stdin)),
+            input: Cell::new(<span class="prelude-val">Some</span>(stdin)),
             output: Cell::new(<span class="prelude-val">None</span>),
             type_: StreamType::Stdio,
         }))
         .trapping_unwrap();
         d.push(Descriptor::Streams(Streams {
             input: Cell::new(<span class="prelude-val">None</span>),
-            output: Cell::new(<span class="prelude-val">Some</span>(stdio.stdout)),
+            output: Cell::new(<span class="prelude-val">Some</span>(stdout)),
             type_: StreamType::Stdio,
         }))
         .trapping_unwrap();
         d.push(Descriptor::Streams(Streams {
             input: Cell::new(<span class="prelude-val">None</span>),
-            output: Cell::new(<span class="prelude-val">Some</span>(stdio.stderr)),
+            output: Cell::new(<span class="prelude-val">Some</span>(stderr)),
             type_: StreamType::Stdio,
         }))
         .trapping_unwrap();

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["create_tcp_socket"],"type":["Error","IpAddressFamily","TcpSocket"]};
+window.SIDEBAR_ITEMS = {"fn":["create_tcp_socket"],"type":["ErrorCode","IpAddressFamily","TcpSocket"]};

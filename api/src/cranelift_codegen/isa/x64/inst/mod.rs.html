@@ -2755,13 +2755,6 @@
 <a href="#2755" id="2755">2755</a>
 <a href="#2756" id="2756">2756</a>
 <a href="#2757" id="2757">2757</a>
-<a href="#2758" id="2758">2758</a>
-<a href="#2759" id="2759">2759</a>
-<a href="#2760" id="2760">2760</a>
-<a href="#2761" id="2761">2761</a>
-<a href="#2762" id="2762">2762</a>
-<a href="#2763" id="2763">2763</a>
-<a href="#2764" id="2764">2764</a>
 </pre><pre class="rust"><code><span class="doccomment">//! This module defines x86_64-specific machine instruction types.
 
 </span><span class="kw">use </span><span class="kw">crate</span>::binemit::{Addend, CodeOffset, Reloc, StackMap};
@@ -3894,9 +3887,9 @@
                 ..
             } =&gt; {
                 <span class="kw">let </span>dst = pretty_print_reg(dst.to_reg().to_reg(), <span class="number">8</span>, allocs);
-                <span class="kw">let </span>src2 = pretty_print_reg(src2.to_reg(), <span class="number">8</span>, allocs);
-                <span class="kw">let </span>src1 = src1.pretty_print(<span class="number">8</span>, allocs);
-                <span class="macro">format!</span>(<span class="string">&quot;{} {}, {}, {}&quot;</span>, ljustify(op.to_string()), src1, src2, dst)
+                <span class="kw">let </span>src1 = pretty_print_reg(src1.to_reg(), <span class="number">8</span>, allocs);
+                <span class="kw">let </span>src2 = src2.pretty_print(<span class="number">8</span>, allocs);
+                <span class="macro">format!</span>(<span class="string">&quot;{} {src1}, {src2}, {dst}&quot;</span>, ljustify(op.to_string()))
             }
 
             Inst::XmmRmREvex3 {
@@ -3907,18 +3900,11 @@
                 dst,
                 ..
             } =&gt; {
-                <span class="kw">let </span>dst = pretty_print_reg(dst.to_reg().to_reg(), <span class="number">8</span>, allocs);
+                <span class="kw">let </span>src1 = pretty_print_reg(src1.to_reg(), <span class="number">8</span>, allocs);
                 <span class="kw">let </span>src2 = pretty_print_reg(src2.to_reg(), <span class="number">8</span>, allocs);
-                <span class="kw">let </span>src3 = pretty_print_reg(src3.to_reg(), <span class="number">8</span>, allocs);
-                <span class="kw">let </span>src1 = src1.pretty_print(<span class="number">8</span>, allocs);
-                <span class="macro">format!</span>(
-                    <span class="string">&quot;{} {}, {}, {}, {}&quot;</span>,
-                    ljustify(op.to_string()),
-                    src1,
-                    src2,
-                    src3,
-                    dst
-                )
+                <span class="kw">let </span>src3 = src3.pretty_print(<span class="number">8</span>, allocs);
+                <span class="kw">let </span>dst = pretty_print_reg(dst.to_reg().to_reg(), <span class="number">8</span>, allocs);
+                <span class="macro">format!</span>(<span class="string">&quot;{} {src1}, {src2}, {src3}, {dst}&quot;</span>, ljustify(op.to_string()))
             }
 
             Inst::XmmMinMaxSeq {
@@ -4851,9 +4837,9 @@
             ..
         } =&gt; {
             <span class="macro">assert_ne!</span>(<span class="kw-2">*</span>op, Avx512Opcode::Vpermi2b);
+            collector.reg_use(src1.to_reg());
+            src2.get_operands(collector);
             collector.reg_def(dst.to_writable_reg());
-            collector.reg_use(src2.to_reg());
-            src1.get_operands(collector);
         }
         Inst::XmmRmREvex3 {
             op,
@@ -4864,11 +4850,11 @@
             ..
         } =&gt; {
             <span class="macro">assert_eq!</span>(<span class="kw-2">*</span>op, Avx512Opcode::Vpermi2b);
-            collector.reg_reuse_def(dst.to_writable_reg(), <span class="number">2</span>); <span class="comment">// Reuse `src3`.
-            </span>collector.reg_use(src2.to_reg());
-            collector.reg_use(src3.to_reg());
-            src1.get_operands(collector);
-        }
+            collector.reg_use(src1.to_reg());
+            collector.reg_use(src2.to_reg());
+            src3.get_operands(collector);
+            collector.reg_reuse_def(dst.to_writable_reg(), <span class="number">0</span>); <span class="comment">// Reuse `src1`.
+        </span>}
         Inst::XmmRmRImm {
             src1, src2, dst, ..
         } =&gt; {

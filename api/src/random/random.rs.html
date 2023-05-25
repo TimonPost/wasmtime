@@ -5,10 +5,10 @@
 <a href="#5" id="5">5</a>
 <a href="#6" id="6">6</a>
 </pre><pre class="rust"><code><span class="kw">fn </span>main() {
-    <span class="kw">let </span><span class="kw-2">mut </span>byte = [<span class="number">0_u8</span>];
-    getrandom::getrandom(<span class="kw-2">&amp;mut </span>byte).unwrap();
+    <span class="kw">let </span><span class="kw-2">mut </span>bytes = [<span class="number">0_u8</span>; <span class="number">256</span>];
+    getrandom::getrandom(<span class="kw-2">&amp;mut </span>bytes).unwrap();
 
-    <span class="macro">assert_eq!</span>(<span class="number">42</span>, byte[<span class="number">0</span>]);
+    <span class="macro">assert!</span>(bytes.iter().any(|x| <span class="kw-2">*</span>x != <span class="number">0</span>));
 }
 </code></pre></div>
 </section></main></body></html>

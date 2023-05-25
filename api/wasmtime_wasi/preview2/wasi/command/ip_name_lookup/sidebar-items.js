@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["add_to_linker"],"trait":["Host"],"type":["Error","IpAddress","IpAddressFamily","Network","Pollable","ResolveAddressStream"]};
+window.SIDEBAR_ITEMS = {"fn":["add_to_linker"],"trait":["Host"],"type":["ErrorCode","IpAddress","IpAddressFamily","Network","Pollable","ResolveAddressStream"]};

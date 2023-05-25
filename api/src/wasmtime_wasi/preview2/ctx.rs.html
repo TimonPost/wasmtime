@@ -155,6 +155,45 @@
 <a href="#155" id="155">155</a>
 <a href="#156" id="156">156</a>
 <a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
+<a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::preview2::{
     clocks::{<span class="self">self</span>, WasiClocks},
     filesystem::{Dir, TableFsExt},
@@ -162,7 +201,7 @@
     stream::{InputStream, OutputStream, TableStreamExt},
     DirPerms, FilePerms, Table,
 };
-<span class="kw">use </span>cap_rand::RngCore;
+<span class="kw">use </span>cap_rand::{Rng, RngCore, SeedableRng};
 
 <span class="attr">#[derive(Default)]
 </span><span class="kw">pub struct </span>WasiCtxBuilder {
@@ -174,17 +213,32 @@
     preopens: Vec&lt;(Dir, String)&gt;,
 
     random: <span class="prelude-ty">Option</span>&lt;Box&lt;<span class="kw">dyn </span>RngCore + Send + Sync&gt;&gt;,
+    insecure_random: <span class="prelude-ty">Option</span>&lt;Box&lt;<span class="kw">dyn </span>RngCore + Send + Sync&gt;&gt;,
+    insecure_random_seed: <span class="prelude-ty">Option</span>&lt;u128&gt;,
     clocks: <span class="prelude-ty">Option</span>&lt;WasiClocks&gt;,
 }
 
 <span class="kw">impl </span>WasiCtxBuilder {
     <span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
-        <span class="self">Self</span>::default()
+        <span class="comment">// For the insecure random API, use `SmallRng`, which is fast. It&#39;s
+        // also insecure, but that&#39;s the deal here.
+        </span><span class="kw">let </span>insecure_random = cap_rand::rngs::SmallRng::from_entropy();
+
+        <span class="comment">// For the insecure random seed, use a `u128` generated from
+        // `thread_rng()`, so that it&#39;s not guessable from the insecure_random
+        // API.
+        </span><span class="kw">let </span>insecure_random_seed =
+            cap_rand::thread_rng(cap_rand::ambient_authority()).gen::&lt;u128&gt;();
+
+        <span class="kw">let </span><span class="kw-2">mut </span>result = <span class="self">Self</span>::default()
             .set_clocks(clocks::host::clocks_ctx())
-            .set_random(random::thread_rng())
+            .set_insecure_random(insecure_random)
+            .set_insecure_random_seed(insecure_random_seed)
             .set_stdin(pipe::ReadPipe::new(std::io::empty()))
             .set_stdout(pipe::WritePipe::new(std::io::sink()))
-            .set_stderr(pipe::WritePipe::new(std::io::sink()))
+            .set_stderr(pipe::WritePipe::new(std::io::sink()));
+        result.random = <span class="prelude-val">Some</span>(random::thread_rng());
+        result
     }
 
     <span class="kw">pub fn </span>set_stdin(<span class="kw-2">mut </span><span class="self">self</span>, stdin: <span class="kw">impl </span>InputStream + <span class="lifetime">&#39;static</span>) -&gt; <span class="self">Self </span>{
@@ -245,8 +299,24 @@
         <span class="self">self
     </span>}
 
-    <span class="kw">pub fn </span>set_random(<span class="kw-2">mut </span><span class="self">self</span>, random: <span class="kw">impl </span>RngCore + Send + Sync + <span class="lifetime">&#39;static</span>) -&gt; <span class="self">Self </span>{
+    <span class="doccomment">/// Set the generator for the secure random number generator. This
+    /// is only avalabile under `cfg(test)` as it&#39;s only intended for use
+    /// by tests.
+    </span><span class="attr">#[cfg(test)]
+    </span><span class="kw">pub fn </span>set_random(<span class="kw-2">mut </span><span class="self">self</span>, random: <span class="kw">impl </span>RngCore + Send + Sync + <span class="lifetime">&#39;static</span>) -&gt; <span class="self">Self </span>{
         <span class="self">self</span>.random = <span class="prelude-val">Some</span>(Box::new(random));
+        <span class="self">self
+    </span>}
+
+    <span class="kw">pub fn </span>set_insecure_random(
+        <span class="kw-2">mut </span><span class="self">self</span>,
+        insecure_random: <span class="kw">impl </span>RngCore + Send + Sync + <span class="lifetime">&#39;static</span>,
+    ) -&gt; <span class="self">Self </span>{
+        <span class="self">self</span>.insecure_random = <span class="prelude-val">Some</span>(Box::new(insecure_random));
+        <span class="self">self
+    </span>}
+    <span class="kw">pub fn </span>set_insecure_random_seed(<span class="kw-2">mut </span><span class="self">self</span>, insecure_random_seed: u128) -&gt; <span class="self">Self </span>{
+        <span class="self">self</span>.insecure_random_seed = <span class="prelude-val">Some</span>(insecure_random_seed);
         <span class="self">self
     </span>}
     <span class="kw">pub fn </span>set_clocks(<span class="kw-2">mut </span><span class="self">self</span>, clocks: WasiClocks) -&gt; <span class="self">Self </span>{
@@ -277,6 +347,12 @@
 
         <span class="prelude-val">Ok</span>(WasiCtx {
             random: <span class="self">self</span>.random.context(<span class="string">&quot;required member random&quot;</span>)<span class="question-mark">?</span>,
+            insecure_random: <span class="self">self
+                </span>.insecure_random
+                .context(<span class="string">&quot;required member insecure_random&quot;</span>)<span class="question-mark">?</span>,
+            insecure_random_seed: <span class="self">self
+                </span>.insecure_random_seed
+                .context(<span class="string">&quot;required member insecure_random_seed&quot;</span>)<span class="question-mark">?</span>,
             clocks: <span class="self">self</span>.clocks.context(<span class="string">&quot;required member clocks&quot;</span>)<span class="question-mark">?</span>,
             env: <span class="self">self</span>.env,
             args: <span class="self">self</span>.args,
@@ -296,7 +372,9 @@
 }
 
 <span class="kw">pub struct </span>WasiCtx {
-    <span class="kw">pub </span>random: Box&lt;<span class="kw">dyn </span>RngCore + Send + Sync&gt;,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) random: Box&lt;<span class="kw">dyn </span>RngCore + Send + Sync&gt;,
+    <span class="kw">pub </span>insecure_random: Box&lt;<span class="kw">dyn </span>RngCore + Send + Sync&gt;,
+    <span class="kw">pub </span>insecure_random_seed: u128,
     <span class="kw">pub </span>clocks: WasiClocks,
     <span class="kw">pub </span>env: Vec&lt;(String, String)&gt;,
     <span class="kw">pub </span>args: Vec&lt;String&gt;,

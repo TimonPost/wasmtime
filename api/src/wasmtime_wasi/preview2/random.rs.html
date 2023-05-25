@@ -58,7 +58,7 @@
 <a href="#58" id="58">58</a>
 </pre><pre class="rust"><code><span class="kw">use </span>cap_rand::RngCore;
 
-<span class="doccomment">/// Implement `WasiRandom` using a deterministic cycle of bytes.
+<span class="doccomment">/// Implement `insecure-random` using a deterministic cycle of bytes.
 </span><span class="kw">pub struct </span>Deterministic {
     cycle: std::iter::Cycle&lt;std::vec::IntoIter&lt;u8&gt;&gt;,
 }

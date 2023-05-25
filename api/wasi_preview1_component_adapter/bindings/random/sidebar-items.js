@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["get_random_bytes","get_random_u64","insecure_random"]};
+window.SIDEBAR_ITEMS = {"fn":["get_random_bytes","get_random_u64"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["create_udp_socket"],"type":["Error","IpAddressFamily","UdpSocket"]};
+window.SIDEBAR_ITEMS = {"fn":["create_udp_socket"],"type":["ErrorCode","IpAddressFamily","UdpSocket"]};
