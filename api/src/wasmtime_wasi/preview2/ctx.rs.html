@@ -194,6 +194,16 @@
 <a href="#194" id="194">194</a>
 <a href="#195" id="195">195</a>
 <a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::preview2::{
     clocks::{<span class="self">self</span>, WasiClocks},
     filesystem::{Dir, TableFsExt},
@@ -256,10 +266,20 @@
         <span class="self">self
     </span>}
 
-    <span class="kw">pub fn </span>inherit_stdio(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
+    <span class="kw">pub fn </span>inherit_stdin(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
         <span class="self">self</span>.set_stdin(stdio::stdin())
-            .set_stdout(stdio::stdout())
-            .set_stderr(stdio::stderr())
+    }
+
+    <span class="kw">pub fn </span>inherit_stdout(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
+        <span class="self">self</span>.set_stdout(stdio::stdout())
+    }
+
+    <span class="kw">pub fn </span>inherit_stderr(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
+        <span class="self">self</span>.set_stderr(stdio::stderr())
+    }
+
+    <span class="kw">pub fn </span>inherit_stdio(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
+        <span class="self">self</span>.inherit_stdin().inherit_stdout().inherit_stderr()
     }
 
     <span class="kw">pub fn </span>set_env(<span class="kw-2">mut </span><span class="self">self</span>, env: <span class="kw-2">&amp;</span>[(<span class="kw">impl </span>AsRef&lt;str&gt;, <span class="kw">impl </span>AsRef&lt;str&gt;)]) -&gt; <span class="self">Self </span>{
