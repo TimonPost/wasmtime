@@ -19432,7 +19432,6 @@
 ) -&gt; ProducesFlags {
     <span class="kw">let </span>v5 = C::temp_writable_reg(ctx, I64);
     <span class="kw">let </span>v6 = <span class="kw-2">&amp;</span>constructor_operand_size(ctx, arg0);
-    <span class="kw">let </span>v8 = C::writable_reg_to_reg(ctx, v5);
     <span class="kw">let </span>v7 = MInst::AluRRR {
         alu_op: arg3.clone(),
         size: v6.clone(),
@@ -19440,6 +19439,7 @@
         rn: arg1,
         rm: arg2,
     };
+    <span class="kw">let </span>v8 = C::writable_reg_to_reg(ctx, v5);
     <span class="kw">let </span>v9 = ProducesFlags::ProducesFlagsReturnsResultWithConsumer {
         inst: v7,
         result: v8,
@@ -19458,7 +19458,6 @@
 ) -&gt; ConsumesAndProducesFlags {
     <span class="kw">let </span>v5 = C::temp_writable_reg(ctx, I64);
     <span class="kw">let </span>v6 = <span class="kw-2">&amp;</span>constructor_operand_size(ctx, arg0);
-    <span class="kw">let </span>v8 = C::writable_reg_to_reg(ctx, v5);
     <span class="kw">let </span>v7 = MInst::AluRRR {
         alu_op: arg3.clone(),
         size: v6.clone(),
@@ -19466,6 +19465,7 @@
         rn: arg1,
         rm: arg2,
     };
+    <span class="kw">let </span>v8 = C::writable_reg_to_reg(ctx, v5);
     <span class="kw">let </span>v9 = ConsumesAndProducesFlags::ReturnsReg {
         inst: v7,
         result: v8,
@@ -19504,7 +19504,6 @@
 ) -&gt; ProducesFlags {
     <span class="kw">let </span>v4 = C::temp_writable_reg(ctx, I64);
     <span class="kw">let </span>v6 = <span class="kw-2">&amp;</span>constructor_operand_size(ctx, arg0);
-    <span class="kw">let </span>v8 = C::writable_reg_to_reg(ctx, v4);
     <span class="kw">let </span>v7 = MInst::AluRRR {
         alu_op: ALUOp::AddS,
         size: v6.clone(),
@@ -19512,6 +19511,7 @@
         rn: arg1,
         rm: arg2,
     };
+    <span class="kw">let </span>v8 = C::writable_reg_to_reg(ctx, v4);
     <span class="kw">let </span>v9 = ProducesFlags::ProducesFlagsReturnsResultWithConsumer {
         inst: v7,
         result: v8,
@@ -19529,7 +19529,6 @@
 ) -&gt; ConsumesFlags {
     <span class="kw">let </span>v4 = C::temp_writable_reg(ctx, I64);
     <span class="kw">let </span>v6 = <span class="kw-2">&amp;</span>constructor_operand_size(ctx, arg0);
-    <span class="kw">let </span>v8 = C::writable_reg_to_reg(ctx, v4);
     <span class="kw">let </span>v7 = MInst::AluRRR {
         alu_op: ALUOp::Adc,
         size: v6.clone(),
@@ -19537,6 +19536,7 @@
         rn: arg1,
         rm: arg2,
     };
+    <span class="kw">let </span>v8 = C::writable_reg_to_reg(ctx, v4);
     <span class="kw">let </span>v9 = ConsumesFlags::ConsumesFlagsReturnsResultWithProducer {
         inst: v7,
         result: v8,
@@ -19554,7 +19554,6 @@
 ) -&gt; ProducesFlags {
     <span class="kw">let </span>v4 = C::temp_writable_reg(ctx, I64);
     <span class="kw">let </span>v6 = <span class="kw-2">&amp;</span>constructor_operand_size(ctx, arg0);
-    <span class="kw">let </span>v8 = C::writable_reg_to_reg(ctx, v4);
     <span class="kw">let </span>v7 = MInst::AluRRR {
         alu_op: ALUOp::SubS,
         size: v6.clone(),
@@ -19562,6 +19561,7 @@
         rn: arg1,
         rm: arg2,
     };
+    <span class="kw">let </span>v8 = C::writable_reg_to_reg(ctx, v4);
     <span class="kw">let </span>v9 = ProducesFlags::ProducesFlagsReturnsResultWithConsumer {
         inst: v7,
         result: v8,
@@ -19576,11 +19576,11 @@
     arg0: <span class="kw-2">&amp;</span>Cond,
 ) -&gt; ConsumesFlags {
     <span class="kw">let </span>v2 = C::temp_writable_reg(ctx, I64);
-    <span class="kw">let </span>v4 = C::writable_reg_to_reg(ctx, v2);
     <span class="kw">let </span>v3 = MInst::CSet {
         rd: v2,
         cond: arg0.clone(),
     };
+    <span class="kw">let </span>v4 = C::writable_reg_to_reg(ctx, v2);
     <span class="kw">let </span>v5 = ConsumesFlags::ConsumesFlagsReturnsReg {
         inst: v3,
         result: v4,
@@ -19699,7 +19699,6 @@
 ) -&gt; ConsumesFlags {
     <span class="kw">let </span>v4 = C::temp_writable_reg(ctx, I64);
     <span class="kw">let </span>v6 = <span class="kw-2">&amp;</span>constructor_operand_size(ctx, arg0);
-    <span class="kw">let </span>v8 = C::writable_reg_to_reg(ctx, v4);
     <span class="kw">let </span>v7 = MInst::AluRRR {
         alu_op: ALUOp::Sbc,
         size: v6.clone(),
@@ -19707,6 +19706,7 @@
         rn: arg1,
         rm: arg2,
     };
+    <span class="kw">let </span>v8 = C::writable_reg_to_reg(ctx, v4);
     <span class="kw">let </span>v9 = ConsumesFlags::ConsumesFlagsReturnsResultWithProducer {
         inst: v7,
         result: v8,
@@ -19954,13 +19954,13 @@
     <span class="kw">match </span>arg0 {
         F32 =&gt; {
             <span class="kw">let </span>v5 = C::temp_writable_reg(ctx, F32);
-            <span class="kw">let </span>v7 = C::writable_reg_to_reg(ctx, v5);
             <span class="kw">let </span>v6 = MInst::FpuCSel32 {
                 rd: v5,
                 rn: arg2,
                 rm: arg3,
                 cond: arg1.clone(),
             };
+            <span class="kw">let </span>v7 = C::writable_reg_to_reg(ctx, v5);
             <span class="kw">let </span>v8 = ConsumesFlags::ConsumesFlagsReturnsReg {
                 inst: v6,
                 result: v7,
@@ -19970,13 +19970,13 @@
         }
         F64 =&gt; {
             <span class="kw">let </span>v10 = C::temp_writable_reg(ctx, F64);
-            <span class="kw">let </span>v12 = C::writable_reg_to_reg(ctx, v10);
             <span class="kw">let </span>v11 = MInst::FpuCSel64 {
                 rd: v10,
                 rn: arg2,
                 rm: arg3,
                 cond: arg1.clone(),
             };
+            <span class="kw">let </span>v12 = C::writable_reg_to_reg(ctx, v10);
             <span class="kw">let </span>v13 = ConsumesFlags::ConsumesFlagsReturnsReg {
                 inst: v11,
                 result: v12,
@@ -19997,13 +19997,13 @@
     arg2: Reg,
 ) -&gt; ConsumesFlags {
     <span class="kw">let </span>v4 = C::temp_writable_reg(ctx, I8X16);
-    <span class="kw">let </span>v6 = C::writable_reg_to_reg(ctx, v4);
     <span class="kw">let </span>v5 = MInst::VecCSel {
         rd: v4,
         rn: arg1,
         rm: arg2,
         cond: arg0.clone(),
     };
+    <span class="kw">let </span>v6 = C::writable_reg_to_reg(ctx, v4);
     <span class="kw">let </span>v7 = ConsumesFlags::ConsumesFlagsReturnsReg {
         inst: v5,
         result: v6,
@@ -20357,13 +20357,13 @@
     arg2: Reg,
 ) -&gt; ConsumesFlags {
     <span class="kw">let </span>v4 = C::temp_writable_reg(ctx, I64);
-    <span class="kw">let </span>v6 = C::writable_reg_to_reg(ctx, v4);
     <span class="kw">let </span>v5 = MInst::CSel {
         rd: v4,
         cond: arg0.clone(),
         rn: arg1,
         rm: arg2,
     };
+    <span class="kw">let </span>v6 = C::writable_reg_to_reg(ctx, v4);
     <span class="kw">let </span>v7 = ConsumesFlags::ConsumesFlagsReturnsReg {
         inst: v5,
         result: v6,
@@ -20378,11 +20378,11 @@
     arg0: <span class="kw-2">&amp;</span>Cond,
 ) -&gt; ConsumesFlags {
     <span class="kw">let </span>v2 = C::temp_writable_reg(ctx, I64);
-    <span class="kw">let </span>v4 = C::writable_reg_to_reg(ctx, v2);
     <span class="kw">let </span>v3 = MInst::CSet {
         rd: v2,
         cond: arg0.clone(),
     };
+    <span class="kw">let </span>v4 = C::writable_reg_to_reg(ctx, v2);
     <span class="kw">let </span>v5 = ConsumesFlags::ConsumesFlagsReturnsReg {
         inst: v3,
         result: v4,
@@ -20397,11 +20397,11 @@
     arg0: <span class="kw-2">&amp;</span>Cond,
 ) -&gt; ConsumesFlags {
     <span class="kw">let </span>v2 = C::temp_writable_reg(ctx, I64);
-    <span class="kw">let </span>v4 = C::writable_reg_to_reg(ctx, v2);
     <span class="kw">let </span>v3 = MInst::CSet {
         rd: v2,
         cond: arg0.clone(),
     };
+    <span class="kw">let </span>v4 = C::writable_reg_to_reg(ctx, v2);
     <span class="kw">let </span>v5 = ConsumesFlags::ConsumesFlagsReturnsResultWithProducer {
         inst: v3,
         result: v4,
@@ -20416,11 +20416,11 @@
     arg0: <span class="kw-2">&amp;</span>Cond,
 ) -&gt; ConsumesFlags {
     <span class="kw">let </span>v2 = C::temp_writable_reg(ctx, I64);
-    <span class="kw">let </span>v4 = C::writable_reg_to_reg(ctx, v2);
     <span class="kw">let </span>v3 = MInst::CSetm {
         rd: v2,
         cond: arg0.clone(),
     };
+    <span class="kw">let </span>v4 = C::writable_reg_to_reg(ctx, v2);
     <span class="kw">let </span>v5 = ConsumesFlags::ConsumesFlagsReturnsReg {
         inst: v3,
         result: v4,
@@ -20437,13 +20437,13 @@
     arg2: Reg,
 ) -&gt; ConsumesFlags {
     <span class="kw">let </span>v4 = C::temp_writable_reg(ctx, I64);
-    <span class="kw">let </span>v6 = C::writable_reg_to_reg(ctx, v4);
     <span class="kw">let </span>v5 = MInst::CSNeg {
         rd: v4,
         cond: arg0.clone(),
         rn: arg1,
         rm: arg2,
     };
+    <span class="kw">let </span>v6 = C::writable_reg_to_reg(ctx, v4);
     <span class="kw">let </span>v7 = ConsumesFlags::ConsumesFlagsReturnsReg {
         inst: v5,
         result: v6,
@@ -24102,13 +24102,13 @@
 ) -&gt; ConsumesFlags {
     <span class="kw">let </span>v3 = C::temp_writable_reg(ctx, I64);
     <span class="kw">let </span>v4 = C::temp_writable_reg(ctx, I64);
-    <span class="kw">let </span>v7 = C::writable_reg_to_reg(ctx, v3);
     <span class="kw">let </span>v9 = C::writable_reg_to_reg(ctx, v4);
     <span class="kw">let </span>v10 = C::value_reg(ctx, v9);
     <span class="kw">let </span>v5 = MInst::CSet {
         rd: v3,
         cond: arg0.clone(),
     };
+    <span class="kw">let </span>v7 = C::writable_reg_to_reg(ctx, v3);
     <span class="kw">let </span>v8 = MInst::CSel {
         rd: v4,
         cond: Cond::Eq,
