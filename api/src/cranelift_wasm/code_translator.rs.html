@@ -3478,6 +3478,64 @@
 <a href="#3478" id="3478">3478</a>
 <a href="#3479" id="3479">3479</a>
 <a href="#3480" id="3480">3480</a>
+<a href="#3481" id="3481">3481</a>
+<a href="#3482" id="3482">3482</a>
+<a href="#3483" id="3483">3483</a>
+<a href="#3484" id="3484">3484</a>
+<a href="#3485" id="3485">3485</a>
+<a href="#3486" id="3486">3486</a>
+<a href="#3487" id="3487">3487</a>
+<a href="#3488" id="3488">3488</a>
+<a href="#3489" id="3489">3489</a>
+<a href="#3490" id="3490">3490</a>
+<a href="#3491" id="3491">3491</a>
+<a href="#3492" id="3492">3492</a>
+<a href="#3493" id="3493">3493</a>
+<a href="#3494" id="3494">3494</a>
+<a href="#3495" id="3495">3495</a>
+<a href="#3496" id="3496">3496</a>
+<a href="#3497" id="3497">3497</a>
+<a href="#3498" id="3498">3498</a>
+<a href="#3499" id="3499">3499</a>
+<a href="#3500" id="3500">3500</a>
+<a href="#3501" id="3501">3501</a>
+<a href="#3502" id="3502">3502</a>
+<a href="#3503" id="3503">3503</a>
+<a href="#3504" id="3504">3504</a>
+<a href="#3505" id="3505">3505</a>
+<a href="#3506" id="3506">3506</a>
+<a href="#3507" id="3507">3507</a>
+<a href="#3508" id="3508">3508</a>
+<a href="#3509" id="3509">3509</a>
+<a href="#3510" id="3510">3510</a>
+<a href="#3511" id="3511">3511</a>
+<a href="#3512" id="3512">3512</a>
+<a href="#3513" id="3513">3513</a>
+<a href="#3514" id="3514">3514</a>
+<a href="#3515" id="3515">3515</a>
+<a href="#3516" id="3516">3516</a>
+<a href="#3517" id="3517">3517</a>
+<a href="#3518" id="3518">3518</a>
+<a href="#3519" id="3519">3519</a>
+<a href="#3520" id="3520">3520</a>
+<a href="#3521" id="3521">3521</a>
+<a href="#3522" id="3522">3522</a>
+<a href="#3523" id="3523">3523</a>
+<a href="#3524" id="3524">3524</a>
+<a href="#3525" id="3525">3525</a>
+<a href="#3526" id="3526">3526</a>
+<a href="#3527" id="3527">3527</a>
+<a href="#3528" id="3528">3528</a>
+<a href="#3529" id="3529">3529</a>
+<a href="#3530" id="3530">3530</a>
+<a href="#3531" id="3531">3531</a>
+<a href="#3532" id="3532">3532</a>
+<a href="#3533" id="3533">3533</a>
+<a href="#3534" id="3534">3534</a>
+<a href="#3535" id="3535">3535</a>
+<a href="#3536" id="3536">3536</a>
+<a href="#3537" id="3537">3537</a>
+<a href="#3538" id="3538">3538</a>
 </pre><pre class="rust"><code><span class="doccomment">//! This module contains the bulk of the interesting code performing the translation between
 //! WebAssembly and Cranelift IR.
 //!
@@ -3561,7 +3619,6 @@
 };
 <span class="kw">use </span><span class="kw">crate</span>::wasm_unsupported;
 <span class="kw">use crate</span>::{FuncIndex, GlobalIndex, MemoryIndex, TableIndex, TypeIndex, WasmResult};
-<span class="kw">use </span>core::convert::TryInto;
 <span class="kw">use </span>core::{i32, u32};
 <span class="kw">use </span>cranelift_codegen::ir::condcodes::{FloatCC, IntCC};
 <span class="kw">use </span>cranelift_codegen::ir::immediates::Offset32;
@@ -4632,7 +4689,8 @@
             translate_fcmp(FloatCC::LessThanOrEqual, builder, state)
         }
         Operator::RefNull { hty } =&gt; {
-            state.push1(environ.translate_ref_null(builder.cursor(), (<span class="kw-2">*</span>hty).try_into()<span class="question-mark">?</span>)<span class="question-mark">?</span>)
+            <span class="kw">let </span>hty = environ.convert_heap_type(<span class="kw-2">*</span>hty);
+            state.push1(environ.translate_ref_null(builder.cursor(), hty)<span class="question-mark">?</span>)
         }
         Operator::RefIsNull =&gt; {
             <span class="kw">let </span>value = state.pop1();
@@ -5815,16 +5873,74 @@
             state.push1(builder.ins().iadd(dot32, c));
         }
 
-        Operator::CallRef { .. }
-        | Operator::ReturnCallRef { .. }
-        | Operator::BrOnNull { .. }
-        | Operator::BrOnNonNull { .. }
-        | Operator::RefAsNonNull =&gt; {
+        Operator::ReturnCallRef { type_index: <span class="kw">_ </span>} =&gt; {
             <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">wasm_unsupported!</span>(
-                <span class="string">&quot;proposed function-references operator {:?}&quot;</span>,
+                <span class="string">&quot;proposed tail-call operator for function references {:?}&quot;</span>,
                 op
             ));
         }
+        Operator::BrOnNull { relative_depth } =&gt; {
+            <span class="kw">let </span>r = state.pop1();
+            <span class="kw">let </span>(br_destination, inputs) = translate_br_if_args(<span class="kw-2">*</span>relative_depth, state);
+            <span class="kw">let </span>is_null = environ.translate_ref_is_null(builder.cursor(), r)<span class="question-mark">?</span>;
+            <span class="kw">let </span>else_block = builder.create_block();
+            canonicalise_brif(builder, is_null, br_destination, inputs, else_block, <span class="kw-2">&amp;</span>[]);
+
+            builder.seal_block(else_block); <span class="comment">// The only predecessor is the current block.
+            </span>builder.switch_to_block(else_block);
+            state.push1(r);
+        }
+        Operator::BrOnNonNull { relative_depth } =&gt; {
+            <span class="comment">// We write this a bit differently from the spec to avoid an extra
+            // block/branch and the typed accounting thereof. Instead of the
+            // spec&#39;s approach, it&#39;s described as such:
+            // Peek the value val from the stack.
+            // If val is ref.null ht, then: pop the value val from the stack.
+            // Else: Execute the instruction (br relative_depth).
+            </span><span class="kw">let </span>is_null = environ.translate_ref_is_null(builder.cursor(), state.peek1())<span class="question-mark">?</span>;
+            <span class="kw">let </span>(br_destination, inputs) = translate_br_if_args(<span class="kw-2">*</span>relative_depth, state);
+            <span class="kw">let </span>else_block = builder.create_block();
+            canonicalise_brif(builder, is_null, else_block, <span class="kw-2">&amp;</span>[], br_destination, inputs);
+
+            <span class="comment">// In the null case, pop the ref
+            </span>state.pop1();
+
+            builder.seal_block(else_block); <span class="comment">// The only predecessor is the current block.
+
+            // The rest of the translation operates on our is null case, which is
+            // currently an empty block
+            </span>builder.switch_to_block(else_block);
+        }
+        Operator::CallRef { type_index } =&gt; {
+            <span class="comment">// Get function signature
+            // `index` is the index of the function&#39;s signature and `table_index` is the index of
+            // the table to search the function in.
+            </span><span class="kw">let </span>(sigref, num_args) = state.get_indirect_sig(builder.func, <span class="kw-2">*</span>type_index, environ)<span class="question-mark">?</span>;
+            <span class="kw">let </span>callee = state.pop1();
+
+            <span class="comment">// Bitcast any vector arguments to their default type, I8X16, before calling.
+            </span><span class="kw">let </span>args = state.peekn_mut(num_args);
+            bitcast_wasm_params(environ, sigref, args, builder);
+
+            <span class="kw">let </span>call =
+                environ.translate_call_ref(builder, sigref, callee, state.peekn(num_args))<span class="question-mark">?</span>;
+
+            <span class="kw">let </span>inst_results = builder.inst_results(call);
+            <span class="macro">debug_assert_eq!</span>(
+                inst_results.len(),
+                builder.func.dfg.signatures[sigref].returns.len(),
+                <span class="string">&quot;translate_call_ref results should match the call signature&quot;
+            </span>);
+            state.popn(num_args);
+            state.pushn(inst_results);
+        }
+        Operator::RefAsNonNull =&gt; {
+            <span class="kw">let </span>r = state.pop1();
+            <span class="kw">let </span>is_null = environ.translate_ref_is_null(builder.cursor(), r)<span class="question-mark">?</span>;
+            builder.ins().trapnz(is_null, ir::TrapCode::NullReference);
+            state.push1(r);
+        }
+
         Operator::I31New | Operator::I31GetS | Operator::I31GetU =&gt; {
             <span class="macro">unimplemented!</span>(<span class="string">&quot;GC operators not yet implemented&quot;</span>)
         }

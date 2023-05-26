@@ -772,6 +772,22 @@
 <a href="#772" id="772">772</a>
 <a href="#773" id="773">773</a>
 <a href="#774" id="774">774</a>
+<a href="#775" id="775">775</a>
+<a href="#776" id="776">776</a>
+<a href="#777" id="777">777</a>
+<a href="#778" id="778">778</a>
+<a href="#779" id="779">779</a>
+<a href="#780" id="780">780</a>
+<a href="#781" id="781">781</a>
+<a href="#782" id="782">782</a>
+<a href="#783" id="783">783</a>
+<a href="#784" id="784">784</a>
+<a href="#785" id="785">785</a>
+<a href="#786" id="786">786</a>
+<a href="#787" id="787">787</a>
+<a href="#788" id="788">788</a>
+<a href="#789" id="789">789</a>
+<a href="#790" id="790">790</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Contains the common Wasmtime command line interface (CLI) flags.
 
 </span><span class="attr">#![deny(trivial_numeric_casts, unused_extern_crates, unstable_features)]
@@ -817,6 +833,10 @@
     (<span class="string">&quot;memory64&quot;</span>, <span class="string">&quot;enables support for 64-bit memories&quot;</span>),
     <span class="attr">#[cfg(feature = <span class="string">&quot;component-model&quot;</span>)]
     </span>(<span class="string">&quot;component-model&quot;</span>, <span class="string">&quot;enables support for the component model&quot;</span>),
+    (
+        <span class="string">&quot;function-references&quot;</span>,
+        <span class="string">&quot;enables support for typed function references&quot;</span>,
+    ),
 ];
 
 <span class="kw">pub const </span>SUPPORTED_WASI_MODULES: <span class="kw-2">&amp;</span>[(<span class="kw-2">&amp;</span>str, <span class="kw-2">&amp;</span>str)] = <span class="kw-2">&amp;</span>[
@@ -1140,6 +1160,7 @@
             memory64,
             <span class="attr">#[cfg(feature = <span class="string">&quot;component-model&quot;</span>)]
             </span>component_model,
+            function_references,
         } = <span class="self">self</span>.wasm_features.unwrap_or_default();
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(enable) = simd {
@@ -1153,6 +1174,9 @@
         }
         <span class="kw">if let </span><span class="prelude-val">Some</span>(enable) = reference_types {
             config.wasm_reference_types(enable);
+        }
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(enable) = function_references {
+            config.wasm_function_references(enable);
         }
         <span class="kw">if let </span><span class="prelude-val">Some</span>(enable) = multi_value {
             config.wasm_multi_value(enable);
@@ -1206,6 +1230,7 @@
     <span class="kw">pub </span>memory64: <span class="prelude-ty">Option</span>&lt;bool&gt;,
     <span class="attr">#[cfg(feature = <span class="string">&quot;component-model&quot;</span>)]
     </span><span class="kw">pub </span>component_model: <span class="prelude-ty">Option</span>&lt;bool&gt;,
+    <span class="kw">pub </span>function_references: <span class="prelude-ty">Option</span>&lt;bool&gt;,
 }
 
 <span class="kw">fn </span>parse_wasm_features(features: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;WasmFeatures&gt; {
@@ -1257,6 +1282,7 @@
         memory64: all.or(values[<span class="string">&quot;memory64&quot;</span>]),
         <span class="attr">#[cfg(feature = <span class="string">&quot;component-model&quot;</span>)]
         </span>component_model: all.or(values[<span class="string">&quot;component-model&quot;</span>]),
+        function_references: all.or(values[<span class="string">&quot;function-references&quot;</span>]),
     })
 }
 
@@ -1372,6 +1398,7 @@
             threads,
             multi_memory,
             memory64,
+            function_references,
         } = options.wasm_features.unwrap();
 
         <span class="macro">assert_eq!</span>(reference_types, <span class="prelude-val">Some</span>(<span class="bool-val">true</span>));
@@ -1381,6 +1408,7 @@
         <span class="macro">assert_eq!</span>(threads, <span class="prelude-val">Some</span>(<span class="bool-val">true</span>));
         <span class="macro">assert_eq!</span>(multi_memory, <span class="prelude-val">Some</span>(<span class="bool-val">true</span>));
         <span class="macro">assert_eq!</span>(memory64, <span class="prelude-val">Some</span>(<span class="bool-val">true</span>));
+        <span class="macro">assert_eq!</span>(function_references, <span class="prelude-val">Some</span>(<span class="bool-val">true</span>));
         <span class="macro">assert_eq!</span>(relaxed_simd, <span class="prelude-val">Some</span>(<span class="bool-val">true</span>));
 
         <span class="prelude-val">Ok</span>(())
@@ -1399,6 +1427,7 @@
             threads,
             multi_memory,
             memory64,
+            function_references,
         } = options.wasm_features.unwrap();
 
         <span class="macro">assert_eq!</span>(reference_types, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
@@ -1408,6 +1437,7 @@
         <span class="macro">assert_eq!</span>(threads, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
         <span class="macro">assert_eq!</span>(multi_memory, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
         <span class="macro">assert_eq!</span>(memory64, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
+        <span class="macro">assert_eq!</span>(function_references, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
         <span class="macro">assert_eq!</span>(relaxed_simd, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
 
         <span class="prelude-val">Ok</span>(())
@@ -1429,6 +1459,7 @@
             threads,
             multi_memory,
             memory64,
+            function_references,
         } = options.wasm_features.unwrap();
 
         <span class="macro">assert_eq!</span>(reference_types, <span class="prelude-val">Some</span>(<span class="bool-val">false</span>));
@@ -1438,6 +1469,7 @@
         <span class="macro">assert_eq!</span>(threads, <span class="prelude-val">None</span>);
         <span class="macro">assert_eq!</span>(multi_memory, <span class="prelude-val">Some</span>(<span class="bool-val">true</span>));
         <span class="macro">assert_eq!</span>(memory64, <span class="prelude-val">Some</span>(<span class="bool-val">true</span>));
+        <span class="macro">assert_eq!</span>(function_references, <span class="prelude-val">None</span>);
         <span class="macro">assert_eq!</span>(relaxed_simd, <span class="prelude-val">None</span>);
 
         <span class="prelude-val">Ok</span>(())

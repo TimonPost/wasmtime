@@ -549,8 +549,31 @@
 <a href="#549" id="549">549</a>
 <a href="#550" id="550">550</a>
 <a href="#551" id="551">551</a>
+<a href="#552" id="552">552</a>
+<a href="#553" id="553">553</a>
+<a href="#554" id="554">554</a>
+<a href="#555" id="555">555</a>
+<a href="#556" id="556">556</a>
+<a href="#557" id="557">557</a>
+<a href="#558" id="558">558</a>
+<a href="#559" id="559">559</a>
+<a href="#560" id="560">560</a>
+<a href="#561" id="561">561</a>
+<a href="#562" id="562">562</a>
+<a href="#563" id="563">563</a>
+<a href="#564" id="564">564</a>
+<a href="#565" id="565">565</a>
+<a href="#566" id="566">566</a>
+<a href="#567" id="567">567</a>
+<a href="#568" id="568">568</a>
+<a href="#569" id="569">569</a>
+<a href="#570" id="570">570</a>
+<a href="#571" id="571">571</a>
+<a href="#572" id="572">572</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::fmt;
-<span class="kw">use </span>wasmtime_environ::{EntityType, Global, Memory, ModuleTypes, Table, WasmFuncType, WasmType};
+<span class="kw">use </span>wasmtime_environ::{
+    EntityType, Global, Memory, ModuleTypes, Table, WasmFuncType, WasmRefType, WasmType,
+};
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>matching;
 
@@ -570,7 +593,7 @@
 <span class="comment">// Value Types
 
 </span><span class="doccomment">/// A list of all possible value types in WebAssembly.
-</span><span class="attr">#[derive(Debug, Clone, Copy, Hash, Eq, PartialEq)]
+</span><span class="attr">#[derive(Debug, Clone, Hash, Eq, PartialEq)]
 </span><span class="kw">pub enum </span>ValType {
     <span class="comment">// NB: the ordering here is intended to match the ordering in
     // `wasmtime_types::WasmType` to help improve codegen when converting.
@@ -629,8 +652,8 @@
             <span class="self">Self</span>::F32 =&gt; WasmType::F32,
             <span class="self">Self</span>::F64 =&gt; WasmType::F64,
             <span class="self">Self</span>::V128 =&gt; WasmType::V128,
-            <span class="self">Self</span>::FuncRef =&gt; WasmType::FuncRef,
-            <span class="self">Self</span>::ExternRef =&gt; WasmType::ExternRef,
+            <span class="self">Self</span>::FuncRef =&gt; WasmType::Ref(WasmRefType::FUNCREF),
+            <span class="self">Self</span>::ExternRef =&gt; WasmType::Ref(WasmRefType::EXTERNREF),
         }
     }
 
@@ -641,8 +664,17 @@
             WasmType::F32 =&gt; <span class="self">Self</span>::F32,
             WasmType::F64 =&gt; <span class="self">Self</span>::F64,
             WasmType::V128 =&gt; <span class="self">Self</span>::V128,
-            WasmType::FuncRef =&gt; <span class="self">Self</span>::FuncRef,
-            WasmType::ExternRef =&gt; <span class="self">Self</span>::ExternRef,
+            WasmType::Ref(WasmRefType::FUNCREF) =&gt; <span class="self">Self</span>::FuncRef,
+            WasmType::Ref(WasmRefType::EXTERNREF) =&gt; <span class="self">Self</span>::ExternRef,
+            <span class="comment">// FIXME: exposing the full function-references (and beyond)
+            // proposals will require redesigning the embedder API for `ValType`
+            // and types in Wasmtime. That is a large undertaking which is
+            // deferred for later. The intention for now is that
+            // function-references types can&#39;t show up in the &quot;public API&quot; of a
+            // core wasm module but it can use everything internally still.
+            </span>WasmType::Ref(<span class="kw">_</span>) =&gt; {
+                <span class="macro">unimplemented!</span>(<span class="string">&quot;typed function references are not exposed in the public API yet&quot;</span>)
+            }
         }
     }
 }
@@ -840,10 +872,20 @@
 <span class="kw">impl </span>TableType {
     <span class="doccomment">/// Creates a new table descriptor which will contain the specified
     /// `element` and have the `limits` applied to its length.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the `element` type provided is not a reference type.
     </span><span class="kw">pub fn </span>new(element: ValType, min: u32, max: <span class="prelude-ty">Option</span>&lt;u32&gt;) -&gt; TableType {
         TableType {
             ty: Table {
-                wasm_ty: element.to_wasm_type(),
+                <span class="comment">// FIXME: the `ValType` API should be redesigned and the
+                // argument to this constructor should be `RefType`.
+                </span>wasm_ty: <span class="kw">match </span>element {
+                    ValType::FuncRef =&gt; WasmRefType::FUNCREF,
+                    ValType::ExternRef =&gt; WasmRefType::EXTERNREF,
+                    <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">&quot;Attempt to convert non-reference type to a reference type&quot;</span>),
+                },
                 minimum: min,
                 maximum: max,
             },
@@ -852,7 +894,7 @@
 
     <span class="doccomment">/// Returns the element value type of this table.
     </span><span class="kw">pub fn </span>element(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; ValType {
-        ValType::from_wasm_type(<span class="kw-2">&amp;</span><span class="self">self</span>.ty.wasm_ty)
+        ValType::from_wasm_type(<span class="kw-2">&amp;</span>WasmType::Ref(<span class="self">self</span>.ty.wasm_ty))
     }
 
     <span class="doccomment">/// Returns minimum number of elements this table must have

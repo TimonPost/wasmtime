@@ -613,6 +613,13 @@
 <a href="#613" id="613">613</a>
 <a href="#614" id="614">614</a>
 <a href="#615" id="615">615</a>
+<a href="#616" id="616">616</a>
+<a href="#617" id="617">617</a>
+<a href="#618" id="618">618</a>
+<a href="#619" id="619">619</a>
+<a href="#620" id="620">620</a>
+<a href="#621" id="621">621</a>
+<a href="#622" id="622">622</a>
 </pre><pre class="rust"><code><span class="doccomment">//! This module implements serialization and deserialization of `Engine`
 //! configuration data which is embedded into compiled artifacts of Wasmtime.
 //!
@@ -783,6 +790,7 @@
     memory64: bool,
     relaxed_simd: bool,
     extended_const: bool,
+    function_references: bool,
 }
 
 <span class="kw">impl </span>Metadata {
@@ -814,7 +822,6 @@
 
         <span class="macro">assert!</span>(!memory_control);
         <span class="macro">assert!</span>(!tail_call);
-        <span class="macro">assert!</span>(!function_references);
         <span class="macro">assert!</span>(!gc);
 
         Metadata {
@@ -834,6 +841,7 @@
                 memory64,
                 relaxed_simd,
                 extended_const,
+                function_references,
             },
         }
     }
@@ -1004,6 +1012,7 @@
             memory64,
             relaxed_simd,
             extended_const,
+            function_references,
         } = <span class="self">self</span>.features;
 
         <span class="self">Self</span>::check_bool(
@@ -1052,6 +1061,11 @@
             relaxed_simd,
             other.relaxed_simd,
             <span class="string">&quot;WebAssembly relaxed-simd support&quot;</span>,
+        )<span class="question-mark">?</span>;
+        <span class="self">Self</span>::check_bool(
+            function_references,
+            other.function_references,
+            <span class="string">&quot;WebAssembly function-references support&quot;</span>,
         )<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(())

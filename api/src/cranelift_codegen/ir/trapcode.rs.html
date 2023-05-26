@@ -136,6 +136,12 @@
 <a href="#136" id="136">136</a>
 <a href="#137" id="137">137</a>
 <a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Trap codes describing the reason for a trap.
 
 </span><span class="kw">use </span>core::fmt::{<span class="self">self</span>, Display, Formatter};
@@ -189,6 +195,9 @@
 
     <span class="doccomment">/// A user-defined trap code.
     </span>User(u16),
+
+    <span class="doccomment">/// A null reference was encountered which was required to be non-null.
+    </span>NullReference,
 }
 
 <span class="kw">impl </span>TrapCode {
@@ -206,6 +215,7 @@
             TrapCode::BadConversionToInteger,
             TrapCode::UnreachableCodeReached,
             TrapCode::Interrupt,
+            TrapCode::NullReference,
         ]
     }
 }
@@ -226,6 +236,7 @@
             UnreachableCodeReached =&gt; <span class="string">&quot;unreachable&quot;</span>,
             Interrupt =&gt; <span class="string">&quot;interrupt&quot;</span>,
             User(x) =&gt; <span class="kw">return </span><span class="macro">write!</span>(f, <span class="string">&quot;user{}&quot;</span>, x),
+            NullReference =&gt; <span class="string">&quot;null_reference&quot;</span>,
         };
         f.write_str(identifier)
     }
@@ -248,6 +259,7 @@
             <span class="string">&quot;bad_toint&quot; </span>=&gt; <span class="prelude-val">Ok</span>(BadConversionToInteger),
             <span class="string">&quot;unreachable&quot; </span>=&gt; <span class="prelude-val">Ok</span>(UnreachableCodeReached),
             <span class="string">&quot;interrupt&quot; </span>=&gt; <span class="prelude-val">Ok</span>(Interrupt),
+            <span class="string">&quot;null_reference&quot; </span>=&gt; <span class="prelude-val">Ok</span>(NullReference),
             <span class="kw">_ if </span>s.starts_with(<span class="string">&quot;user&quot;</span>) =&gt; s[<span class="number">4</span>..].parse().map(User).map_err(|<span class="kw">_</span>| ()),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(()),
         }

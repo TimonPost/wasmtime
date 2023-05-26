@@ -1904,8 +1904,24 @@
 <a href="#1904" id="1904">1904</a>
 <a href="#1905" id="1905">1905</a>
 <a href="#1906" id="1906">1906</a>
+<a href="#1907" id="1907">1907</a>
+<a href="#1908" id="1908">1908</a>
+<a href="#1909" id="1909">1909</a>
+<a href="#1910" id="1910">1910</a>
+<a href="#1911" id="1911">1911</a>
+<a href="#1912" id="1912">1912</a>
+<a href="#1913" id="1913">1913</a>
+<a href="#1914" id="1914">1914</a>
+<a href="#1915" id="1915">1915</a>
+<a href="#1916" id="1916">1916</a>
+<a href="#1917" id="1917">1917</a>
+<a href="#1918" id="1918">1918</a>
+<a href="#1919" id="1919">1919</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::component::{MAX_FLAT_PARAMS, MAX_FLAT_RESULTS};
-<span class="kw">use crate</span>::{EntityType, Global, ModuleTypes, ModuleTypesBuilder, PrimaryMap, SignatureIndex};
+<span class="kw">use crate</span>::{
+    EntityType, ModuleTypes, ModuleTypesBuilder, PrimaryMap, SignatureIndex, TypeConvert,
+    WasmHeapType,
+};
 <span class="kw">use </span>anyhow::{bail, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span>cranelift_entity::EntityRef;
 <span class="kw">use </span>indexmap::IndexMap;
@@ -2360,7 +2376,8 @@
     </span><span class="kw">pub fn </span>intern_core_type(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ty: <span class="kw-2">&amp;</span>wasmparser::CoreType&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;TypeDef&gt; {
         <span class="prelude-val">Ok</span>(<span class="kw">match </span>ty {
             wasmparser::CoreType::Func(ty) =&gt; {
-                TypeDef::CoreFunc(<span class="self">self</span>.module_types.wasm_func_type(ty.clone().try_into()<span class="question-mark">?</span>))
+                <span class="kw">let </span>ty = <span class="self">self</span>.convert_func_type(ty);
+                TypeDef::CoreFunc(<span class="self">self</span>.module_types.wasm_func_type(ty))
             }
             wasmparser::CoreType::Module(ty) =&gt; TypeDef::Module(<span class="self">self</span>.module_type(ty)<span class="question-mark">?</span>),
         })
@@ -2397,8 +2414,8 @@
         <span class="kw">for </span>item <span class="kw">in </span>ty {
             <span class="kw">match </span>item {
                 wasmparser::ModuleTypeDeclaration::Type(wasmparser::Type::Func(f)) =&gt; {
-                    <span class="kw">let </span>ty =
-                        TypeDef::CoreFunc(<span class="self">self</span>.module_types.wasm_func_type(f.clone().try_into()<span class="question-mark">?</span>));
+                    <span class="kw">let </span>f = <span class="self">self</span>.convert_func_type(f);
+                    <span class="kw">let </span>ty = TypeDef::CoreFunc(<span class="self">self</span>.module_types.wasm_func_type(f));
                     <span class="self">self</span>.push_core_typedef(ty);
                 }
                 wasmparser::ModuleTypeDeclaration::Export { name, ty } =&gt; {
@@ -2439,9 +2456,9 @@
                     <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(), <span class="comment">// not possible with valid components
                 </span>}
             }
-            wasmparser::TypeRef::Table(ty) =&gt; EntityType::Table(ty.clone().try_into()<span class="question-mark">?</span>),
+            wasmparser::TypeRef::Table(ty) =&gt; EntityType::Table(<span class="self">self</span>.convert_table_type(ty)),
             wasmparser::TypeRef::Memory(ty) =&gt; EntityType::Memory(ty.clone().into()),
-            wasmparser::TypeRef::Global(ty) =&gt; EntityType::Global(Global::new(ty.clone())<span class="question-mark">?</span>),
+            wasmparser::TypeRef::Global(ty) =&gt; EntityType::Global(<span class="self">self</span>.convert_global_type(ty)),
             wasmparser::TypeRef::Tag(<span class="kw">_</span>) =&gt; <span class="macro">bail!</span>(<span class="string">&quot;exceptions proposal not implemented&quot;</span>),
         })
     }
@@ -2843,6 +2860,15 @@
             InterfaceType::Union(i) =&gt; <span class="kw-2">&amp;</span><span class="self">self</span>.type_info.unions[<span class="kw-2">*</span>i],
             InterfaceType::Option(i) =&gt; <span class="kw-2">&amp;</span><span class="self">self</span>.type_info.options[<span class="kw-2">*</span>i],
             InterfaceType::Result(i) =&gt; <span class="kw-2">&amp;</span><span class="self">self</span>.type_info.results[<span class="kw-2">*</span>i],
+        }
+    }
+}
+
+<span class="kw">impl </span>TypeConvert <span class="kw">for </span>ComponentTypesBuilder {
+    <span class="kw">fn </span>lookup_heap_type(<span class="kw-2">&amp;</span><span class="self">self</span>, index: TypeIndex) -&gt; WasmHeapType {
+        <span class="kw">match </span><span class="self">self</span>.type_scopes.last().unwrap().core[index] {
+            TypeDef::CoreFunc(i) =&gt; WasmHeapType::TypedFunc(i),
+            <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
         }
     }
 }

@@ -68,6 +68,8 @@
 <a href="#68" id="68">68</a>
 <a href="#69" id="69">69</a>
 <a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
 </pre><pre class="rust"><code><span class="kw">use </span>anyhow::{Context, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span>clap::Parser;
 <span class="kw">use </span>cranelift_codegen::settings;
@@ -76,6 +78,7 @@
 <span class="kw">use </span>wasmtime_environ::{
     wasmparser::{Parser <span class="kw">as </span>WasmParser, Validator},
     DefinedFuncIndex, FunctionBodyData, ModuleEnvironment, ModuleTranslation, Tunables,
+    TypeConvert,
 };
 <span class="kw">use </span>winch_codegen::{lookup, TargetIsa};
 <span class="kw">use </span>winch_filetests::disasm::disasm;
@@ -125,6 +128,7 @@
     <span class="kw">let </span>sig = types
         .function_at(index.as_u32())
         .expect(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;function type at index {:?}&quot;</span>, index.as_u32()));
+    <span class="kw">let </span>sig = translation.module.convert_func_type(sig);
     <span class="kw">let </span>FunctionBodyData { body, validator } = f.<span class="number">1</span>;
     <span class="kw">let </span><span class="kw-2">mut </span>validator = validator.into_validator(Default::default());
     <span class="kw">let </span>buffer = isa

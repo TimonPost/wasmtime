@@ -417,6 +417,27 @@
 <a href="#417" id="417">417</a>
 <a href="#418" id="418">418</a>
 <a href="#419" id="419">419</a>
+<a href="#420" id="420">420</a>
+<a href="#421" id="421">421</a>
+<a href="#422" id="422">422</a>
+<a href="#423" id="423">423</a>
+<a href="#424" id="424">424</a>
+<a href="#425" id="425">425</a>
+<a href="#426" id="426">426</a>
+<a href="#427" id="427">427</a>
+<a href="#428" id="428">428</a>
+<a href="#429" id="429">429</a>
+<a href="#430" id="430">430</a>
+<a href="#431" id="431">431</a>
+<a href="#432" id="432">432</a>
+<a href="#433" id="433">433</a>
+<a href="#434" id="434">434</a>
+<a href="#435" id="435">435</a>
+<a href="#436" id="436">436</a>
+<a href="#437" id="437">437</a>
+<a href="#438" id="438">438</a>
+<a href="#439" id="439">439</a>
+<a href="#440" id="440">440</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Stand-alone WebAssembly to Cranelift IR translator.
 //!
 //! This module defines the `FuncTranslator` type which can translate a single WebAssembly
@@ -428,7 +449,6 @@
 <span class="kw">use </span><span class="kw">crate</span>::state::FuncTranslationState;
 <span class="kw">use </span><span class="kw">crate</span>::translation_utils::get_vmctx_value_label;
 <span class="kw">use </span><span class="kw">crate</span>::WasmResult;
-<span class="kw">use </span>core::convert::TryInto;
 <span class="kw">use </span>cranelift_codegen::entity::EntityRef;
 <span class="kw">use </span>cranelift_codegen::ir::{<span class="self">self</span>, Block, InstBuilder, ValueLabel};
 <span class="kw">use </span>cranelift_codegen::timing;
@@ -612,27 +632,49 @@
 ) -&gt; WasmResult&lt;()&gt; {
     <span class="comment">// All locals are initialized to 0.
     </span><span class="kw">use </span>wasmparser::ValType::<span class="kw-2">*</span>;
-    <span class="kw">let </span>zeroval = <span class="kw">match </span>wasm_type {
-        I32 =&gt; builder.ins().iconst(ir::types::I32, <span class="number">0</span>),
-        I64 =&gt; builder.ins().iconst(ir::types::I64, <span class="number">0</span>),
-        F32 =&gt; builder.ins().f32const(ir::immediates::Ieee32::with_bits(<span class="number">0</span>)),
-        F64 =&gt; builder.ins().f64const(ir::immediates::Ieee64::with_bits(<span class="number">0</span>)),
+    <span class="kw">let </span>(ty, init) = <span class="kw">match </span>wasm_type {
+        I32 =&gt; (
+            ir::types::I32,
+            <span class="prelude-val">Some</span>(builder.ins().iconst(ir::types::I32, <span class="number">0</span>)),
+        ),
+        I64 =&gt; (
+            ir::types::I64,
+            <span class="prelude-val">Some</span>(builder.ins().iconst(ir::types::I64, <span class="number">0</span>)),
+        ),
+        F32 =&gt; (
+            ir::types::F32,
+            <span class="prelude-val">Some</span>(builder.ins().f32const(ir::immediates::Ieee32::with_bits(<span class="number">0</span>))),
+        ),
+        F64 =&gt; (
+            ir::types::F64,
+            <span class="prelude-val">Some</span>(builder.ins().f64const(ir::immediates::Ieee64::with_bits(<span class="number">0</span>))),
+        ),
         V128 =&gt; {
             <span class="kw">let </span>constant_handle = builder.func.dfg.constants.insert([<span class="number">0</span>; <span class="number">16</span>].to_vec().into());
-            builder.ins().vconst(ir::types::I8X16, constant_handle)
+            (
+                ir::types::I8X16,
+                <span class="prelude-val">Some</span>(builder.ins().vconst(ir::types::I8X16, constant_handle)),
+            )
         }
-        Ref(t) =&gt; {
-            <span class="macro">assert!</span>(t.is_nullable());
-            environ.translate_ref_null(builder.cursor(), t.heap_type().try_into()<span class="question-mark">?</span>)<span class="question-mark">?
-        </span>}
+        Ref(rt) =&gt; {
+            <span class="kw">let </span>hty = environ.convert_heap_type(rt.heap_type());
+            <span class="kw">let </span>ty = environ.reference_type(hty);
+            <span class="kw">let </span>init = <span class="kw">if </span>rt.is_nullable() {
+                <span class="prelude-val">Some</span>(environ.translate_ref_null(builder.cursor(), hty)<span class="question-mark">?</span>)
+            } <span class="kw">else </span>{
+                <span class="prelude-val">None
+            </span>};
+            (ty, init)
+        }
     };
 
-    <span class="kw">let </span>ty = builder.func.dfg.value_type(zeroval);
     <span class="kw">for _ in </span><span class="number">0</span>..count {
         <span class="kw">let </span>local = Variable::new(<span class="kw-2">*</span>next_local);
         builder.declare_var(local, ty);
-        builder.def_var(local, zeroval);
-        builder.set_val_label(zeroval, ValueLabel::new(<span class="kw-2">*</span>next_local));
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(init) = init {
+            builder.def_var(local, init);
+            builder.set_val_label(init, ValueLabel::new(<span class="kw-2">*</span>next_local));
+        }
         <span class="kw-2">*</span>next_local += <span class="number">1</span>;
     }
     <span class="prelude-val">Ok</span>(())

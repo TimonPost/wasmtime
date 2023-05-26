@@ -408,7 +408,6 @@
 <a href="#408" id="408">408</a>
 <a href="#409" id="409">409</a>
 <a href="#410" id="410">410</a>
-<a href="#411" id="411">411</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::expression::{CompiledExpression, FunctionFrameInfo};
 <span class="kw">use </span><span class="kw">super</span>::utils::{add_internal_types, append_vmctx_info, get_function_frame_info};
 <span class="kw">use </span><span class="kw">super</span>::AddressTransform;
@@ -422,9 +421,8 @@
 <span class="kw">use </span>std::collections::{HashMap, HashSet};
 <span class="kw">use </span>std::path::PathBuf;
 <span class="kw">use </span>std::sync::atomic::{AtomicUsize, Ordering::SeqCst};
-<span class="kw">use </span>wasmparser::ValType <span class="kw">as </span>WasmType;
 <span class="kw">use </span>wasmtime_environ::{
-    DebugInfoData, DefinedFuncIndex, EntityRef, FuncIndex, FunctionMetadata, WasmFileInfo,
+    DebugInfoData, DefinedFuncIndex, EntityRef, FuncIndex, FunctionMetadata, WasmFileInfo, WasmType,
 };
 
 <span class="kw">const </span>PRODUCER_NAME: <span class="kw-2">&amp;</span>str = <span class="string">&quot;wasmtime&quot;</span>;

@@ -414,15 +414,59 @@
 <a href="#414" id="414">414</a>
 <a href="#415" id="415">415</a>
 <a href="#416" id="416">416</a>
+<a href="#417" id="417">417</a>
+<a href="#418" id="418">418</a>
+<a href="#419" id="419">419</a>
+<a href="#420" id="420">420</a>
+<a href="#421" id="421">421</a>
+<a href="#422" id="422">422</a>
+<a href="#423" id="423">423</a>
+<a href="#424" id="424">424</a>
+<a href="#425" id="425">425</a>
+<a href="#426" id="426">426</a>
+<a href="#427" id="427">427</a>
+<a href="#428" id="428">428</a>
+<a href="#429" id="429">429</a>
+<a href="#430" id="430">430</a>
+<a href="#431" id="431">431</a>
+<a href="#432" id="432">432</a>
+<a href="#433" id="433">433</a>
+<a href="#434" id="434">434</a>
+<a href="#435" id="435">435</a>
+<a href="#436" id="436">436</a>
+<a href="#437" id="437">437</a>
+<a href="#438" id="438">438</a>
+<a href="#439" id="439">439</a>
+<a href="#440" id="440">440</a>
+<a href="#441" id="441">441</a>
+<a href="#442" id="442">442</a>
+<a href="#443" id="443">443</a>
+<a href="#444" id="444">444</a>
+<a href="#445" id="445">445</a>
+<a href="#446" id="446">446</a>
+<a href="#447" id="447">447</a>
+<a href="#448" id="448">448</a>
+<a href="#449" id="449">449</a>
+<a href="#450" id="450">450</a>
+<a href="#451" id="451">451</a>
+<a href="#452" id="452">452</a>
+<a href="#453" id="453">453</a>
+<a href="#454" id="454">454</a>
+<a href="#455" id="455">455</a>
+<a href="#456" id="456">456</a>
+<a href="#457" id="457">457</a>
+<a href="#458" id="458">458</a>
+<a href="#459" id="459">459</a>
+<a href="#460" id="460">460</a>
+<a href="#461" id="461">461</a>
+<a href="#462" id="462">462</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Internal dependency of Wasmtime and Cranelift that defines types for
 //! WebAssembly.
 
 </span><span class="kw">pub use </span>wasmparser;
 
 <span class="kw">use </span>cranelift_entity::entity_impl;
-
 <span class="kw">use </span>serde::{Deserialize, Serialize};
-<span class="kw">use </span>std::convert::{TryFrom, TryInto};
 <span class="kw">use </span>std::fmt;
 
 <span class="kw">mod </span>error;
@@ -441,68 +485,8 @@
     </span>F64,
     <span class="doccomment">/// V128 type
     </span>V128,
-    <span class="doccomment">/// FuncRef type
-    </span>FuncRef,
-    <span class="doccomment">/// ExternRef type
-    </span>ExternRef,
-}
-
-<span class="kw">impl </span>TryFrom&lt;wasmparser::ValType&gt; <span class="kw">for </span>WasmType {
-    <span class="kw">type </span>Error = WasmError;
-    <span class="kw">fn </span>try_from(ty: wasmparser::ValType) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
-        <span class="kw">use </span>wasmparser::ValType::<span class="kw-2">*</span>;
-        <span class="kw">match </span>ty {
-            I32 =&gt; <span class="prelude-val">Ok</span>(WasmType::I32),
-            I64 =&gt; <span class="prelude-val">Ok</span>(WasmType::I64),
-            F32 =&gt; <span class="prelude-val">Ok</span>(WasmType::F32),
-            F64 =&gt; <span class="prelude-val">Ok</span>(WasmType::F64),
-            V128 =&gt; <span class="prelude-val">Ok</span>(WasmType::V128),
-            Ref(r) =&gt; r.try_into(),
-        }
-    }
-}
-
-<span class="kw">impl </span>TryFrom&lt;wasmparser::RefType&gt; <span class="kw">for </span>WasmType {
-    <span class="kw">type </span>Error = WasmError;
-    <span class="kw">fn </span>try_from(ty: wasmparser::RefType) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
-        <span class="kw">match </span>ty {
-            wasmparser::RefType::FUNCREF =&gt; <span class="prelude-val">Ok</span>(WasmType::FuncRef),
-            wasmparser::RefType::EXTERNREF =&gt; <span class="prelude-val">Ok</span>(WasmType::ExternRef),
-            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(WasmError::Unsupported(
-                <span class="string">&quot;function references proposal&quot;</span>.to_string(),
-            )),
-        }
-    }
-}
-
-<span class="kw">impl </span>TryFrom&lt;wasmparser::HeapType&gt; <span class="kw">for </span>WasmType {
-    <span class="kw">type </span>Error = WasmError;
-    <span class="kw">fn </span>try_from(ty: wasmparser::HeapType) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
-        <span class="kw">match </span>ty {
-            wasmparser::HeapType::Func =&gt; <span class="prelude-val">Ok</span>(WasmType::FuncRef),
-            wasmparser::HeapType::Extern =&gt; <span class="prelude-val">Ok</span>(WasmType::ExternRef),
-            <span class="comment">// NB: when the function-references proposal is implemented this
-            // entire `impl` should probably go away to remove the need for not
-            // only this `unsupported` but everything.
-            </span><span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(WasmError::Unsupported(
-                <span class="string">&quot;function references proposal&quot;</span>.to_string(),
-            )),
-        }
-    }
-}
-
-<span class="kw">impl </span>From&lt;WasmType&gt; <span class="kw">for </span>wasmparser::ValType {
-    <span class="kw">fn </span>from(ty: WasmType) -&gt; wasmparser::ValType {
-        <span class="kw">match </span>ty {
-            WasmType::I32 =&gt; wasmparser::ValType::I32,
-            WasmType::I64 =&gt; wasmparser::ValType::I64,
-            WasmType::F32 =&gt; wasmparser::ValType::F32,
-            WasmType::F64 =&gt; wasmparser::ValType::F64,
-            WasmType::V128 =&gt; wasmparser::ValType::V128,
-            WasmType::FuncRef =&gt; wasmparser::ValType::FUNCREF,
-            WasmType::ExternRef =&gt; wasmparser::ValType::EXTERNREF,
-        }
-    }
+    <span class="doccomment">/// Reference type
+    </span>Ref(WasmRefType),
 }
 
 <span class="kw">impl </span>fmt::Display <span class="kw">for </span>WasmType {
@@ -513,8 +497,69 @@
             WasmType::F32 =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;f32&quot;</span>),
             WasmType::F64 =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;f64&quot;</span>),
             WasmType::V128 =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;v128&quot;</span>),
-            WasmType::ExternRef =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;externref&quot;</span>),
-            WasmType::FuncRef =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;funcref&quot;</span>),
+            WasmType::Ref(rt) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;{rt}&quot;</span>),
+        }
+    }
+}
+
+<span class="doccomment">/// WebAssembly reference type -- equivalent of `wasmparser`&#39;s RefType
+</span><span class="attr">#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+</span><span class="kw">pub struct </span>WasmRefType {
+    <span class="kw">pub </span>nullable: bool,
+    <span class="kw">pub </span>heap_type: WasmHeapType,
+}
+
+<span class="kw">impl </span>WasmRefType {
+    <span class="kw">pub const </span>EXTERNREF: WasmRefType = WasmRefType {
+        nullable: <span class="bool-val">true</span>,
+        heap_type: WasmHeapType::Extern,
+    };
+    <span class="kw">pub const </span>FUNCREF: WasmRefType = WasmRefType {
+        nullable: <span class="bool-val">true</span>,
+        heap_type: WasmHeapType::Func,
+    };
+}
+
+<span class="kw">impl </span>fmt::Display <span class="kw">for </span>WasmRefType {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter) -&gt; fmt::Result {
+        <span class="kw">match </span><span class="kw-2">*</span><span class="self">self </span>{
+            <span class="self">Self</span>::FUNCREF =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;funcref&quot;</span>),
+            <span class="self">Self</span>::EXTERNREF =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;externref&quot;</span>),
+            <span class="kw">_ </span>=&gt; {
+                <span class="kw">if </span><span class="self">self</span>.nullable {
+                    <span class="macro">write!</span>(f, <span class="string">&quot;(ref null {})&quot;</span>, <span class="self">self</span>.heap_type)
+                } <span class="kw">else </span>{
+                    <span class="macro">write!</span>(f, <span class="string">&quot;(ref {})&quot;</span>, <span class="self">self</span>.heap_type)
+                }
+            }
+        }
+    }
+}
+
+<span class="doccomment">/// WebAssembly heap type -- equivalent of `wasmparser`&#39;s HeapType
+</span><span class="attr">#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+</span><span class="kw">pub enum </span>WasmHeapType {
+    Func,
+    Extern,
+    <span class="comment">// FIXME: the `SignatureIndex` payload here is not suitable given all the
+    // contexts that this type is used within. For example the Engine in
+    // wasmtime hashes this index which is not appropriate because the index is
+    // not globally unique.
+    //
+    // This probably needs to become `WasmHeapType&lt;T&gt;` where all of translation
+    // uses `WasmHeapType&lt;SignatureIndex&gt;` and all of engine-level &quot;stuff&quot;  uses
+    // `WasmHeapType&lt;VMSharedSignatureIndex&gt;`. This `&lt;T&gt;` would need to be
+    // propagated to quite a few locations though so it&#39;s left for a future
+    // refactoring at this time.
+    </span>TypedFunc(SignatureIndex),
+}
+
+<span class="kw">impl </span>fmt::Display <span class="kw">for </span>WasmHeapType {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter) -&gt; fmt::Result {
+        <span class="kw">match </span><span class="self">self </span>{
+            <span class="self">Self</span>::Func =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;func&quot;</span>),
+            <span class="self">Self</span>::Extern =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;extern&quot;</span>),
+            <span class="self">Self</span>::TypedFunc(i) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;func_sig{}&quot;</span>, i.as_u32()),
         }
     }
 }
@@ -531,10 +576,19 @@
 <span class="kw">impl </span>WasmFuncType {
     <span class="attr">#[inline]
     </span><span class="kw">pub fn </span>new(params: Box&lt;[WasmType]&gt;, returns: Box&lt;[WasmType]&gt;) -&gt; <span class="self">Self </span>{
-        <span class="kw">let </span>externref_params_count = params.iter().filter(|p| <span class="kw-2">**</span>p == WasmType::ExternRef).count();
+        <span class="kw">let </span>externref_params_count = params
+            .iter()
+            .filter(|p| <span class="kw">match </span><span class="kw-2">**</span>p {
+                WasmType::Ref(rt) =&gt; rt.heap_type == WasmHeapType::Extern,
+                <span class="kw">_ </span>=&gt; <span class="bool-val">false</span>,
+            })
+            .count();
         <span class="kw">let </span>externref_returns_count = returns
             .iter()
-            .filter(|r| <span class="kw-2">**</span>r == WasmType::ExternRef)
+            .filter(|r| <span class="kw">match </span><span class="kw-2">**</span>r {
+                WasmType::Ref(rt) =&gt; rt.heap_type == WasmHeapType::Extern,
+                <span class="kw">_ </span>=&gt; <span class="bool-val">false</span>,
+            })
             .count();
         WasmFuncType {
             params,
@@ -566,25 +620,6 @@
     </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>externref_returns_count(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
         <span class="self">self</span>.externref_returns_count
-    }
-}
-
-<span class="kw">impl </span>TryFrom&lt;wasmparser::FuncType&gt; <span class="kw">for </span>WasmFuncType {
-    <span class="kw">type </span>Error = WasmError;
-    <span class="kw">fn </span>try_from(ty: wasmparser::FuncType) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
-        <span class="kw">let </span>params = ty
-            .params()
-            .iter()
-            .copied()
-            .map(WasmType::try_from)
-            .collect::&lt;<span class="prelude-ty">Result</span>&lt;<span class="kw">_</span>, <span class="self">Self</span>::Error&gt;&gt;()<span class="question-mark">?</span>;
-        <span class="kw">let </span>returns = ty
-            .results()
-            .iter()
-            .copied()
-            .map(WasmType::try_from)
-            .collect::&lt;<span class="prelude-ty">Result</span>&lt;<span class="kw">_</span>, <span class="self">Self</span>::Error&gt;&gt;()<span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(<span class="self">Self</span>::new(params, returns))
     }
 }
 
@@ -757,37 +792,15 @@
     </span>RefFunc(FuncIndex),
 }
 
-<span class="kw">impl </span>Global {
-    <span class="doccomment">/// Creates a new `Global` type from wasmparser&#39;s representation.
-    </span><span class="kw">pub fn </span>new(ty: wasmparser::GlobalType) -&gt; WasmResult&lt;Global&gt; {
-        <span class="prelude-val">Ok</span>(Global {
-            wasm_ty: ty.content_type.try_into()<span class="question-mark">?</span>,
-            mutability: ty.mutable,
-        })
-    }
-}
-
 <span class="doccomment">/// WebAssembly table.
 </span><span class="attr">#[derive(Debug, Clone, Copy, Hash, Eq, PartialEq, Serialize, Deserialize)]
 </span><span class="kw">pub struct </span>Table {
     <span class="doccomment">/// The table elements&#39; Wasm type.
-    </span><span class="kw">pub </span>wasm_ty: WasmType,
+    </span><span class="kw">pub </span>wasm_ty: WasmRefType,
     <span class="doccomment">/// The minimum number of elements in the table.
     </span><span class="kw">pub </span>minimum: u32,
     <span class="doccomment">/// The maximum number of elements in the table.
     </span><span class="kw">pub </span>maximum: <span class="prelude-ty">Option</span>&lt;u32&gt;,
-}
-
-<span class="kw">impl </span>TryFrom&lt;wasmparser::TableType&gt; <span class="kw">for </span>Table {
-    <span class="kw">type </span>Error = WasmError;
-
-    <span class="kw">fn </span>try_from(ty: wasmparser::TableType) -&gt; WasmResult&lt;Table&gt; {
-        <span class="prelude-val">Ok</span>(Table {
-            wasm_ty: ty.element_type.try_into()<span class="question-mark">?</span>,
-            minimum: ty.initial,
-            maximum: ty.maximum,
-        })
-    }
 }
 
 <span class="doccomment">/// WebAssembly linear memory.
@@ -829,6 +842,85 @@
             },
         }
     }
+}
+
+<span class="doccomment">/// Helpers used to convert a `wasmparser` type to a type in this crate.
+</span><span class="kw">pub trait </span>TypeConvert {
+    <span class="doccomment">/// Converts a wasmparser table type into a wasmtime type
+    </span><span class="kw">fn </span>convert_global_type(<span class="kw-2">&amp;</span><span class="self">self</span>, ty: <span class="kw-2">&amp;</span>wasmparser::GlobalType) -&gt; Global {
+        Global {
+            wasm_ty: <span class="self">self</span>.convert_valtype(ty.content_type),
+            mutability: ty.mutable,
+        }
+    }
+
+    <span class="doccomment">/// Converts a wasmparser table type into a wasmtime type
+    </span><span class="kw">fn </span>convert_table_type(<span class="kw-2">&amp;</span><span class="self">self</span>, ty: <span class="kw-2">&amp;</span>wasmparser::TableType) -&gt; Table {
+        Table {
+            wasm_ty: <span class="self">self</span>.convert_ref_type(ty.element_type),
+            minimum: ty.initial,
+            maximum: ty.maximum,
+        }
+    }
+
+    <span class="doccomment">/// Converts a wasmparser function type to a wasmtime type
+    </span><span class="kw">fn </span>convert_func_type(<span class="kw-2">&amp;</span><span class="self">self</span>, ty: <span class="kw-2">&amp;</span>wasmparser::FuncType) -&gt; WasmFuncType {
+        <span class="kw">let </span>params = ty
+            .params()
+            .iter()
+            .map(|t| <span class="self">self</span>.convert_valtype(<span class="kw-2">*</span>t))
+            .collect();
+        <span class="kw">let </span>results = ty
+            .results()
+            .iter()
+            .map(|t| <span class="self">self</span>.convert_valtype(<span class="kw-2">*</span>t))
+            .collect();
+        WasmFuncType::new(params, results)
+    }
+
+    <span class="doccomment">/// Converts a wasmparser value type to a wasmtime type
+    </span><span class="kw">fn </span>convert_valtype(<span class="kw-2">&amp;</span><span class="self">self</span>, ty: wasmparser::ValType) -&gt; WasmType {
+        <span class="kw">match </span>ty {
+            wasmparser::ValType::I32 =&gt; WasmType::I32,
+            wasmparser::ValType::I64 =&gt; WasmType::I64,
+            wasmparser::ValType::F32 =&gt; WasmType::F32,
+            wasmparser::ValType::F64 =&gt; WasmType::F64,
+            wasmparser::ValType::V128 =&gt; WasmType::V128,
+            wasmparser::ValType::Ref(t) =&gt; WasmType::Ref(<span class="self">self</span>.convert_ref_type(t)),
+        }
+    }
+
+    <span class="doccomment">/// Converts a wasmparser reference type to a wasmtime type
+    </span><span class="kw">fn </span>convert_ref_type(<span class="kw-2">&amp;</span><span class="self">self</span>, ty: wasmparser::RefType) -&gt; WasmRefType {
+        WasmRefType {
+            nullable: ty.is_nullable(),
+            heap_type: <span class="self">self</span>.convert_heap_type(ty.heap_type()),
+        }
+    }
+
+    <span class="doccomment">/// Converts a wasmparser heap type to a wasmtime type
+    </span><span class="kw">fn </span>convert_heap_type(<span class="kw-2">&amp;</span><span class="self">self</span>, ty: wasmparser::HeapType) -&gt; WasmHeapType {
+        <span class="kw">match </span>ty {
+            wasmparser::HeapType::Func =&gt; WasmHeapType::Func,
+            wasmparser::HeapType::Extern =&gt; WasmHeapType::Extern,
+            wasmparser::HeapType::TypedFunc(i) =&gt; <span class="self">self</span>.lookup_heap_type(TypeIndex::from_u32(i)),
+
+            wasmparser::HeapType::Any
+            | wasmparser::HeapType::None
+            | wasmparser::HeapType::NoExtern
+            | wasmparser::HeapType::NoFunc
+            | wasmparser::HeapType::Eq
+            | wasmparser::HeapType::Struct
+            | wasmparser::HeapType::Array
+            | wasmparser::HeapType::I31 =&gt; {
+                <span class="macro">unimplemented!</span>(<span class="string">&quot;unsupported heap type {ty:?}&quot;</span>);
+            }
+        }
+    }
+
+    <span class="doccomment">/// Converts the specified type index from a heap type into a canonicalized
+    /// heap type.
+    </span><span class="kw">fn </span>lookup_heap_type(<span class="kw-2">&amp;</span><span class="self">self</span>, index: TypeIndex) -&gt; WasmHeapType;
 }
 </code></pre></div>
 </section></main></body></html>

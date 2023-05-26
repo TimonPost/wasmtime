@@ -283,7 +283,7 @@
 </span><span class="kw">use </span><span class="kw">crate</span>::isa::{reg::Reg, CallingConvention};
 <span class="kw">use </span>smallvec::SmallVec;
 <span class="kw">use </span>std::ops::{Add, BitAnd, Not, Sub};
-<span class="kw">use </span>wasmparser::{FuncType, ValType};
+<span class="kw">use </span>wasmtime_environ::{WasmFuncType, WasmType};
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>local;
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">use </span>local::<span class="kw-2">*</span>;
@@ -306,7 +306,7 @@
 
     <span class="doccomment">/// Construct the ABI-specific signature from a WebAssembly
     /// function type.
-    </span><span class="kw">fn </span>sig(wasm_sig: <span class="kw-2">&amp;</span>FuncType, call_conv: <span class="kw-2">&amp;</span>CallingConvention) -&gt; ABISig;
+    </span><span class="kw">fn </span>sig(wasm_sig: <span class="kw-2">&amp;</span>WasmFuncType, call_conv: <span class="kw-2">&amp;</span>CallingConvention) -&gt; ABISig;
 
     <span class="doccomment">/// Returns the number of bits in a word.
     </span><span class="kw">fn </span>word_bits() -&gt; u32;
@@ -340,14 +340,14 @@
     <span class="doccomment">/// A register argument.
     </span>Reg {
         <span class="doccomment">/// Type of the argument.
-        </span>ty: ValType,
+        </span>ty: WasmType,
         <span class="doccomment">/// Register holding the argument.
         </span>reg: Reg,
     },
     <span class="doccomment">/// A stack argument.
     </span>Stack {
         <span class="doccomment">/// The type of the argument.
-        </span>ty: ValType,
+        </span>ty: WasmType,
         <span class="doccomment">/// Offset of the argument relative to the frame pointer.
         </span>offset: u32,
     },
@@ -355,12 +355,12 @@
 
 <span class="kw">impl </span>ABIArg {
     <span class="doccomment">/// Allocate a new register abi arg.
-    </span><span class="kw">pub fn </span>reg(reg: Reg, ty: ValType) -&gt; <span class="self">Self </span>{
+    </span><span class="kw">pub fn </span>reg(reg: Reg, ty: WasmType) -&gt; <span class="self">Self </span>{
         <span class="self">Self</span>::Reg { reg, ty }
     }
 
     <span class="doccomment">/// Allocate a new stack abi arg.
-    </span><span class="kw">pub fn </span>stack_offset(offset: u32, ty: ValType) -&gt; <span class="self">Self </span>{
+    </span><span class="kw">pub fn </span>stack_offset(offset: u32, ty: WasmType) -&gt; <span class="self">Self </span>{
         <span class="self">Self</span>::Stack { ty, offset }
     }
 
@@ -381,7 +381,7 @@
     }
 
     <span class="doccomment">/// Get the type associated to this arg.
-    </span><span class="kw">pub fn </span>ty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; ValType {
+    </span><span class="kw">pub fn </span>ty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; WasmType {
         <span class="kw">match </span><span class="kw-2">*</span><span class="self">self </span>{
             ABIArg::Reg { ty, .. } | ABIArg::Stack { ty, .. } =&gt; ty,
         }
@@ -392,7 +392,7 @@
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">enum </span>ABIResult {
     Reg {
         <span class="doccomment">/// Type of the result.
-        </span>ty: <span class="prelude-ty">Option</span>&lt;ValType&gt;,
+        </span>ty: <span class="prelude-ty">Option</span>&lt;WasmType&gt;,
         <span class="doccomment">/// Register to hold the result.
         </span>reg: Reg,
     },
@@ -400,7 +400,7 @@
 
 <span class="kw">impl </span>ABIResult {
     <span class="doccomment">/// Create a register ABI result.
-    </span><span class="kw">pub fn </span>reg(ty: <span class="prelude-ty">Option</span>&lt;ValType&gt;, reg: Reg) -&gt; <span class="self">Self </span>{
+    </span><span class="kw">pub fn </span>reg(ty: <span class="prelude-ty">Option</span>&lt;WasmType&gt;, reg: Reg) -&gt; <span class="self">Self </span>{
         <span class="self">Self</span>::Reg { ty, reg }
     }
 
@@ -443,10 +443,10 @@
 }
 
 <span class="doccomment">/// Returns the size in bytes of a given WebAssembly type.
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>ty_size(ty: <span class="kw-2">&amp;</span>ValType) -&gt; u32 {
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>ty_size(ty: <span class="kw-2">&amp;</span>WasmType) -&gt; u32 {
     <span class="kw">match </span><span class="kw-2">*</span>ty {
-        ValType::I32 | ValType::F32 =&gt; <span class="number">4</span>,
-        ValType::I64 | ValType::F64 =&gt; <span class="number">8</span>,
+        WasmType::I32 | WasmType::F32 =&gt; <span class="number">4</span>,
+        WasmType::I64 | WasmType::F64 =&gt; <span class="number">8</span>,
         <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(),
     }
 }

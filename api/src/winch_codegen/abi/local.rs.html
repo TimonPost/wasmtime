@@ -67,7 +67,9 @@
 <a href="#67" id="67">67</a>
 <a href="#68" id="68">68</a>
 <a href="#69" id="69">69</a>
-</pre><pre class="rust"><code><span class="kw">use </span>wasmparser::ValType;
+<a href="#70" id="70">70</a>
+</pre><pre class="rust"><code><span class="kw">use </span>wasmtime_environ::WasmType;
+
 <span class="doccomment">/// Base register used to address the local slot.
 ///
 /// Slots for stack arguments are addressed from the frame pointer.
@@ -88,7 +90,7 @@
     <span class="doccomment">/// The offset of the local slot.
     </span><span class="kw">pub </span>offset: u32,
     <span class="doccomment">/// The type contained by this local slot.
-    </span><span class="kw">pub </span>ty: ValType,
+    </span><span class="kw">pub </span>ty: WasmType,
     <span class="doccomment">/// Base register associated to this local slot.
     </span>base: Base,
 }
@@ -96,7 +98,7 @@
 <span class="kw">impl </span>LocalSlot {
     <span class="doccomment">/// Creates a local slot for a function defined local or
     /// for a spilled argument register.
-    </span><span class="kw">pub fn </span>new(ty: ValType, offset: u32) -&gt; <span class="self">Self </span>{
+    </span><span class="kw">pub fn </span>new(ty: WasmType, offset: u32) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             ty,
             offset,
@@ -107,7 +109,7 @@
     <span class="doccomment">/// Int32 shortcut for `new`.
     </span><span class="kw">pub fn </span>i32(offset: u32) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
-            ty: ValType::I32,
+            ty: WasmType::I32,
             offset,
             base: Base::SP,
         }
@@ -116,14 +118,14 @@
     <span class="doccomment">/// Int64 shortcut for `new`.
     </span><span class="kw">pub fn </span>i64(offset: u32) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
-            ty: ValType::I64,
+            ty: WasmType::I64,
             offset,
             base: Base::SP,
         }
     }
 
     <span class="doccomment">/// Creates a local slot for a stack function argument.
-    </span><span class="kw">pub fn </span>stack_arg(ty: ValType, offset: u32) -&gt; <span class="self">Self </span>{
+    </span><span class="kw">pub fn </span>stack_arg(ty: WasmType, offset: u32) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             ty,
             offset,

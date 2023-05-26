@@ -232,6 +232,10 @@
 <a href="#232" id="232">232</a>
 <a href="#233" id="233">233</a>
 <a href="#234" id="234">234</a>
+<a href="#235" id="235">235</a>
+<a href="#236" id="236">236</a>
+<a href="#237" id="237">237</a>
+<a href="#238" id="238">238</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::obj::ELF_WASMTIME_TRAPS;
 <span class="kw">use </span>object::write::{Object, StandardSegment};
 <span class="kw">use </span>object::{Bytes, LittleEndian, SectionKind, U32Bytes};
@@ -321,8 +325,10 @@
 
     <span class="doccomment">/// Used to indicate that a trap was raised by atomic wait operations on non shared memory.
     </span>AtomicWaitNonSharedMemory,
-    <span class="comment">//
-    // if adding a variant here be sure to update the `check!` macro below
+
+    <span class="doccomment">/// Call to a null reference.
+    </span>NullReference,
+    <span class="comment">// if adding a variant here be sure to update the `check!` macro below
 </span>}
 
 <span class="kw">impl </span>fmt::Display <span class="kw">for </span>Trap {
@@ -344,6 +350,7 @@
             AlwaysTrapAdapter =&gt; <span class="string">&quot;degenerate component adapter called&quot;</span>,
             OutOfFuel =&gt; <span class="string">&quot;all fuel consumed by WebAssembly&quot;</span>,
             AtomicWaitNonSharedMemory =&gt; <span class="string">&quot;atomic wait on non-shared memory&quot;</span>,
+            NullReference =&gt; <span class="string">&quot;null reference&quot;</span>,
         };
         <span class="macro">write!</span>(f, <span class="string">&quot;wasm trap: {desc}&quot;</span>)
     }
@@ -458,6 +465,7 @@
         AlwaysTrapAdapter
         OutOfFuel
         AtomicWaitNonSharedMemory
+        NullReference
     }
 
     <span class="kw">if </span><span class="macro">cfg!</span>(debug_assertions) {

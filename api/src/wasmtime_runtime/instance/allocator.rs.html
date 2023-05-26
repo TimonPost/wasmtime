@@ -526,6 +526,9 @@
 <a href="#526" id="526">526</a>
 <a href="#527" id="527">527</a>
 <a href="#528" id="528">528</a>
+<a href="#529" id="529">529</a>
+<a href="#530" id="530">530</a>
+<a href="#531" id="531">531</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::imports::Imports;
 <span class="kw">use </span><span class="kw">crate</span>::instance::{Instance, InstanceHandle, RuntimeMemoryCreator};
 <span class="kw">use </span><span class="kw">crate</span>::memory::{DefaultMemoryCreator, Memory};
@@ -539,7 +542,7 @@
 <span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>wasmtime_environ::{
     DefinedMemoryIndex, DefinedTableIndex, HostPtr, InitMemory, MemoryInitialization,
-    MemoryInitializer, Module, PrimaryMap, TableInitialization, TableInitializer, Trap, VMOffsets,
+    MemoryInitializer, Module, PrimaryMap, TableInitialValue, TableSegment, Trap, VMOffsets,
     WasmType, WASM_PAGE_SIZE,
 };
 
@@ -728,7 +731,7 @@
     </span><span class="kw">fn </span>purge_module(<span class="kw-2">&amp;</span><span class="self">self</span>, module: CompiledModuleId);
 }
 
-<span class="kw">fn </span>get_table_init_start(init: <span class="kw-2">&amp;</span>TableInitializer, instance: <span class="kw-2">&amp;mut </span>Instance) -&gt; <span class="prelude-ty">Result</span>&lt;u32&gt; {
+<span class="kw">fn </span>get_table_init_start(init: <span class="kw-2">&amp;</span>TableSegment, instance: <span class="kw-2">&amp;mut </span>Instance) -&gt; <span class="prelude-ty">Result</span>&lt;u32&gt; {
     <span class="kw">match </span>init.base {
         <span class="prelude-val">Some</span>(base) =&gt; {
             <span class="kw">let </span>val = <span class="kw">unsafe </span>{ <span class="kw-2">*</span>(<span class="kw-2">*</span>instance.defined_or_imported_global_ptr(base)).as_u32() };
@@ -742,23 +745,18 @@
 }
 
 <span class="kw">fn </span>check_table_init_bounds(instance: <span class="kw-2">&amp;mut </span>Instance, module: <span class="kw-2">&amp;</span>Module) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-    <span class="kw">match </span><span class="kw-2">&amp;</span>module.table_initialization {
-        TableInitialization::FuncTable { segments, .. }
-        | TableInitialization::Segments { segments } =&gt; {
-            <span class="kw">for </span>segment <span class="kw">in </span>segments {
-                <span class="kw">let </span>table = <span class="kw">unsafe </span>{ <span class="kw-2">&amp;*</span>instance.get_table(segment.table_index) };
-                <span class="kw">let </span>start = get_table_init_start(segment, instance)<span class="question-mark">?</span>;
-                <span class="kw">let </span>start = usize::try_from(start).unwrap();
-                <span class="kw">let </span>end = start.checked_add(segment.elements.len());
+    <span class="kw">for </span>segment <span class="kw">in </span>module.table_initialization.segments.iter() {
+        <span class="kw">let </span>table = <span class="kw">unsafe </span>{ <span class="kw-2">&amp;*</span>instance.get_table(segment.table_index) };
+        <span class="kw">let </span>start = get_table_init_start(segment, instance)<span class="question-mark">?</span>;
+        <span class="kw">let </span>start = usize::try_from(start).unwrap();
+        <span class="kw">let </span>end = start.checked_add(segment.elements.len());
 
-                <span class="kw">match </span>end {
-                    <span class="prelude-val">Some</span>(end) <span class="kw">if </span>end &lt;= table.size() <span class="kw">as </span>usize =&gt; {
-                        <span class="comment">// Initializer is in bounds
-                    </span>}
-                    <span class="kw">_ </span>=&gt; {
-                        <span class="macro">bail!</span>(<span class="string">&quot;table out of bounds: elements segment does not fit&quot;</span>)
-                    }
-                }
+        <span class="kw">match </span>end {
+            <span class="prelude-val">Some</span>(end) <span class="kw">if </span>end &lt;= table.size() <span class="kw">as </span>usize =&gt; {
+                <span class="comment">// Initializer is in bounds
+            </span>}
+            <span class="kw">_ </span>=&gt; {
+                <span class="macro">bail!</span>(<span class="string">&quot;table out of bounds: elements segment does not fit&quot;</span>)
             }
         }
     }
@@ -767,6 +765,19 @@
 }
 
 <span class="kw">fn </span>initialize_tables(instance: <span class="kw-2">&amp;mut </span>Instance, module: <span class="kw-2">&amp;</span>Module) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    <span class="kw">for </span>(table, init) <span class="kw">in </span>module.table_initialization.initial_values.iter() {
+        <span class="kw">match </span>init {
+            <span class="comment">// Tables are always initially null-initialized at this time
+            </span>TableInitialValue::Null { precomputed: <span class="kw">_ </span>} =&gt; {}
+
+            TableInitialValue::FuncRef(idx) =&gt; {
+                <span class="kw">let </span>funcref = instance.get_func_ref(<span class="kw-2">*</span>idx).unwrap();
+                <span class="kw">let </span>table = <span class="kw">unsafe </span>{ <span class="kw-2">&amp;mut *</span>instance.get_defined_table(table) };
+                table.init_func(funcref)<span class="question-mark">?</span>;
+            }
+        }
+    }
+
     <span class="comment">// Note: if the module&#39;s table initializer state is in
     // FuncTable mode, we will lazily initialize tables based on
     // any statically-precomputed image of FuncIndexes, but there
@@ -774,20 +785,15 @@
     // incorporated. So we have a unified handler here that
     // iterates over all segments (Segments mode) or leftover
     // segments (FuncTable mode) to initialize.
-    </span><span class="kw">match </span><span class="kw-2">&amp;</span>module.table_initialization {
-        TableInitialization::FuncTable { segments, .. }
-        | TableInitialization::Segments { segments } =&gt; {
-            <span class="kw">for </span>segment <span class="kw">in </span>segments {
-                <span class="kw">let </span>start = get_table_init_start(segment, instance)<span class="question-mark">?</span>;
-                instance.table_init_segment(
-                    segment.table_index,
-                    <span class="kw-2">&amp;</span>segment.elements,
-                    start,
-                    <span class="number">0</span>,
-                    segment.elements.len() <span class="kw">as </span>u32,
-                )<span class="question-mark">?</span>;
-            }
-        }
+    </span><span class="kw">for </span>segment <span class="kw">in </span>module.table_initialization.segments.iter() {
+        <span class="kw">let </span>start = get_table_init_start(segment, instance)<span class="question-mark">?</span>;
+        instance.table_init_segment(
+            segment.table_index,
+            <span class="kw-2">&amp;</span>segment.elements,
+            start,
+            <span class="number">0</span>,
+            segment.elements.len() <span class="kw">as </span>u32,
+        )<span class="question-mark">?</span>;
     }
 
     <span class="prelude-val">Ok</span>(())

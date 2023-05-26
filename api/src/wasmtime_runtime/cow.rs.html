@@ -1147,7 +1147,7 @@
                 <span class="kw">use </span>rustix::fd::AsRawFd;
                 <span class="self">self</span>.as_file().as_raw_fd() == other.as_file().as_raw_fd()
             } <span class="kw">else </span>{
-                drop(other);
+                <span class="kw">let _ </span>= other;
                 <span class="kw">match </span><span class="kw-2">*</span><span class="self">self </span>{}
             }
         }

@@ -412,20 +412,6 @@
 <a href="#412" id="412">412</a>
 <a href="#413" id="413">413</a>
 <a href="#414" id="414">414</a>
-<a href="#415" id="415">415</a>
-<a href="#416" id="416">416</a>
-<a href="#417" id="417">417</a>
-<a href="#418" id="418">418</a>
-<a href="#419" id="419">419</a>
-<a href="#420" id="420">420</a>
-<a href="#421" id="421">421</a>
-<a href="#422" id="422">422</a>
-<a href="#423" id="423">423</a>
-<a href="#424" id="424">424</a>
-<a href="#425" id="425">425</a>
-<a href="#426" id="426">426</a>
-<a href="#427" id="427">427</a>
-<a href="#428" id="428">428</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Helper functions to gather information for each of the non-function sections of a
 //! WebAssembly module.
 //!
@@ -438,8 +424,8 @@
 </span><span class="kw">use </span><span class="kw">crate</span>::environ::ModuleEnvironment;
 <span class="kw">use </span><span class="kw">crate</span>::wasm_unsupported;
 <span class="kw">use crate</span>::{
-    DataIndex, ElemIndex, FuncIndex, Global, GlobalIndex, GlobalInit, Memory, MemoryIndex, Table,
-    TableIndex, Tag, TagIndex, TypeIndex, WasmError, WasmResult,
+    DataIndex, ElemIndex, FuncIndex, GlobalIndex, GlobalInit, Memory, MemoryIndex, TableIndex, Tag,
+    TagIndex, TypeIndex, WasmError, WasmResult,
 };
 <span class="kw">use </span>cranelift_entity::packed_option::ReservedValue;
 <span class="kw">use </span>cranelift_entity::EntityRef;
@@ -448,9 +434,9 @@
 <span class="kw">use </span>wasmparser::{
     <span class="self">self</span>, Data, DataKind, DataSectionReader, Element, ElementItems, ElementKind,
     ElementSectionReader, Export, ExportSectionReader, ExternalKind, FunctionSectionReader,
-    GlobalSectionReader, GlobalType, ImportSectionReader, MemorySectionReader, MemoryType,
-    NameSectionReader, Naming, Operator, TableSectionReader, TableType, TagSectionReader, TagType,
-    Type, TypeRef, TypeSectionReader,
+    GlobalSectionReader, ImportSectionReader, MemorySectionReader, MemoryType, NameSectionReader,
+    Naming, Operator, TableSectionReader, TagSectionReader, TagType, Type, TypeRef,
+    TypeSectionReader,
 };
 
 <span class="kw">fn </span>memory(ty: MemoryType) -&gt; Memory {
@@ -470,21 +456,6 @@
     }
 }
 
-<span class="kw">fn </span>table(ty: TableType) -&gt; WasmResult&lt;Table&gt; {
-    <span class="prelude-val">Ok</span>(Table {
-        wasm_ty: ty.element_type.try_into()<span class="question-mark">?</span>,
-        minimum: ty.initial,
-        maximum: ty.maximum,
-    })
-}
-
-<span class="kw">fn </span>global(ty: GlobalType) -&gt; WasmResult&lt;Global&gt; {
-    <span class="prelude-val">Ok</span>(Global {
-        wasm_ty: ty.content_type.try_into()<span class="question-mark">?</span>,
-        mutability: ty.mutable,
-    })
-}
-
 <span class="doccomment">/// Parses the Type section of the wasm module.
 </span><span class="kw">pub fn </span>parse_type_section&lt;<span class="lifetime">&#39;a</span>&gt;(
     types: TypeSectionReader&lt;<span class="lifetime">&#39;a</span>&gt;,
@@ -496,7 +467,8 @@
     <span class="kw">for </span>entry <span class="kw">in </span>types {
         <span class="kw">match </span>entry<span class="question-mark">? </span>{
             Type::Func(wasm_func_ty) =&gt; {
-                environ.declare_type_func(wasm_func_ty.clone().try_into()<span class="question-mark">?</span>)<span class="question-mark">?</span>;
+                <span class="kw">let </span>ty = environ.convert_func_type(<span class="kw-2">&amp;</span>wasm_func_ty);
+                environ.declare_type_func(ty)<span class="question-mark">?</span>;
             }
         }
     }
@@ -527,11 +499,11 @@
                 environ.declare_tag_import(tag(e), import.module, import.name)<span class="question-mark">?</span>;
             }
             TypeRef::Global(ty) =&gt; {
-                <span class="kw">let </span>ty = global(ty)<span class="question-mark">?</span>;
+                <span class="kw">let </span>ty = environ.convert_global_type(<span class="kw-2">&amp;</span>ty);
                 environ.declare_global_import(ty, import.module, import.name)<span class="question-mark">?</span>;
             }
             TypeRef::Table(ty) =&gt; {
-                <span class="kw">let </span>ty = table(ty)<span class="question-mark">?</span>;
+                <span class="kw">let </span>ty = environ.convert_table_type(<span class="kw-2">&amp;</span>ty);
                 environ.declare_table_import(ty, import.module, import.name)<span class="question-mark">?</span>;
             }
         }
@@ -570,7 +542,7 @@
     environ.reserve_tables(tables.count())<span class="question-mark">?</span>;
 
     <span class="kw">for </span>entry <span class="kw">in </span>tables {
-        <span class="kw">let </span>ty = table(entry<span class="question-mark">?</span>.ty)<span class="question-mark">?</span>;
+        <span class="kw">let </span>ty = environ.convert_table_type(<span class="kw-2">&amp;</span>entry<span class="question-mark">?</span>.ty);
         environ.declare_table(ty)<span class="question-mark">?</span>;
     }
 
@@ -639,7 +611,7 @@
                 ));
             }
         };
-        <span class="kw">let </span>ty = global(ty)<span class="question-mark">?</span>;
+        <span class="kw">let </span>ty = environ.convert_global_type(<span class="kw-2">&amp;</span>ty);
         environ.declare_global(ty, initializer)<span class="question-mark">?</span>;
     }
 

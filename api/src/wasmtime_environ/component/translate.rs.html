@@ -1068,11 +1068,11 @@
 <a href="#1068" id="1068">1068</a>
 <a href="#1069" id="1069">1069</a>
 <a href="#1070" id="1070">1070</a>
-<a href="#1071" id="1071">1071</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::component::<span class="kw-2">*</span>;
 <span class="kw">use </span><span class="kw">crate</span>::ScopeVec;
 <span class="kw">use crate</span>::{
     EntityIndex, ModuleEnvironment, ModuleTranslation, PrimaryMap, SignatureIndex, Tunables,
+    TypeConvert,
 };
 <span class="kw">use </span>anyhow::{bail, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span>indexmap::IndexMap;
@@ -1489,10 +1489,8 @@
                         <span class="prelude-val">Some</span>(ty) =&gt; ty,
                         <span class="prelude-val">None </span>=&gt; <span class="kw">break</span>,
                     };
-                    <span class="kw">let </span>ty = <span class="self">self
-                        </span>.types
-                        .module_types_builder()
-                        .wasm_func_type(lowered_function_type.clone().try_into()<span class="question-mark">?</span>);
+                    <span class="kw">let </span>ty = <span class="self">self</span>.types.convert_func_type(lowered_function_type);
+                    <span class="kw">let </span>ty = <span class="self">self</span>.types.module_types_builder().wasm_func_type(ty);
                     <span class="self">self</span>.result.funcs.push(ty);
                 }
 

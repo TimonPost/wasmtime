@@ -117,6 +117,7 @@
 <a href="#117" id="117">117</a>
 <a href="#118" id="118">118</a>
 <a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
 </pre><pre class="rust"><code><span class="kw">use </span>cranelift_codegen::{
     binemit,
     ir::{<span class="self">self</span>, ExternalName, UserExternalNameRef},
@@ -196,6 +197,7 @@
             ir::TrapCode::UnreachableCodeReached =&gt; Trap::UnreachableCodeReached,
             ir::TrapCode::Interrupt =&gt; Trap::Interrupt,
             ir::TrapCode::User(ALWAYS_TRAP_CODE) =&gt; Trap::AlwaysTrapAdapter,
+            ir::TrapCode::NullReference =&gt; Trap::NullReference,
 
             <span class="comment">// These do not get converted to wasmtime traps, since they
             // shouldn&#39;t ever be hit in theory. Instead of catching and handling

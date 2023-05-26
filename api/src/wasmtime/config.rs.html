@@ -2044,6 +2044,26 @@
 <a href="#2044" id="2044">2044</a>
 <a href="#2045" id="2045">2045</a>
 <a href="#2046" id="2046">2046</a>
+<a href="#2047" id="2047">2047</a>
+<a href="#2048" id="2048">2048</a>
+<a href="#2049" id="2049">2049</a>
+<a href="#2050" id="2050">2050</a>
+<a href="#2051" id="2051">2051</a>
+<a href="#2052" id="2052">2052</a>
+<a href="#2053" id="2053">2053</a>
+<a href="#2054" id="2054">2054</a>
+<a href="#2055" id="2055">2055</a>
+<a href="#2056" id="2056">2056</a>
+<a href="#2057" id="2057">2057</a>
+<a href="#2058" id="2058">2058</a>
+<a href="#2059" id="2059">2059</a>
+<a href="#2060" id="2060">2060</a>
+<a href="#2061" id="2061">2061</a>
+<a href="#2062" id="2062">2062</a>
+<a href="#2063" id="2063">2063</a>
+<a href="#2064" id="2064">2064</a>
+<a href="#2065" id="2065">2065</a>
+<a href="#2066" id="2066">2066</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::memory::MemoryCreator;
 <span class="kw">use </span><span class="kw">crate</span>::trampoline::MemoryCreatorProxy;
 <span class="kw">use </span>anyhow::{bail, <span class="prelude-ty">Result</span>};
@@ -2716,6 +2736,22 @@
     /// [proposal]: https://github.com/webassembly/reference-types
     </span><span class="kw">pub fn </span>wasm_reference_types(<span class="kw-2">&amp;mut </span><span class="self">self</span>, enable: bool) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
         <span class="self">self</span>.features.reference_types = enable;
+        <span class="self">self
+    </span>}
+
+    <span class="doccomment">/// Configures whether the [WebAssembly function references proposal][proposal]
+    /// will be enabled for compilation.
+    ///
+    /// This feature gates non-nullable reference types, function reference
+    /// types, call_ref, ref.func, and non-nullable reference related instructions.
+    ///
+    /// Note that the function references proposal depends on the reference types proposal.
+    ///
+    /// This feature is `false` by default.
+    ///
+    /// [proposal]: https://github.com/WebAssembly/function-references
+    </span><span class="kw">pub fn </span>wasm_function_references(<span class="kw-2">&amp;mut </span><span class="self">self</span>, enable: bool) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
+        <span class="self">self</span>.features.function_references = enable;
         <span class="self">self
     </span>}
 
@@ -3715,6 +3751,10 @@
             .field(<span class="string">&quot;parse_wasm_debuginfo&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.tunables.parse_wasm_debuginfo)
             .field(<span class="string">&quot;wasm_threads&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.features.threads)
             .field(<span class="string">&quot;wasm_reference_types&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.features.reference_types)
+            .field(
+                <span class="string">&quot;wasm_function_references&quot;</span>,
+                <span class="kw-2">&amp;</span><span class="self">self</span>.features.function_references,
+            )
             .field(<span class="string">&quot;wasm_bulk_memory&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.features.bulk_memory)
             .field(<span class="string">&quot;wasm_simd&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.features.simd)
             .field(<span class="string">&quot;wasm_relaxed_simd&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.features.relaxed_simd)

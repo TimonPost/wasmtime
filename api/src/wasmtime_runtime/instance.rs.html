@@ -1343,10 +1343,6 @@
 <a href="#1343" id="1343">1343</a>
 <a href="#1344" id="1344">1344</a>
 <a href="#1345" id="1345">1345</a>
-<a href="#1346" id="1346">1346</a>
-<a href="#1347" id="1347">1347</a>
-<a href="#1348" id="1348">1348</a>
-<a href="#1349" id="1349">1349</a>
 </pre><pre class="rust"><code><span class="doccomment">//! An `Instance` contains all the runtime state used by execution of a
 //! wasm module (except its callstack and register state). An
 //! `InstanceHandle` is a reference-counting handle for an `Instance`.
@@ -1379,7 +1375,7 @@
     packed_option::ReservedValue, DataIndex, DefinedGlobalIndex, DefinedMemoryIndex,
     DefinedTableIndex, ElemIndex, EntityIndex, EntityRef, EntitySet, FuncIndex, GlobalIndex,
     GlobalInit, HostPtr, MemoryIndex, Module, PrimaryMap, SignatureIndex, TableIndex,
-    TableInitialization, Trap, VMOffsets, WasmType, VMCONTEXT_MAGIC,
+    TableInitialValue, Trap, VMOffsets, WasmHeapType, WasmRefType, WasmType, VMCONTEXT_MAGIC,
 };
 
 <span class="kw">mod </span>allocator;
@@ -2312,37 +2308,30 @@
                         </span><span class="kw">break</span>;
                     }
                 };
-                <span class="kw">if </span>value.is_uninit() {
-                    <span class="kw">let </span>module = <span class="self">self</span>.module();
-                    <span class="kw">let </span>table_init = <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.module().table_initialization {
-                        <span class="comment">// We unfortunately can&#39;t borrow `tables` outside the
-                        // loop because we need to call `get_func_ref` (a `&amp;mut`
-                        // method) below; so unwrap it dynamically here.
-                        </span>TableInitialization::FuncTable { tables, .. } =&gt; tables,
-                        <span class="kw">_ </span>=&gt; <span class="kw">break</span>,
-                    }
-                    .get(module.table_index(idx));
 
-                    <span class="comment">// The TableInitialization::FuncTable elements table may
-                    // be smaller than the current size of the table: it
-                    // always matches the initial table size, if present. We
-                    // want to iterate up through the end of the accessed
-                    // index range so that we set an &quot;initialized null&quot; even
-                    // if there is no initializer. We do a checked `get()` on
-                    // the initializer table below and unwrap to a null if
-                    // we&#39;re past its end.
-                    </span><span class="kw">let </span>func_index =
-                        table_init.and_then(|indices| indices.get(i <span class="kw">as </span>usize).cloned());
-                    <span class="kw">let </span>func_ref = func_index
-                        .and_then(|func_index| <span class="self">self</span>.get_func_ref(func_index))
-                        .unwrap_or(std::ptr::null_mut());
-
-                    <span class="kw">let </span>value = TableElement::FuncRef(func_ref);
-
-                    <span class="self">self</span>.tables[idx]
-                        .set(i, value)
-                        .expect(<span class="string">&quot;Table type should match and index should be in-bounds&quot;</span>);
+                <span class="kw">if </span>!value.is_uninit() {
+                    <span class="kw">continue</span>;
                 }
+
+                <span class="comment">// The table element `i` is uninitialized and is now being
+                // initialized. This must imply that a `precompiled` list of
+                // function indices is available for this table. The precompiled
+                // list is extracted and then it is consulted with `i` to
+                // determine the function that is going to be initialized. Note
+                // that `i` may be outside the limits of the static
+                // initialization so it&#39;s a fallible `get` instead of an index.
+                </span><span class="kw">let </span>module = <span class="self">self</span>.module();
+                <span class="kw">let </span>precomputed = <span class="kw">match </span><span class="kw-2">&amp;</span>module.table_initialization.initial_values[idx] {
+                    TableInitialValue::Null { precomputed } =&gt; precomputed,
+                    TableInitialValue::FuncRef(<span class="kw">_</span>) =&gt; <span class="macro">unreachable!</span>(),
+                };
+                <span class="kw">let </span>func_index = precomputed.get(i <span class="kw">as </span>usize).cloned();
+                <span class="kw">let </span>func_ref = func_index
+                    .and_then(|func_index| <span class="self">self</span>.get_func_ref(func_index))
+                    .unwrap_or(std::ptr::null_mut());
+                <span class="self">self</span>.tables[idx]
+                    .set(i, TableElement::FuncRef(func_ref))
+                    .expect(<span class="string">&quot;Table type should match and index should be in-bounds&quot;</span>);
             }
         }
 
@@ -2497,9 +2486,10 @@
                     // count as values move between globals, everything else is just
                     // copy-able bits.
                     </span><span class="kw">match </span>wasm_ty {
-                        WasmType::ExternRef =&gt; {
-                            <span class="kw-2">*</span>(<span class="kw-2">*</span>to).as_externref_mut() = from.as_externref().clone()
-                        }
+                        WasmType::Ref(WasmRefType {
+                            heap_type: WasmHeapType::Extern,
+                            ..
+                        }) =&gt; <span class="kw-2">*</span>(<span class="kw-2">*</span>to).as_externref_mut() = from.as_externref().clone(),
                         <span class="kw">_ </span>=&gt; ptr::copy_nonoverlapping(from, to, <span class="number">1</span>),
                     }
                 }
@@ -2508,8 +2498,7 @@
                 }
                 GlobalInit::RefNullConst =&gt; <span class="kw">match </span>wasm_ty {
                     <span class="comment">// `VMGlobalDefinition::new()` already zeroed out the bits
-                    </span>WasmType::FuncRef =&gt; {}
-                    WasmType::ExternRef =&gt; {}
+                    </span>WasmType::Ref(WasmRefType { nullable: <span class="bool-val">true</span>, .. }) =&gt; {}
                     ty =&gt; <span class="macro">panic!</span>(<span class="string">&quot;unsupported reference type for global: {:?}&quot;</span>, ty),
                 },
             }
@@ -2545,7 +2534,10 @@
             };
             <span class="kw">match </span>global.wasm_ty {
                 <span class="comment">// For now only externref globals need to get destroyed
-                </span>WasmType::ExternRef =&gt; {}
+                </span>WasmType::Ref(WasmRefType {
+                    heap_type: WasmHeapType::Extern,
+                    ..
+                }) =&gt; {}
                 <span class="kw">_ </span>=&gt; <span class="kw">continue</span>,
             }
             <span class="kw">unsafe </span>{

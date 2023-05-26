@@ -168,11 +168,14 @@
 <a href="#168" id="168">168</a>
 <a href="#169" id="169">169</a>
 <a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::abi::{align_to, ty_size, ABIArg, ABISig, LocalSlot, ABI};
 <span class="kw">use </span>anyhow::Result;
 <span class="kw">use </span>smallvec::SmallVec;
 <span class="kw">use </span>std::ops::Range;
-<span class="kw">use </span>wasmparser::{BinaryReader, FuncValidator, ValType, ValidatorResources};
+<span class="kw">use </span>wasmparser::{BinaryReader, FuncValidator, ValidatorResources};
+<span class="kw">use </span>wasmtime_environ::{ModuleTranslation, TypeConvert};
 
 <span class="comment">// TODO:
 // SpiderMonkey&#39;s implementation uses 16;
@@ -202,6 +205,7 @@
 <span class="kw">impl </span>DefinedLocals {
     <span class="doccomment">/// Compute the local slots for a Wasm function.
     </span><span class="kw">pub fn </span>new(
+        translation: <span class="kw-2">&amp;</span>ModuleTranslation&lt;<span class="lifetime">&#39;_</span>&gt;,
         reader: <span class="kw-2">&amp;mut </span>BinaryReader&lt;<span class="lifetime">&#39;_</span>&gt;,
         validator: <span class="kw-2">&amp;mut </span>FuncValidator&lt;ValidatorResources&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
@@ -216,7 +220,7 @@
             <span class="kw">let </span>ty = reader.read()<span class="question-mark">?</span>;
             validator.define_locals(position, count, ty)<span class="question-mark">?</span>;
 
-            <span class="kw">let </span>ty: ValType = ty.try_into()<span class="question-mark">?</span>;
+            <span class="kw">let </span>ty = translation.module.convert_valtype(ty);
             <span class="kw">for _ in </span><span class="number">0</span>..count {
                 <span class="kw">let </span>ty_size = ty_size(<span class="kw-2">&amp;</span>ty);
                 next_stack = align_to(next_stack, ty_size) + ty_size;

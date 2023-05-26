@@ -352,6 +352,12 @@
 <a href="#352" id="352">352</a>
 <a href="#353" id="353">353</a>
 <a href="#354" id="354">354</a>
+<a href="#355" id="355">355</a>
+<a href="#356" id="356">356</a>
+<a href="#357" id="357">357</a>
+<a href="#358" id="358">358</a>
+<a href="#359" id="359">359</a>
+<a href="#360" id="360">360</a>
 </pre><pre class="rust"><code><span class="kw">use </span>anyhow::{bail, Context, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span>std::fmt::{Display, LowerHex};
 <span class="kw">use </span>wasmtime::{ExternRef, Val};
@@ -434,11 +440,17 @@
                 <span class="macro">bail!</span>(<span class="string">&quot;expected non-null externref, found null&quot;</span>)
             }
         }
-        (Val::FuncRef(x), WastRetCore::RefNull(<span class="kw">_</span>)) =&gt; {
+        (Val::FuncRef(actual), WastRetCore::RefNull(expected)) =&gt; <span class="kw">match </span>(actual, expected) {
+            (<span class="prelude-val">None</span>, <span class="prelude-val">None</span>) =&gt; <span class="prelude-val">Ok</span>(()),
+            (<span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(HeapType::Func)) =&gt; <span class="prelude-val">Ok</span>(()),
+            (<span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(<span class="kw">_</span>)) =&gt; <span class="macro">bail!</span>(<span class="string">&quot;expected null non-funcref, found null funcref&quot;</span>),
+            (<span class="prelude-val">Some</span>(<span class="kw">_</span>), <span class="kw">_</span>) =&gt; <span class="macro">bail!</span>(<span class="string">&quot;expected null funcref, found non-null&quot;</span>),
+        },
+        (Val::FuncRef(x), WastRetCore::RefFunc(<span class="kw">_</span>)) =&gt; {
             <span class="kw">if </span>x.is_none() {
-                <span class="prelude-val">Ok</span>(())
+                <span class="macro">bail!</span>(<span class="string">&quot;expected non-null funcref, found null&quot;</span>);
             } <span class="kw">else </span>{
-                <span class="macro">bail!</span>(<span class="string">&quot;expected null funcref, found non-null&quot;</span>)
+                <span class="prelude-val">Ok</span>(())
             }
         }
         <span class="kw">_ </span>=&gt; <span class="macro">bail!</span>(

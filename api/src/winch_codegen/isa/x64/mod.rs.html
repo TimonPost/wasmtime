@@ -157,18 +157,18 @@
 <span class="kw">use </span><span class="kw">crate</span>::masm::MacroAssembler;
 <span class="kw">use </span><span class="kw">crate</span>::regalloc::RegAlloc;
 <span class="kw">use </span><span class="kw">crate</span>::stack::Stack;
+<span class="kw">use </span><span class="kw">crate</span>::trampoline::{Trampoline, TrampolineKind};
 <span class="kw">use crate</span>::{
     isa::{Builder, TargetIsa},
     regset::RegSet,
 };
-<span class="kw">use crate</span>::{Trampoline, TrampolineKind};
 <span class="kw">use </span>anyhow::Result;
 <span class="kw">use </span>cranelift_codegen::settings::{<span class="self">self</span>, Flags};
 <span class="kw">use </span>cranelift_codegen::{isa::x64::settings <span class="kw">as </span>x64_settings, Final, MachBufferFinalized};
 <span class="kw">use </span>cranelift_codegen::{MachTextSectionBuilder, TextSectionBuilder};
 <span class="kw">use </span>target_lexicon::Triple;
-<span class="kw">use </span>wasmparser::{FuncType, FuncValidator, FunctionBody, ValidatorResources};
-<span class="kw">use </span>wasmtime_environ::ModuleTranslation;
+<span class="kw">use </span>wasmparser::{FuncValidator, FunctionBody, ValidatorResources};
+<span class="kw">use </span>wasmtime_environ::{ModuleTranslation, WasmFuncType};
 
 <span class="kw">use </span><span class="self">self</span>::regs::ALL_GPR;
 
@@ -237,7 +237,7 @@
 
     <span class="kw">fn </span>compile_function(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        sig: <span class="kw-2">&amp;</span>FuncType,
+        sig: <span class="kw-2">&amp;</span>WasmFuncType,
         body: <span class="kw-2">&amp;</span>FunctionBody,
         translation: <span class="kw-2">&amp;</span>ModuleTranslation,
         validator: <span class="kw-2">&amp;mut </span>FuncValidator&lt;ValidatorResources&gt;,
@@ -247,7 +247,7 @@
         <span class="kw">let </span>stack = Stack::new();
         <span class="kw">let </span>abi_sig = abi::X64ABI::sig(sig, <span class="kw-2">&amp;</span>CallingConvention::Default);
 
-        <span class="kw">let </span>defined_locals = DefinedLocals::new(<span class="kw-2">&amp;mut </span>body, validator)<span class="question-mark">?</span>;
+        <span class="kw">let </span>defined_locals = DefinedLocals::new(translation, <span class="kw-2">&amp;mut </span>body, validator)<span class="question-mark">?</span>;
         <span class="kw">let </span>frame = Frame::new::&lt;abi::X64ABI&gt;(<span class="kw-2">&amp;</span>abi_sig, <span class="kw-2">&amp;</span>defined_locals)<span class="question-mark">?</span>;
         <span class="comment">// TODO Add in floating point bitmask
         </span><span class="kw">let </span>regalloc = RegAlloc::new(RegSet::new(ALL_GPR, <span class="number">0</span>), regs::scratch());
@@ -271,7 +271,7 @@
 
     <span class="kw">fn </span>compile_trampoline(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        ty: <span class="kw-2">&amp;</span>FuncType,
+        ty: <span class="kw-2">&amp;</span>WasmFuncType,
         kind: TrampolineKind,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;MachBufferFinalized&lt;Final&gt;&gt; {
         <span class="kw">use </span>TrampolineKind::<span class="kw-2">*</span>;

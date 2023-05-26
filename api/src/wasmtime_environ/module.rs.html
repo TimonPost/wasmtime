@@ -1044,9 +1044,46 @@
 <a href="#1044" id="1044">1044</a>
 <a href="#1045" id="1045">1045</a>
 <a href="#1046" id="1046">1046</a>
+<a href="#1047" id="1047">1047</a>
+<a href="#1048" id="1048">1048</a>
+<a href="#1049" id="1049">1049</a>
+<a href="#1050" id="1050">1050</a>
+<a href="#1051" id="1051">1051</a>
+<a href="#1052" id="1052">1052</a>
+<a href="#1053" id="1053">1053</a>
+<a href="#1054" id="1054">1054</a>
+<a href="#1055" id="1055">1055</a>
+<a href="#1056" id="1056">1056</a>
+<a href="#1057" id="1057">1057</a>
+<a href="#1058" id="1058">1058</a>
+<a href="#1059" id="1059">1059</a>
+<a href="#1060" id="1060">1060</a>
+<a href="#1061" id="1061">1061</a>
+<a href="#1062" id="1062">1062</a>
+<a href="#1063" id="1063">1063</a>
+<a href="#1064" id="1064">1064</a>
+<a href="#1065" id="1065">1065</a>
+<a href="#1066" id="1066">1066</a>
+<a href="#1067" id="1067">1067</a>
+<a href="#1068" id="1068">1068</a>
+<a href="#1069" id="1069">1069</a>
+<a href="#1070" id="1070">1070</a>
+<a href="#1071" id="1071">1071</a>
+<a href="#1072" id="1072">1072</a>
+<a href="#1073" id="1073">1073</a>
+<a href="#1074" id="1074">1074</a>
+<a href="#1075" id="1075">1075</a>
+<a href="#1076" id="1076">1076</a>
+<a href="#1077" id="1077">1077</a>
+<a href="#1078" id="1078">1078</a>
+<a href="#1079" id="1079">1079</a>
+<a href="#1080" id="1080">1080</a>
+<a href="#1081" id="1081">1081</a>
+<a href="#1082" id="1082">1082</a>
+<a href="#1083" id="1083">1083</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Data structures for representing decoded wasm modules.
 
-</span><span class="kw">use crate</span>::{ModuleTranslation, PrimaryMap, Tunables, WASM_PAGE_SIZE};
+</span><span class="kw">use crate</span>::{ModuleTranslation, PrimaryMap, Tunables, WasmHeapType, WASM_PAGE_SIZE};
 <span class="kw">use </span>cranelift_entity::{packed_option::ReservedValue, EntityRef};
 <span class="kw">use </span>indexmap::IndexMap;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
@@ -1447,45 +1484,60 @@
         // OOMs or DoS on truly sparse tables.
         </span><span class="kw">const </span>MAX_FUNC_TABLE_SIZE: u32 = <span class="number">1024 </span>* <span class="number">1024</span>;
 
-        <span class="kw">let </span>segments = <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.module.table_initialization {
-            TableInitialization::Segments { segments } =&gt; segments,
-            TableInitialization::FuncTable { .. } =&gt; {
-                <span class="comment">// Already done!
-                </span><span class="kw">return</span>;
-            }
-        };
-
-        <span class="comment">// Build the table arrays per-table.
-        </span><span class="kw">let </span><span class="kw-2">mut </span>tables = PrimaryMap::with_capacity(<span class="self">self</span>.module.table_plans.len());
-        <span class="comment">// Keep the &quot;leftovers&quot; for eager init.
-        </span><span class="kw">let </span><span class="kw-2">mut </span>leftovers = <span class="macro">vec!</span>[];
-
-        <span class="kw">for </span>segment <span class="kw">in </span>segments {
-            <span class="comment">// Skip imported tables: we can&#39;t provide a preconstructed
-            // table for them, because their values depend on the
-            // imported table overlaid with whatever segments we have.
-            </span><span class="kw">if </span><span class="self">self
-                </span>.module
-                .defined_table_index(segment.table_index)
-                .is_none()
-            {
-                leftovers.push(segment.clone());
+        <span class="comment">// First convert any element-initialized tables to images of just that
+        // single function if the minimum size of the table allows doing so.
+        </span><span class="kw">for </span>((<span class="kw">_</span>, init), (<span class="kw">_</span>, plan)) <span class="kw">in </span><span class="self">self
+            </span>.module
+            .table_initialization
+            .initial_values
+            .iter_mut()
+            .zip(
+                <span class="self">self</span>.module
+                    .table_plans
+                    .iter()
+                    .skip(<span class="self">self</span>.module.num_imported_tables),
+            )
+        {
+            <span class="kw">let </span>table_size = plan.table.minimum;
+            <span class="kw">if </span>table_size &gt; MAX_FUNC_TABLE_SIZE {
                 <span class="kw">continue</span>;
             }
-
-            <span class="comment">// If this is not a funcref table, then we can&#39;t support a
-            // pre-computed table of function indices.
-            </span><span class="kw">if </span><span class="self">self</span>.module.table_plans[segment.table_index].table.wasm_ty != WasmType::FuncRef {
-                leftovers.push(segment.clone());
-                <span class="kw">continue</span>;
+            <span class="kw">if let </span>TableInitialValue::FuncRef(val) = <span class="kw-2">*</span>init {
+                <span class="kw-2">*</span>init = TableInitialValue::Null {
+                    precomputed: <span class="macro">vec!</span>[val; table_size <span class="kw">as </span>usize],
+                };
             }
+        }
+
+        <span class="kw">let </span><span class="kw-2">mut </span>segments = mem::take(<span class="kw-2">&amp;mut </span><span class="self">self</span>.module.table_initialization.segments)
+            .into_iter()
+            .peekable();
+
+        <span class="comment">// The goal of this loop is to interpret a table segment and apply it
+        // &quot;statically&quot; to a local table. This will iterate over segments and
+        // apply them one-by-one to each table.
+        //
+        // If any segment can&#39;t be applied, however, then this loop exits and
+        // all remaining segments are placed back into the segment list. This is
+        // because segments are supposed to be initialized one-at-a-time which
+        // means that intermediate state is visible with respect to traps. If
+        // anything isn&#39;t statically known to not trap it&#39;s pessimistically
+        // assumed to trap meaning all further segment initializers must be
+        // applied manually at instantiation time.
+        </span><span class="kw">while let </span><span class="prelude-val">Some</span>(segment) = segments.peek() {
+            <span class="kw">let </span>defined_index = <span class="kw">match </span><span class="self">self</span>.module.defined_table_index(segment.table_index) {
+                <span class="prelude-val">Some</span>(index) =&gt; index,
+                <span class="comment">// Skip imported tables: we can&#39;t provide a preconstructed
+                // table for them, because their values depend on the
+                // imported table overlaid with whatever segments we have.
+                </span><span class="prelude-val">None </span>=&gt; <span class="kw">break</span>,
+            };
 
             <span class="comment">// If the base of this segment is dynamic, then we can&#39;t
             // include it in the statically-built array of initial
             // contents.
             </span><span class="kw">if </span>segment.base.is_some() {
-                leftovers.push(segment.clone());
-                <span class="kw">continue</span>;
+                <span class="kw">break</span>;
             }
 
             <span class="comment">// Get the end of this segment. If out-of-bounds, or too
@@ -1493,34 +1545,55 @@
             // segment.
             </span><span class="kw">let </span>top = <span class="kw">match </span>segment.offset.checked_add(segment.elements.len() <span class="kw">as </span>u32) {
                 <span class="prelude-val">Some</span>(top) =&gt; top,
-                <span class="prelude-val">None </span>=&gt; {
-                    leftovers.push(segment.clone());
-                    <span class="kw">continue</span>;
-                }
+                <span class="prelude-val">None </span>=&gt; <span class="kw">break</span>,
             };
             <span class="kw">let </span>table_size = <span class="self">self</span>.module.table_plans[segment.table_index].table.minimum;
             <span class="kw">if </span>top &gt; table_size || top &gt; MAX_FUNC_TABLE_SIZE {
-                leftovers.push(segment.clone());
-                <span class="kw">continue</span>;
+                <span class="kw">break</span>;
             }
 
-            <span class="comment">// We can now incorporate this segment into the initializers array.
-            </span><span class="kw">while </span>tables.len() &lt;= segment.table_index.index() {
-                tables.push(<span class="macro">vec!</span>[]);
-            }
-            <span class="kw">let </span>elements = <span class="kw-2">&amp;mut </span>tables[segment.table_index];
-            <span class="kw">if </span>elements.is_empty() {
-                elements.resize(table_size <span class="kw">as </span>usize, FuncIndex::reserved_value());
+            <span class="kw">match </span><span class="self">self</span>.module.table_plans[segment.table_index]
+                .table
+                .wasm_ty
+                .heap_type
+            {
+                WasmHeapType::Func | WasmHeapType::TypedFunc(<span class="kw">_</span>) =&gt; {}
+                <span class="comment">// If this is not a funcref table, then we can&#39;t support a
+                // pre-computed table of function indices. Technically this
+                // initializer won&#39;t trap so we could continue processing
+                // segments, but that&#39;s left as a future optimization if
+                // necessary.
+                </span>WasmHeapType::Extern =&gt; <span class="kw">break</span>,
             }
 
-            <span class="kw">let </span>dst = <span class="kw-2">&amp;mut </span>elements[(segment.offset <span class="kw">as </span>usize)..(top <span class="kw">as </span>usize)];
+            <span class="kw">let </span>precomputed =
+                <span class="kw">match </span><span class="kw-2">&amp;mut </span><span class="self">self</span>.module.table_initialization.initial_values[defined_index] {
+                    TableInitialValue::Null { precomputed } =&gt; precomputed,
+
+                    <span class="comment">// If this table is still listed as an initial value here
+                    // then that means the initial size of the table doesn&#39;t
+                    // support a precomputed function list, so skip this.
+                    // Technically this won&#39;t trap so it&#39;s possible to process
+                    // further initializers, but that&#39;s left as a future
+                    // optimization.
+                    </span>TableInitialValue::FuncRef(<span class="kw">_</span>) =&gt; <span class="kw">break</span>,
+                };
+
+            <span class="comment">// At this point we&#39;re committing to pre-initializing the table
+            // with the `segment` that&#39;s being iterated over. This segment is
+            // applied to the `precomputed` list for the table by ensuring
+            // it&#39;s large enough to hold the segment and then copying the
+            // segment into the precomputed list.
+            </span><span class="kw">if </span>precomputed.len() &lt; top <span class="kw">as </span>usize {
+                precomputed.resize(top <span class="kw">as </span>usize, FuncIndex::reserved_value());
+            }
+            <span class="kw">let </span>dst = <span class="kw-2">&amp;mut </span>precomputed[(segment.offset <span class="kw">as </span>usize)..(top <span class="kw">as </span>usize)];
             dst.copy_from_slice(<span class="kw-2">&amp;</span>segment.elements[..]);
-        }
 
-        <span class="self">self</span>.module.table_initialization = TableInitialization::FuncTable {
-            tables,
-            segments: leftovers,
-        };
+            <span class="comment">// advance the iterator to see the next segment
+            </span><span class="kw">let _ </span>= segments.next();
+        }
+        <span class="self">self</span>.module.table_initialization.segments = segments.collect();
     }
 }
 
@@ -1727,9 +1800,52 @@
     }
 }
 
+<span class="doccomment">/// Table initialization data for all tables in the module.
+</span><span class="attr">#[derive(Debug, Default, Serialize, Deserialize)]
+</span><span class="kw">pub struct </span>TableInitialization {
+    <span class="doccomment">/// Initial values for tables defined within the module itself.
+    ///
+    /// This contains the initial values and initializers for tables defined
+    /// within a wasm, so excluding imported tables. This initializer can
+    /// represent null-initialized tables, element-initialized tables (e.g. with
+    /// the function-references proposal), or precomputed images of table
+    /// initialization. For example table initializers to a table that are all
+    /// in-bounds will get removed from `segment` and moved into
+    /// `initial_values` here.
+    </span><span class="kw">pub </span>initial_values: PrimaryMap&lt;DefinedTableIndex, TableInitialValue&gt;,
+
+    <span class="doccomment">/// Element segments present in the initial wasm module which are executed
+    /// at instantiation time.
+    ///
+    /// These element segments are iterated over during instantiation to apply
+    /// any segments that weren&#39;t already moved into `initial_values` above.
+    </span><span class="kw">pub </span>segments: Vec&lt;TableSegment&gt;,
+}
+
+<span class="doccomment">/// Initial value for all elements in a table.
+</span><span class="attr">#[derive(Clone, Debug, Serialize, Deserialize)]
+</span><span class="kw">pub enum </span>TableInitialValue {
+    <span class="doccomment">/// Initialize each table element to null, optionally setting some elements
+    /// to non-null given the precomputed image.
+    </span>Null {
+        <span class="doccomment">/// A precomputed image of table initializers for this table.
+        ///
+        /// This image is constructed during `try_func_table_init` and
+        /// null-initialized elements are represented with
+        /// `FuncIndex::reserved_value()`. Note that this image is empty by
+        /// default and may not encompass the entire span of the table in which
+        /// case the elements are initialized to null.
+        </span>precomputed: Vec&lt;FuncIndex&gt;,
+    },
+
+    <span class="doccomment">/// Initialize each table element to the function reference given
+    /// by the `FuncIndex`.
+    </span>FuncRef(FuncIndex),
+}
+
 <span class="doccomment">/// A WebAssembly table initializer segment.
 </span><span class="attr">#[derive(Clone, Debug, Serialize, Deserialize)]
-</span><span class="kw">pub struct </span>TableInitializer {
+</span><span class="kw">pub struct </span>TableSegment {
     <span class="doccomment">/// The index of a table to initialize.
     </span><span class="kw">pub </span>table_index: TableIndex,
     <span class="doccomment">/// Optionally, a global variable giving a base index.
@@ -1738,56 +1854,6 @@
     </span><span class="kw">pub </span>offset: u32,
     <span class="doccomment">/// The values to write into the table elements.
     </span><span class="kw">pub </span>elements: Box&lt;[FuncIndex]&gt;,
-}
-
-<span class="doccomment">/// Table initialization data for all tables in the module.
-</span><span class="attr">#[derive(Debug, Serialize, Deserialize)]
-</span><span class="kw">pub enum </span>TableInitialization {
-    <span class="doccomment">/// &quot;Segment&quot; mode: table initializer segments, possibly with
-    /// dynamic bases, possibly applying to an imported memory.
-    ///
-    /// Every kind of table initialization is supported by the
-    /// Segments mode.
-    </span>Segments {
-        <span class="doccomment">/// The segment initializers. All apply to the table for which
-        /// this TableInitialization is specified.
-        </span>segments: Vec&lt;TableInitializer&gt;,
-    },
-
-    <span class="doccomment">/// &quot;FuncTable&quot; mode: a single array per table, with a function
-    /// index or null per slot. This is only possible to provide for a
-    /// given table when it is defined by the module itself, and can
-    /// only include data from initializer segments that have
-    /// statically-knowable bases (i.e., not dependent on global
-    /// values).
-    ///
-    /// Any segments that are not compatible with this mode are held
-    /// in the `segments` array of &quot;leftover segments&quot;, which are
-    /// still processed eagerly.
-    ///
-    /// This mode facilitates lazy initialization of the tables. It is
-    /// thus &quot;nice to have&quot;, but not necessary for correctness.
-    </span>FuncTable {
-        <span class="doccomment">/// For each table, an array of function indices (or
-        /// FuncIndex::reserved_value(), meaning no initialized value,
-        /// hence null by default). Array elements correspond
-        /// one-to-one to table elements; i.e., `elements[i]` is the
-        /// initial value for `table[i]`.
-        </span>tables: PrimaryMap&lt;TableIndex, Vec&lt;FuncIndex&gt;&gt;,
-
-        <span class="doccomment">/// Leftover segments that need to be processed eagerly on
-        /// instantiation. These either apply to an imported table (so
-        /// we can&#39;t pre-build a full image of the table from this
-        /// overlay) or have dynamically (at instantiation time)
-        /// determined bases.
-        </span>segments: Vec&lt;TableInitializer&gt;,
-    },
-}
-
-<span class="kw">impl </span>Default <span class="kw">for </span>TableInitialization {
-    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
-        TableInitialization::Segments { segments: <span class="macro">vec!</span>[] }
-    }
 }
 
 <span class="doccomment">/// Different types that can appear in a module.
@@ -2063,6 +2129,14 @@
             signature,
             func_ref,
         })
+    }
+}
+
+<span class="kw">impl </span>TypeConvert <span class="kw">for </span>Module {
+    <span class="kw">fn </span>lookup_heap_type(<span class="kw-2">&amp;</span><span class="self">self</span>, index: TypeIndex) -&gt; WasmHeapType {
+        <span class="kw">match </span><span class="self">self</span>.types[index] {
+            ModuleType::Function(i) =&gt; WasmHeapType::TypedFunc(i),
+        }
     }
 }
 

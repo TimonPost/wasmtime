@@ -97,19 +97,9 @@
 <a href="#97" id="97">97</a>
 <a href="#98" id="98">98</a>
 <a href="#99" id="99">99</a>
-<a href="#100" id="100">100</a>
-<a href="#101" id="101">101</a>
-<a href="#102" id="102">102</a>
-<a href="#103" id="103">103</a>
-<a href="#104" id="104">104</a>
-<a href="#105" id="105">105</a>
-<a href="#106" id="106">106</a>
-<a href="#107" id="107">107</a>
-<a href="#108" id="108">108</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Helper functions and structures for the translation.
 </span><span class="kw">use </span><span class="kw">crate</span>::environ::TargetEnvironment;
 <span class="kw">use </span><span class="kw">crate</span>::WasmResult;
-<span class="kw">use </span>core::convert::TryInto;
 <span class="kw">use </span>core::u32;
 <span class="kw">use </span>cranelift_codegen::ir;
 <span class="kw">use </span>cranelift_frontend::FunctionBuilder;
@@ -131,27 +121,18 @@
     <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="kw">match </span>ty {
         wasmparser::BlockType::Empty =&gt; {
             <span class="kw">let </span>params: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>[wasmparser::ValType] = <span class="kw-2">&amp;</span>[];
-            <span class="kw">let </span>results: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>[wasmparser::ValType] = <span class="kw-2">&amp;</span>[];
+            <span class="kw">let </span>results: std::vec::Vec&lt;wasmparser::ValType&gt; = <span class="macro">vec!</span>[];
             (
                 itertools::Either::Left(params.iter().copied()),
-                itertools::Either::Left(results.iter().copied()),
+                itertools::Either::Left(results.into_iter()),
             )
         }
         wasmparser::BlockType::Type(ty) =&gt; {
             <span class="kw">let </span>params: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>[wasmparser::ValType] = <span class="kw-2">&amp;</span>[];
-            <span class="kw">let </span>results: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>[wasmparser::ValType] = <span class="kw">match </span>ty {
-                wasmparser::ValType::I32 =&gt; <span class="kw-2">&amp;</span>[wasmparser::ValType::I32],
-                wasmparser::ValType::I64 =&gt; <span class="kw-2">&amp;</span>[wasmparser::ValType::I64],
-                wasmparser::ValType::F32 =&gt; <span class="kw-2">&amp;</span>[wasmparser::ValType::F32],
-                wasmparser::ValType::F64 =&gt; <span class="kw-2">&amp;</span>[wasmparser::ValType::F64],
-                wasmparser::ValType::V128 =&gt; <span class="kw-2">&amp;</span>[wasmparser::ValType::V128],
-                wasmparser::ValType::EXTERNREF =&gt; <span class="kw-2">&amp;</span>[wasmparser::ValType::EXTERNREF],
-                wasmparser::ValType::FUNCREF =&gt; <span class="kw-2">&amp;</span>[wasmparser::ValType::FUNCREF],
-                wasmparser::ValType::Ref(<span class="kw">_</span>) =&gt; <span class="macro">unimplemented!</span>(<span class="string">&quot;function references proposal&quot;</span>),
-            };
+            <span class="kw">let </span>results: std::vec::Vec&lt;wasmparser::ValType&gt; = <span class="macro">vec!</span>[ty.clone()];
             (
                 itertools::Either::Left(params.iter().copied()),
-                itertools::Either::Left(results.iter().copied()),
+                itertools::Either::Left(results.into_iter()),
             )
         }
         wasmparser::BlockType::FuncType(ty_index) =&gt; {
@@ -188,8 +169,9 @@
             wasmparser::ValType::F64 =&gt; {
                 builder.append_block_param(block, ir::types::F64);
             }
-            wasmparser::ValType::Ref(ty) =&gt; {
-                builder.append_block_param(block, environ.reference_type(ty.try_into()<span class="question-mark">?</span>));
+            wasmparser::ValType::Ref(rt) =&gt; {
+                <span class="kw">let </span>hty = environ.convert_heap_type(rt.heap_type());
+                builder.append_block_param(block, environ.reference_type(hty));
             }
             wasmparser::ValType::V128 =&gt; {
                 builder.append_block_param(block, ir::types::I8X16);

@@ -900,6 +900,28 @@
 <a href="#900" id="900">900</a>
 <a href="#901" id="901">901</a>
 <a href="#902" id="902">902</a>
+<a href="#903" id="903">903</a>
+<a href="#904" id="904">904</a>
+<a href="#905" id="905">905</a>
+<a href="#906" id="906">906</a>
+<a href="#907" id="907">907</a>
+<a href="#908" id="908">908</a>
+<a href="#909" id="909">909</a>
+<a href="#910" id="910">910</a>
+<a href="#911" id="911">911</a>
+<a href="#912" id="912">912</a>
+<a href="#913" id="913">913</a>
+<a href="#914" id="914">914</a>
+<a href="#915" id="915">915</a>
+<a href="#916" id="916">916</a>
+<a href="#917" id="917">917</a>
+<a href="#918" id="918">918</a>
+<a href="#919" id="919">919</a>
+<a href="#920" id="920">920</a>
+<a href="#921" id="921">921</a>
+<a href="#922" id="922">922</a>
+<a href="#923" id="923">923</a>
+<a href="#924" id="924">924</a>
 </pre><pre class="rust"><code><span class="doccomment">//! &quot;Dummy&quot; implementations of `ModuleEnvironment` and `FuncEnvironment` for testing
 //! wasm translation. For complete implementations of `ModuleEnvironment` and
 //! `FuncEnvironment`, see [wasmtime-environ] in [Wasmtime].
@@ -913,8 +935,8 @@
 <span class="kw">use </span><span class="kw">crate</span>::WasmType;
 <span class="kw">use crate</span>::{
     DataIndex, DefinedFuncIndex, ElemIndex, FuncIndex, Global, GlobalIndex, GlobalInit, Heap,
-    HeapData, HeapStyle, Memory, MemoryIndex, Table, TableIndex, TypeIndex, WasmFuncType,
-    WasmResult,
+    HeapData, HeapStyle, Memory, MemoryIndex, Table, TableIndex, TypeConvert, TypeIndex,
+    WasmFuncType, WasmHeapType, WasmResult,
 };
 <span class="kw">use </span>core::convert::TryFrom;
 <span class="kw">use </span>cranelift_codegen::cursor::FuncCursor;
@@ -1153,6 +1175,12 @@
     }
 }
 
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;dummy_environment</span>&gt; TypeConvert <span class="kw">for </span>DummyFuncEnvironment&lt;<span class="lifetime">&#39;dummy_environment</span>&gt; {
+    <span class="kw">fn </span>lookup_heap_type(<span class="kw-2">&amp;</span><span class="self">self</span>, _index: TypeIndex) -&gt; WasmHeapType {
+        <span class="macro">unimplemented!</span>()
+    }
+}
+
 <span class="kw">impl</span>&lt;<span class="lifetime">&#39;dummy_environment</span>&gt; TargetEnvironment <span class="kw">for </span>DummyFuncEnvironment&lt;<span class="lifetime">&#39;dummy_environment</span>&gt; {
     <span class="kw">fn </span>target_config(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; TargetFrontendConfig {
         <span class="self">self</span>.mod_info.config
@@ -1181,7 +1209,7 @@
                 WasmType::F32 =&gt; ir::types::F32,
                 WasmType::F64 =&gt; ir::types::F64,
                 WasmType::V128 =&gt; ir::types::I8X16,
-                WasmType::FuncRef | WasmType::ExternRef =&gt; ir::types::R64,
+                WasmType::Ref(<span class="kw">_</span>) =&gt; ir::types::R64,
             },
         })
     }
@@ -1364,6 +1392,16 @@
         args.push(vmctx, <span class="kw-2">&amp;mut </span>pos.func.dfg.value_lists);
 
         <span class="prelude-val">Ok</span>(pos.ins().Call(ir::Opcode::Call, INVALID, callee, args).<span class="number">0</span>)
+    }
+
+    <span class="kw">fn </span>translate_call_ref(
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+        _builder: <span class="kw-2">&amp;mut </span>FunctionBuilder,
+        _sig_ref: ir::SigRef,
+        _callee: ir::Value,
+        _call_args: <span class="kw-2">&amp;</span>[ir::Value],
+    ) -&gt; WasmResult&lt;ir::Inst&gt; {
+        <span class="macro">todo!</span>(<span class="string">&quot;Implement dummy translate_call_ref&quot;</span>)
     }
 
     <span class="kw">fn </span>translate_memory_grow(
@@ -1560,6 +1598,12 @@
     }
 }
 
+<span class="kw">impl </span>TypeConvert <span class="kw">for </span>DummyEnvironment {
+    <span class="kw">fn </span>lookup_heap_type(<span class="kw-2">&amp;</span><span class="self">self</span>, _index: TypeIndex) -&gt; WasmHeapType {
+        <span class="macro">unimplemented!</span>()
+    }
+}
+
 <span class="kw">impl </span>TargetEnvironment <span class="kw">for </span>DummyEnvironment {
     <span class="kw">fn </span>target_config(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; TargetFrontendConfig {
         <span class="self">self</span>.info.config
@@ -1585,7 +1629,7 @@
                 WasmType::F32 =&gt; ir::types::F32,
                 WasmType::F64 =&gt; ir::types::F64,
                 WasmType::V128 =&gt; ir::types::I8X16,
-                WasmType::FuncRef | WasmType::ExternRef =&gt; reference_type,
+                WasmType::Ref(<span class="kw">_</span>) =&gt; reference_type,
             })
         };
         sig.params.extend(wasm.params().iter().map(<span class="kw-2">&amp;mut </span>cvt));

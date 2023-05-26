@@ -2164,6 +2164,46 @@
 <a href="#2164" id="2164">2164</a>
 <a href="#2165" id="2165">2165</a>
 <a href="#2166" id="2166">2166</a>
+<a href="#2167" id="2167">2167</a>
+<a href="#2168" id="2168">2168</a>
+<a href="#2169" id="2169">2169</a>
+<a href="#2170" id="2170">2170</a>
+<a href="#2171" id="2171">2171</a>
+<a href="#2172" id="2172">2172</a>
+<a href="#2173" id="2173">2173</a>
+<a href="#2174" id="2174">2174</a>
+<a href="#2175" id="2175">2175</a>
+<a href="#2176" id="2176">2176</a>
+<a href="#2177" id="2177">2177</a>
+<a href="#2178" id="2178">2178</a>
+<a href="#2179" id="2179">2179</a>
+<a href="#2180" id="2180">2180</a>
+<a href="#2181" id="2181">2181</a>
+<a href="#2182" id="2182">2182</a>
+<a href="#2183" id="2183">2183</a>
+<a href="#2184" id="2184">2184</a>
+<a href="#2185" id="2185">2185</a>
+<a href="#2186" id="2186">2186</a>
+<a href="#2187" id="2187">2187</a>
+<a href="#2188" id="2188">2188</a>
+<a href="#2189" id="2189">2189</a>
+<a href="#2190" id="2190">2190</a>
+<a href="#2191" id="2191">2191</a>
+<a href="#2192" id="2192">2192</a>
+<a href="#2193" id="2193">2193</a>
+<a href="#2194" id="2194">2194</a>
+<a href="#2195" id="2195">2195</a>
+<a href="#2196" id="2196">2196</a>
+<a href="#2197" id="2197">2197</a>
+<a href="#2198" id="2198">2198</a>
+<a href="#2199" id="2199">2199</a>
+<a href="#2200" id="2200">2200</a>
+<a href="#2201" id="2201">2201</a>
+<a href="#2202" id="2202">2202</a>
+<a href="#2203" id="2203">2203</a>
+<a href="#2204" id="2204">2204</a>
+<a href="#2205" id="2205">2205</a>
+<a href="#2206" id="2206">2206</a>
 </pre><pre class="rust"><code><span class="kw">use </span>cranelift_codegen::cursor::FuncCursor;
 <span class="kw">use </span>cranelift_codegen::ir;
 <span class="kw">use </span>cranelift_codegen::ir::condcodes::<span class="kw-2">*</span>;
@@ -2176,14 +2216,15 @@
 <span class="kw">use </span>cranelift_frontend::Variable;
 <span class="kw">use </span>cranelift_wasm::{
     <span class="self">self</span>, FuncIndex, FuncTranslationState, GlobalIndex, GlobalVariable, Heap, HeapData, HeapStyle,
-    MemoryIndex, TableIndex, TargetEnvironment, TypeIndex, WasmError, WasmResult, WasmType,
+    MemoryIndex, TableIndex, TargetEnvironment, TypeIndex, WasmHeapType, WasmRefType, WasmResult,
+    WasmType,
 };
 <span class="kw">use </span>std::convert::TryFrom;
 <span class="kw">use </span>std::mem;
 <span class="kw">use </span>wasmparser::Operator;
 <span class="kw">use </span>wasmtime_environ::{
     BuiltinFunctionIndex, MemoryPlan, MemoryStyle, Module, ModuleTranslation, ModuleTypes, PtrSize,
-    TableStyle, Tunables, VMOffsets, WASM_PAGE_SIZE,
+    TableStyle, Tunables, TypeConvert, VMOffsets, WASM_PAGE_SIZE,
 };
 <span class="kw">use </span>wasmtime_environ::{FUNCREF_INIT_BIT, FUNCREF_MASK};
 
@@ -2455,6 +2496,52 @@
             .load(pointer_type, mem_flags, array_addr, body_offset);
 
         (base, func_addr)
+    }
+
+    <span class="doccomment">/// This calls a function by reference without checking the signature. It
+    /// gets the function address, sets relevant flags, and passes the special
+    /// callee/caller vmctxs. It is used by both call_indirect (which checks the
+    /// signature) and call_ref (which doesn&#39;t).
+    </span><span class="kw">fn </span>call_function_unchecked(
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+        builder: <span class="kw-2">&amp;mut </span>FunctionBuilder,
+        sig_ref: ir::SigRef,
+        callee: ir::Value,
+        call_args: <span class="kw-2">&amp;</span>[ir::Value],
+    ) -&gt; WasmResult&lt;ir::Inst&gt; {
+        <span class="kw">let </span>pointer_type = <span class="self">self</span>.pointer_type();
+
+        <span class="comment">// Dereference callee pointer to get the function address.
+        </span><span class="kw">let </span>mem_flags = ir::MemFlags::trusted().with_readonly();
+        <span class="kw">let </span>func_addr = builder.ins().load(
+            pointer_type,
+            mem_flags,
+            callee,
+            i32::from(<span class="self">self</span>.offsets.ptr.vm_func_ref_wasm_call()),
+        );
+
+        <span class="kw">let </span><span class="kw-2">mut </span>real_call_args = Vec::with_capacity(call_args.len() + <span class="number">2</span>);
+        <span class="kw">let </span>caller_vmctx = builder
+            .func
+            .special_param(ArgumentPurpose::VMContext)
+            .unwrap();
+
+        <span class="comment">// First append the callee vmctx address.
+        </span><span class="kw">let </span>vmctx = builder.ins().load(
+            pointer_type,
+            mem_flags,
+            callee,
+            i32::from(<span class="self">self</span>.offsets.ptr.vm_func_ref_vmctx()),
+        );
+        real_call_args.push(vmctx);
+        real_call_args.push(caller_vmctx);
+
+        <span class="comment">// Then append the regular call arguments.
+        </span>real_call_args.extend_from_slice(call_args);
+
+        <span class="prelude-val">Ok</span>(builder
+            .ins()
+            .call_indirect(sig_ref, func_addr, <span class="kw-2">&amp;</span>real_call_args))
     }
 
     <span class="doccomment">/// Generate code to increment or decrement the given `externref`&#39;s
@@ -2979,12 +3066,18 @@
     }
 }
 
+<span class="kw">impl </span>TypeConvert <span class="kw">for </span>FuncEnvironment&lt;<span class="lifetime">&#39;_</span>&gt; {
+    <span class="kw">fn </span>lookup_heap_type(<span class="kw-2">&amp;</span><span class="self">self</span>, ty: TypeIndex) -&gt; WasmHeapType {
+        <span class="self">self</span>.module.lookup_heap_type(ty)
+    }
+}
+
 <span class="kw">impl</span>&lt;<span class="lifetime">&#39;module_environment</span>&gt; TargetEnvironment <span class="kw">for </span>FuncEnvironment&lt;<span class="lifetime">&#39;module_environment</span>&gt; {
     <span class="kw">fn </span>target_config(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; TargetFrontendConfig {
         <span class="self">self</span>.isa.frontend_config()
     }
 
-    <span class="kw">fn </span>reference_type(<span class="kw-2">&amp;</span><span class="self">self</span>, ty: WasmType) -&gt; ir::Type {
+    <span class="kw">fn </span>reference_type(<span class="kw-2">&amp;</span><span class="self">self</span>, ty: WasmHeapType) -&gt; ir::Type {
         <span class="kw">crate</span>::reference_type(ty, <span class="self">self</span>.pointer_type())
     }
 
@@ -3057,7 +3150,7 @@
         });
 
         <span class="kw">let </span>element_size = u64::from(
-            <span class="self">self</span>.reference_type(<span class="self">self</span>.module.table_plans[index].table.wasm_ty)
+            <span class="self">self</span>.reference_type(<span class="self">self</span>.module.table_plans[index].table.wasm_ty.heap_type)
                 .bytes(),
         );
 
@@ -3079,21 +3172,17 @@
         init_value: ir::Value,
     ) -&gt; WasmResult&lt;ir::Value&gt; {
         <span class="kw">let </span>(func_idx, func_sig) =
-            <span class="kw">match </span><span class="self">self</span>.module.table_plans[table_index].table.wasm_ty {
-                WasmType::FuncRef =&gt; (
+            <span class="kw">match </span><span class="self">self</span>.module.table_plans[table_index].table.wasm_ty.heap_type {
+                WasmHeapType::Func | WasmHeapType::TypedFunc(<span class="kw">_</span>) =&gt; (
                     BuiltinFunctionIndex::table_grow_func_ref(),
                     <span class="self">self</span>.builtin_function_signatures
                         .table_grow_func_ref(<span class="kw-2">&amp;mut </span>pos.func),
                 ),
-                WasmType::ExternRef =&gt; (
+                WasmHeapType::Extern =&gt; (
                     BuiltinFunctionIndex::table_grow_externref(),
                     <span class="self">self</span>.builtin_function_signatures
                         .table_grow_externref(<span class="kw-2">&amp;mut </span>pos.func),
                 ),
-                <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(WasmError::Unsupported(
-                    <span class="string">&quot;`table.grow` with a table element type that is not `funcref` or `externref`&quot;
-                        </span>.into(),
-                )),
             };
 
         <span class="kw">let </span>(vmctx, func_addr) = <span class="self">self</span>.translate_load_builtin_function_address(<span class="kw-2">&amp;mut </span>pos, func_idx);
@@ -3118,13 +3207,13 @@
         <span class="kw">let </span>pointer_type = <span class="self">self</span>.pointer_type();
 
         <span class="kw">let </span>plan = <span class="kw-2">&amp;</span><span class="self">self</span>.module.table_plans[table_index];
-        <span class="kw">match </span>plan.table.wasm_ty {
-            WasmType::FuncRef =&gt; <span class="kw">match </span>plan.style {
+        <span class="kw">match </span>plan.table.wasm_ty.heap_type {
+            WasmHeapType::Func | WasmHeapType::TypedFunc(<span class="kw">_</span>) =&gt; <span class="kw">match </span>plan.style {
                 TableStyle::CallerChecksSignature =&gt; {
                     <span class="prelude-val">Ok</span>(<span class="self">self</span>.get_or_init_func_ref_table_elem(builder, table_index, table, index))
                 }
             },
-            WasmType::ExternRef =&gt; {
+            WasmHeapType::Extern =&gt; {
                 <span class="comment">// Our read barrier for `externref` tables is roughly equivalent
                 // to the following pseudocode:
                 //
@@ -3145,7 +3234,7 @@
                 // onto the stack are safely held alive by the
                 // `VMExternRefActivationsTable`.
 
-                </span><span class="kw">let </span>reference_type = <span class="self">self</span>.reference_type(WasmType::ExternRef);
+                </span><span class="kw">let </span>reference_type = <span class="self">self</span>.reference_type(WasmHeapType::Extern);
 
                 builder.ensure_inserted_block();
                 <span class="kw">let </span>continue_block = builder.create_block();
@@ -3240,10 +3329,6 @@
 
                 <span class="prelude-val">Ok</span>(elem)
             }
-            ty =&gt; <span class="prelude-val">Err</span>(WasmError::Unsupported(<span class="macro">format!</span>(
-                <span class="string">&quot;unsupported table type for `table.get` instruction: {:?}&quot;</span>,
-                ty
-            ))),
         }
     }
 
@@ -3256,10 +3341,9 @@
         index: ir::Value,
     ) -&gt; WasmResult&lt;()&gt; {
         <span class="kw">let </span>pointer_type = <span class="self">self</span>.pointer_type();
-
         <span class="kw">let </span>plan = <span class="kw-2">&amp;</span><span class="self">self</span>.module.table_plans[table_index];
-        <span class="kw">match </span>plan.table.wasm_ty {
-            WasmType::FuncRef =&gt; <span class="kw">match </span>plan.style {
+        <span class="kw">match </span>plan.table.wasm_ty.heap_type {
+            WasmHeapType::Func | WasmHeapType::TypedFunc(<span class="kw">_</span>) =&gt; <span class="kw">match </span>plan.style {
                 TableStyle::CallerChecksSignature =&gt; {
                     <span class="kw">let </span>table_entry_addr = builder.ins().table_addr(pointer_type, table, index, <span class="number">0</span>);
                     <span class="comment">// Set the &quot;initialized bit&quot;. See doc-comment on
@@ -3275,7 +3359,8 @@
                     <span class="prelude-val">Ok</span>(())
                 }
             },
-            WasmType::ExternRef =&gt; {
+
+            WasmHeapType::Extern =&gt; {
                 <span class="comment">// Our write barrier for `externref`s being copied out of the
                 // stack and into a table is roughly equivalent to the following
                 // pseudocode:
@@ -3405,10 +3490,6 @@
 
                 <span class="prelude-val">Ok</span>(())
             }
-            ty =&gt; <span class="prelude-val">Err</span>(WasmError::Unsupported(<span class="macro">format!</span>(
-                <span class="string">&quot;unsupported table type for `table.set` instruction: {:?}&quot;</span>,
-                ty
-            ))),
         }
     }
 
@@ -3421,21 +3502,17 @@
         len: ir::Value,
     ) -&gt; WasmResult&lt;()&gt; {
         <span class="kw">let </span>(builtin_idx, builtin_sig) =
-            <span class="kw">match </span><span class="self">self</span>.module.table_plans[table_index].table.wasm_ty {
-                WasmType::FuncRef =&gt; (
+            <span class="kw">match </span><span class="self">self</span>.module.table_plans[table_index].table.wasm_ty.heap_type {
+                WasmHeapType::Func | WasmHeapType::TypedFunc(<span class="kw">_</span>) =&gt; (
                     BuiltinFunctionIndex::table_fill_func_ref(),
                     <span class="self">self</span>.builtin_function_signatures
                         .table_fill_func_ref(<span class="kw-2">&amp;mut </span>pos.func),
                 ),
-                WasmType::ExternRef =&gt; (
+                WasmHeapType::Extern =&gt; (
                     BuiltinFunctionIndex::table_fill_externref(),
                     <span class="self">self</span>.builtin_function_signatures
                         .table_fill_externref(<span class="kw-2">&amp;mut </span>pos.func),
                 ),
-                <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(WasmError::Unsupported(
-                    <span class="string">&quot;`table.fill` with a table element type that is not `funcref` or `externref`&quot;
-                        </span>.into(),
-                )),
             };
 
         <span class="kw">let </span>(vmctx, builtin_addr) =
@@ -3454,16 +3531,13 @@
     <span class="kw">fn </span>translate_ref_null(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         <span class="kw-2">mut </span>pos: cranelift_codegen::cursor::FuncCursor,
-        ty: WasmType,
+        ht: WasmHeapType,
     ) -&gt; WasmResult&lt;ir::Value&gt; {
-        <span class="prelude-val">Ok</span>(<span class="kw">match </span>ty {
-            WasmType::FuncRef =&gt; pos.ins().iconst(<span class="self">self</span>.pointer_type(), <span class="number">0</span>),
-            WasmType::ExternRef =&gt; pos.ins().null(<span class="self">self</span>.reference_type(ty)),
-            <span class="kw">_ </span>=&gt; {
-                <span class="kw">return </span><span class="prelude-val">Err</span>(WasmError::Unsupported(
-                    <span class="string">&quot;`ref.null T` that is not a `funcref` or an `externref`&quot;</span>.into(),
-                ));
+        <span class="prelude-val">Ok</span>(<span class="kw">match </span>ht {
+            WasmHeapType::Func | WasmHeapType::TypedFunc(<span class="kw">_</span>) =&gt; {
+                pos.ins().iconst(<span class="self">self</span>.pointer_type(), <span class="number">0</span>)
             }
+            WasmHeapType::Extern =&gt; pos.ins().null(<span class="self">self</span>.reference_type(ht)),
         })
     }
 
@@ -3510,7 +3584,7 @@
     ) -&gt; WasmResult&lt;ir::Value&gt; {
         <span class="macro">debug_assert_eq!</span>(
             <span class="self">self</span>.module.globals[index].wasm_ty,
-            WasmType::ExternRef,
+            WasmType::Ref(WasmRefType::EXTERNREF),
             <span class="string">&quot;We only use GlobalVariable::Custom for externref&quot;
         </span>);
 
@@ -3538,7 +3612,7 @@
     ) -&gt; WasmResult&lt;()&gt; {
         <span class="macro">debug_assert_eq!</span>(
             <span class="self">self</span>.module.globals[index].wasm_ty,
-            WasmType::ExternRef,
+            WasmType::Ref(WasmRefType::EXTERNREF),
             <span class="string">&quot;We only use GlobalVariable::Custom for externref&quot;
         </span>);
 
@@ -3676,21 +3750,37 @@
         func: <span class="kw-2">&amp;mut </span>ir::Function,
         index: GlobalIndex,
     ) -&gt; WasmResult&lt;GlobalVariable&gt; {
-        <span class="comment">// Although `ExternRef`s live at the same memory location as any other
-        // type of global at the same index would, getting or setting them
-        // requires ref counting barriers. Therefore, we need to use
-        // `GlobalVariable::Custom`, as that is the only kind of
-        // `GlobalVariable` for which `cranelift-wasm` supports custom access
-        // translation.
-        </span><span class="kw">if </span><span class="self">self</span>.module.globals[index].wasm_ty == WasmType::ExternRef {
-            <span class="kw">return </span><span class="prelude-val">Ok</span>(GlobalVariable::Custom);
+        <span class="kw">let </span>ty = <span class="self">self</span>.module.globals[index].wasm_ty;
+        <span class="kw">match </span>ty {
+            <span class="comment">// Although `ExternRef`s live at the same memory location as any
+            // other type of global at the same index would, getting or setting
+            // them requires ref counting barriers. Therefore, we need to use
+            // `GlobalVariable::Custom`, as that is the only kind of
+            // `GlobalVariable` for which `cranelift-wasm` supports custom
+            // access translation.
+            </span>WasmType::Ref(WasmRefType {
+                heap_type: WasmHeapType::Extern,
+                ..
+            }) =&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(GlobalVariable::Custom),
+
+            <span class="comment">// Funcrefs are represented as pointers which survive for the
+            // entire lifetime of the `Store` so there&#39;s no need for barriers.
+            // This means that they can fall through to memory as well.
+            </span>WasmType::Ref(WasmRefType {
+                heap_type: WasmHeapType::Func | WasmHeapType::TypedFunc(<span class="kw">_</span>),
+                ..
+            }) =&gt; {}
+
+            <span class="comment">// Value types all live in memory so let them fall through to a
+            // memory-based global.
+            </span>WasmType::I32 | WasmType::I64 | WasmType::F32 | WasmType::F64 | WasmType::V128 =&gt; {}
         }
 
         <span class="kw">let </span>(gv, offset) = <span class="self">self</span>.get_global_location(func, index);
         <span class="prelude-val">Ok</span>(GlobalVariable::Memory {
             gv,
             offset: offset.into(),
-            ty: <span class="kw">super</span>::value_type(<span class="self">self</span>.isa, <span class="self">self</span>.module.globals[index].wasm_ty),
+            ty: <span class="kw">super</span>::value_type(<span class="self">self</span>.isa, ty),
         })
     }
 
@@ -3759,15 +3849,6 @@
             .ins()
             .trapz(funcref_ptr, ir::TrapCode::IndirectCallToNull);
 
-        <span class="comment">// Dereference the funcref pointer to get the function address.
-        </span><span class="kw">let </span>mem_flags = ir::MemFlags::trusted().with_readonly();
-        <span class="kw">let </span>func_addr = builder.ins().load(
-            pointer_type,
-            mem_flags,
-            funcref_ptr,
-            i32::from(<span class="self">self</span>.offsets.ptr.vm_func_ref_wasm_call()),
-        );
-
         <span class="comment">// If necessary, check the signature.
         </span><span class="kw">match </span><span class="self">self</span>.module.table_plans[table_index].style {
             TableStyle::CallerChecksSignature =&gt; {
@@ -3811,28 +3892,7 @@
             }
         }
 
-        <span class="kw">let </span><span class="kw-2">mut </span>real_call_args = Vec::with_capacity(call_args.len() + <span class="number">2</span>);
-        <span class="kw">let </span>caller_vmctx = builder
-            .func
-            .special_param(ArgumentPurpose::VMContext)
-            .unwrap();
-
-        <span class="comment">// First append the callee vmctx address.
-        </span><span class="kw">let </span>vmctx = builder.ins().load(
-            pointer_type,
-            mem_flags,
-            funcref_ptr,
-            i32::from(<span class="self">self</span>.offsets.ptr.vm_func_ref_vmctx()),
-        );
-        real_call_args.push(vmctx);
-        real_call_args.push(caller_vmctx);
-
-        <span class="comment">// Then append the regular call arguments.
-        </span>real_call_args.extend_from_slice(call_args);
-
-        <span class="prelude-val">Ok</span>(builder
-            .ins()
-            .call_indirect(sig_ref, func_addr, <span class="kw-2">&amp;</span>real_call_args))
+        <span class="self">self</span>.call_function_unchecked(builder, sig_ref, funcref_ptr, call_args)
     }
 
     <span class="kw">fn </span>translate_call(
@@ -3885,6 +3945,26 @@
         </span>real_call_args.extend_from_slice(call_args);
 
         <span class="prelude-val">Ok</span>(pos.ins().call_indirect(sig_ref, func_addr, <span class="kw-2">&amp;</span>real_call_args))
+    }
+
+    <span class="kw">fn </span>translate_call_ref(
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+        builder: <span class="kw-2">&amp;mut </span>FunctionBuilder,
+        sig_ref: ir::SigRef,
+        callee: ir::Value,
+        call_args: <span class="kw-2">&amp;</span>[ir::Value],
+    ) -&gt; WasmResult&lt;ir::Inst&gt; {
+        <span class="comment">// Check for whether the callee is null, and trap if so.
+        //
+        // FIXME: the wasm type system tracks enough information to know whether
+        // `callee` is a null reference or not. In some situations it can be
+        // statically known here that `callee` cannot be null in which case this
+        // null check can be elided. This requires feeding type information from
+        // wasmparser&#39;s validator into this function, however, which is not
+        // easily done at this time.
+        </span>builder.ins().trapz(callee, ir::TrapCode::NullReference);
+
+        <span class="self">self</span>.call_function_unchecked(builder, sig_ref, callee, call_args)
     }
 
     <span class="kw">fn </span>translate_memory_grow(

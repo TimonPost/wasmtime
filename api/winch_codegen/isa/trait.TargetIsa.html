@@ -6,7 +6,7 @@
 <span class="item-spacer"></span>    fn <a href="#tymethod.isa_flags" class="fn">isa_flags</a>(&amp;self) -&gt; <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;<a class="struct" href="../../cranelift_codegen/settings/struct.Value.html" title="struct cranelift_codegen::settings::Value">Value</a>&gt;;
 <span class="item-spacer"></span>    fn <a href="#tymethod.compile_function" class="fn">compile_function</a>(
         &amp;self,
-        sig: &amp;FuncType,
+        sig: &amp;<a class="struct" href="../../wasmtime_types/struct.WasmFuncType.html" title="struct wasmtime_types::WasmFuncType">WasmFuncType</a>,
         body: &amp;FunctionBody&lt;'_&gt;,
         translation: &amp;<a class="struct" href="../../wasmtime_environ/module_environ/struct.ModuleTranslation.html" title="struct wasmtime_environ::module_environ::ModuleTranslation">ModuleTranslation</a>&lt;'_&gt;,
         validator: &amp;mut FuncValidator&lt;ValidatorResources&gt;
@@ -18,7 +18,7 @@
 <span class="item-spacer"></span>    fn <a href="#tymethod.function_alignment" class="fn">function_alignment</a>(&amp;self) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u32.html">u32</a>;
 <span class="item-spacer"></span>    fn <a href="#tymethod.compile_trampoline" class="fn">compile_trampoline</a>(
         &amp;self,
-        ty: &amp;FuncType,
+        ty: &amp;<a class="struct" href="../../wasmtime_types/struct.WasmFuncType.html" title="struct wasmtime_types::WasmFuncType">WasmFuncType</a>,
         kind: <a class="enum" href="../enum.TrampolineKind.html" title="enum winch_codegen::TrampolineKind">TrampolineKind</a>
     ) -&gt; <a class="type" href="https://docs.rs/anyhow/1.0.71/anyhow/type.Result.html" title="type anyhow::Result">Result</a>&lt;<a class="struct" href="../../cranelift_codegen/machinst/buffer/struct.MachBufferFinalized.html" title="struct cranelift_codegen::machinst::buffer::MachBufferFinalized">MachBufferFinalized</a>&lt;<a class="struct" href="../../cranelift_codegen/machinst/buffer/struct.Final.html" title="struct cranelift_codegen::machinst::buffer::Final">Final</a>&gt;&gt;;
 
@@ -37,7 +37,7 @@ instruction set architectures.</p>
 </div></details><details class="toggle method-toggle" open><summary><section id="tymethod.isa_flags" class="method"><a class="srclink rightside" href="../../src/winch_codegen/isa/mod.rs.html#140">source</a><h4 class="code-header">fn <a href="#tymethod.isa_flags" class="fn">isa_flags</a>(&amp;self) -&gt; <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;<a class="struct" href="../../cranelift_codegen/settings/struct.Value.html" title="struct cranelift_codegen::settings::Value">Value</a>&gt;</h4></section></summary><div class="docblock"><p>Get the ISA-dependent flag values that were used to make this trait object.</p>
 </div></details><details class="toggle method-toggle" open><summary><section id="tymethod.compile_function" class="method"><a class="srclink rightside" href="../../src/winch_codegen/isa/mod.rs.html#148-154">source</a><h4 class="code-header">fn <a href="#tymethod.compile_function" class="fn">compile_function</a>(
     &amp;self,
-    sig: &amp;FuncType,
+    sig: &amp;<a class="struct" href="../../wasmtime_types/struct.WasmFuncType.html" title="struct wasmtime_types::WasmFuncType">WasmFuncType</a>,
     body: &amp;FunctionBody&lt;'_&gt;,
     translation: &amp;<a class="struct" href="../../wasmtime_environ/module_environ/struct.ModuleTranslation.html" title="struct wasmtime_environ::module_environ::ModuleTranslation">ModuleTranslation</a>&lt;'_&gt;,
     validator: &amp;mut FuncValidator&lt;ValidatorResources&gt;
@@ -49,7 +49,7 @@ instruction set architectures.</p>
 </div></details><details class="toggle method-toggle" open><summary><section id="tymethod.function_alignment" class="method"><a class="srclink rightside" href="../../src/winch_codegen/isa/mod.rs.html#187">source</a><h4 class="code-header">fn <a href="#tymethod.function_alignment" class="fn">function_alignment</a>(&amp;self) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u32.html">u32</a></h4></section></summary><div class="docblock"><p>See <code>cranelift_codegen::isa::TargetIsa::function_alignment</code>.</p>
 </div></details><details class="toggle method-toggle" open><summary><section id="tymethod.compile_trampoline" class="method"><a class="srclink rightside" href="../../src/winch_codegen/isa/mod.rs.html#193-197">source</a><h4 class="code-header">fn <a href="#tymethod.compile_trampoline" class="fn">compile_trampoline</a>(
     &amp;self,
-    ty: &amp;FuncType,
+    ty: &amp;<a class="struct" href="../../wasmtime_types/struct.WasmFuncType.html" title="struct wasmtime_types::WasmFuncType">WasmFuncType</a>,
     kind: <a class="enum" href="../enum.TrampolineKind.html" title="enum winch_codegen::TrampolineKind">TrampolineKind</a>
 ) -&gt; <a class="type" href="https://docs.rs/anyhow/1.0.71/anyhow/type.Result.html" title="type anyhow::Result">Result</a>&lt;<a class="struct" href="../../cranelift_codegen/machinst/buffer/struct.MachBufferFinalized.html" title="struct cranelift_codegen::machinst::buffer::MachBufferFinalized">MachBufferFinalized</a>&lt;<a class="struct" href="../../cranelift_codegen/machinst/buffer/struct.Final.html" title="struct cranelift_codegen::machinst::buffer::Final">Final</a>&gt;&gt;</h4></section></summary><div class="docblock"><p>Compile a trampoline kind.</p>
 <p>This function, internally dispatches to the right trampoline to emit

@@ -163,6 +163,7 @@
 <a href="#163" id="163">163</a>
 <a href="#164" id="164">164</a>
 <a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
 </pre><pre class="rust"><code><span class="kw">pub mod </span>disasm;
 
 <span class="attr">#[cfg(test)]
@@ -177,7 +178,7 @@
     <span class="kw">use </span>wasmtime_environ::ModuleTranslation;
     <span class="kw">use </span>wasmtime_environ::{
         wasmparser::{Parser <span class="kw">as </span>WasmParser, Validator},
-        DefinedFuncIndex, FunctionBodyData, ModuleEnvironment, Tunables,
+        DefinedFuncIndex, FunctionBodyData, ModuleEnvironment, Tunables, TypeConvert,
     };
     <span class="kw">use </span>winch_codegen::{lookup, TargetIsa};
     <span class="kw">use </span>winch_test_macros::generate_file_tests;
@@ -318,6 +319,7 @@
         <span class="kw">let </span>sig = types
             .function_at(index.as_u32())
             .expect(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;function type at index {:?}&quot;</span>, index.as_u32()));
+        <span class="kw">let </span>sig = translation.module.convert_func_type(<span class="kw-2">&amp;</span>sig);
 
         <span class="kw">let </span>FunctionBodyData { body, validator } = f.<span class="number">1</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>validator = validator.into_validator(Default::default());

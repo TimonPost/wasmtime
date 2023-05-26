@@ -232,11 +232,20 @@
 <a href="#232" id="232">232</a>
 <a href="#233" id="233">233</a>
 <a href="#234" id="234">234</a>
+<a href="#235" id="235">235</a>
+<a href="#236" id="236">236</a>
+<a href="#237" id="237">237</a>
+<a href="#238" id="238">238</a>
+<a href="#239" id="239">239</a>
+<a href="#240" id="240">240</a>
+<a href="#241" id="241">241</a>
+<a href="#242" id="242">242</a>
+<a href="#243" id="243">243</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::regs;
 <span class="kw">use </span><span class="kw">crate</span>::abi::{ABIArg, ABIResult, ABISig, ABI};
 <span class="kw">use </span><span class="kw">crate</span>::isa::{reg::Reg, CallingConvention};
 <span class="kw">use </span>smallvec::SmallVec;
-<span class="kw">use </span>wasmparser::{FuncType, ValType};
+<span class="kw">use </span>wasmtime_environ::{WasmFuncType, WasmType};
 
 <span class="attr">#[derive(Default)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>Aarch64ABI;
@@ -297,10 +306,10 @@
         <span class="number">64
     </span>}
 
-    <span class="kw">fn </span>sig(wasm_sig: <span class="kw-2">&amp;</span>FuncType, call_conv: <span class="kw-2">&amp;</span>CallingConvention) -&gt; ABISig {
+    <span class="kw">fn </span>sig(wasm_sig: <span class="kw-2">&amp;</span>WasmFuncType, call_conv: <span class="kw-2">&amp;</span>CallingConvention) -&gt; ABISig {
         <span class="macro">assert!</span>(call_conv.is_apple_aarch64() || call_conv.is_default());
 
-        <span class="kw">if </span>wasm_sig.results().len() &gt; <span class="number">1 </span>{
+        <span class="kw">if </span>wasm_sig.returns().len() &gt; <span class="number">1 </span>{
             <span class="macro">panic!</span>(<span class="string">&quot;multi-value not supported&quot;</span>);
         }
 
@@ -313,7 +322,7 @@
             .map(|arg| <span class="self">Self</span>::to_abi_arg(arg, <span class="kw-2">&amp;mut </span>stack_offset, <span class="kw-2">&amp;mut </span>index_env))
             .collect();
 
-        <span class="kw">let </span>ty = wasm_sig.results().get(<span class="number">0</span>).map(|e| e.clone());
+        <span class="kw">let </span>ty = wasm_sig.returns().get(<span class="number">0</span>).map(|e| e.clone());
         <span class="comment">// NOTE temporarily defaulting to x0;
         </span><span class="kw">let </span>reg = regs::xreg(<span class="number">0</span>);
         <span class="kw">let </span>result = ABIResult::reg(ty, reg);
@@ -344,14 +353,14 @@
 
 <span class="kw">impl </span>Aarch64ABI {
     <span class="kw">fn </span>to_abi_arg(
-        wasm_arg: <span class="kw-2">&amp;</span>ValType,
+        wasm_arg: <span class="kw-2">&amp;</span>WasmType,
         stack_offset: <span class="kw-2">&amp;mut </span>u32,
         index_env: <span class="kw-2">&amp;mut </span>RegIndexEnv,
     ) -&gt; ABIArg {
         <span class="kw">let </span>(reg, ty) = <span class="kw">match </span>wasm_arg {
-            ty @ (ValType::I32 | ValType::I64) =&gt; (index_env.next_xreg().map(regs::xreg), ty),
+            ty @ (WasmType::I32 | WasmType::I64) =&gt; (index_env.next_xreg().map(regs::xreg), ty),
 
-            ty @ (ValType::F32 | ValType::F64) =&gt; (index_env.next_vreg().map(regs::vreg), ty),
+            ty @ (WasmType::F32 | WasmType::F64) =&gt; (index_env.next_vreg().map(regs::vreg), ty),
 
             ty =&gt; <span class="macro">unreachable!</span>(<span class="string">&quot;Unsupported argument type {:?}&quot;</span>, ty),
         };
@@ -376,9 +385,9 @@
         isa::reg::Reg,
         isa::CallingConvention,
     };
-    <span class="kw">use </span>wasmparser::{
-        FuncType,
-        ValType::{<span class="self">self</span>, <span class="kw-2">*</span>},
+    <span class="kw">use </span>wasmtime_environ::{
+        WasmFuncType,
+        WasmType::{<span class="self">self</span>, <span class="kw-2">*</span>},
     };
 
     <span class="attr">#[test]
@@ -394,7 +403,10 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>xreg_abi_sig() {
-        <span class="kw">let </span>wasm_sig = FuncType::new([I32, I64, I32, I64, I32, I32, I64, I32, I64], []);
+        <span class="kw">let </span>wasm_sig = WasmFuncType::new(
+            [I32, I64, I32, I64, I32, I32, I64, I32, I64].into(),
+            [].into(),
+        );
 
         <span class="kw">let </span>sig = Aarch64ABI::sig(<span class="kw-2">&amp;</span>wasm_sig, <span class="kw-2">&amp;</span>CallingConvention::Default);
         <span class="kw">let </span>params = sig.params;
@@ -412,7 +424,10 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>vreg_abi_sig() {
-        <span class="kw">let </span>wasm_sig = FuncType::new([F32, F64, F32, F64, F32, F32, F64, F32, F64], []);
+        <span class="kw">let </span>wasm_sig = WasmFuncType::new(
+            [F32, F64, F32, F64, F32, F32, F64, F32, F64].into(),
+            [].into(),
+        );
 
         <span class="kw">let </span>sig = Aarch64ABI::sig(<span class="kw-2">&amp;</span>wasm_sig, <span class="kw-2">&amp;</span>CallingConvention::Default);
         <span class="kw">let </span>params = sig.params;
@@ -430,7 +445,10 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>mixed_abi_sig() {
-        <span class="kw">let </span>wasm_sig = FuncType::new([F32, I32, I64, F64, I32, F32, F64, F32, F64], []);
+        <span class="kw">let </span>wasm_sig = WasmFuncType::new(
+            [F32, I32, I64, F64, I32, F32, F64, F32, F64].into(),
+            [].into(),
+        );
 
         <span class="kw">let </span>sig = Aarch64ABI::sig(<span class="kw-2">&amp;</span>wasm_sig, <span class="kw-2">&amp;</span>CallingConvention::Default);
         <span class="kw">let </span>params = sig.params;
@@ -446,7 +464,7 @@
         match_reg_arg(params.get(<span class="number">8</span>).unwrap(), F64, regs::vreg(<span class="number">5</span>));
     }
 
-    <span class="kw">fn </span>match_reg_arg(abi_arg: <span class="kw-2">&amp;</span>ABIArg, expected_ty: ValType, expected_reg: Reg) {
+    <span class="kw">fn </span>match_reg_arg(abi_arg: <span class="kw-2">&amp;</span>ABIArg, expected_ty: WasmType, expected_reg: Reg) {
         <span class="kw">match </span>abi_arg {
             <span class="kw-2">&amp;</span>ABIArg::Reg { reg, ty } =&gt; {
                 <span class="macro">assert_eq!</span>(reg, expected_reg);
@@ -456,7 +474,7 @@
         }
     }
 
-    <span class="kw">fn </span>match_stack_arg(abi_arg: <span class="kw-2">&amp;</span>ABIArg, expected_ty: ValType, expected_offset: u32) {
+    <span class="kw">fn </span>match_stack_arg(abi_arg: <span class="kw-2">&amp;</span>ABIArg, expected_ty: WasmType, expected_offset: u32) {
         <span class="kw">match </span>abi_arg {
             <span class="kw-2">&amp;</span>ABIArg::Stack { offset, ty } =&gt; {
                 <span class="macro">assert_eq!</span>(offset, expected_offset);

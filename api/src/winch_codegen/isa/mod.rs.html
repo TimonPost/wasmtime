@@ -224,8 +224,8 @@
     fmt::{<span class="self">self</span>, Debug, Display},
 };
 <span class="kw">use </span>target_lexicon::{Architecture, Triple};
-<span class="kw">use </span>wasmparser::{FuncType, FuncValidator, FunctionBody, ValidatorResources};
-<span class="kw">use </span>wasmtime_environ::ModuleTranslation;
+<span class="kw">use </span>wasmparser::{FuncValidator, FunctionBody, ValidatorResources};
+<span class="kw">use </span>wasmtime_environ::{ModuleTranslation, WasmFuncType};
 
 <span class="attr">#[cfg(feature = <span class="string">&quot;x64&quot;</span>)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>x64;
@@ -362,7 +362,7 @@
     <span class="doccomment">/// Compile a function.
     </span><span class="kw">fn </span>compile_function(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        sig: <span class="kw-2">&amp;</span>FuncType,
+        sig: <span class="kw-2">&amp;</span>WasmFuncType,
         body: <span class="kw-2">&amp;</span>FunctionBody,
         translation: <span class="kw-2">&amp;</span>ModuleTranslation,
         validator: <span class="kw-2">&amp;mut </span>FuncValidator&lt;ValidatorResources&gt;,
@@ -407,7 +407,7 @@
     /// depending on the `kind` paramter.
     </span><span class="kw">fn </span>compile_trampoline(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        ty: <span class="kw-2">&amp;</span>FuncType,
+        ty: <span class="kw-2">&amp;</span>WasmFuncType,
         kind: TrampolineKind,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;MachBufferFinalized&lt;Final&gt;&gt;;
 

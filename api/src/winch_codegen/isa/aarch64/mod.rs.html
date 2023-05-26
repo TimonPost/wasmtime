@@ -143,8 +143,8 @@
 <span class="kw">use </span>cranelift_codegen::{MachTextSectionBuilder, TextSectionBuilder};
 <span class="kw">use </span>masm::MacroAssembler <span class="kw">as </span>Aarch64Masm;
 <span class="kw">use </span>target_lexicon::Triple;
-<span class="kw">use </span>wasmparser::{FuncType, FuncValidator, FunctionBody, ValidatorResources};
-<span class="kw">use </span>wasmtime_environ::ModuleTranslation;
+<span class="kw">use </span>wasmparser::{FuncValidator, FunctionBody, ValidatorResources};
+<span class="kw">use </span>wasmtime_environ::{ModuleTranslation, WasmFuncType};
 
 <span class="kw">mod </span>abi;
 <span class="kw">mod </span>address;
@@ -211,7 +211,7 @@
 
     <span class="kw">fn </span>compile_function(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        sig: <span class="kw-2">&amp;</span>FuncType,
+        sig: <span class="kw-2">&amp;</span>WasmFuncType,
         body: <span class="kw-2">&amp;</span>FunctionBody,
         translation: <span class="kw-2">&amp;</span>ModuleTranslation,
         validator: <span class="kw-2">&amp;mut </span>FuncValidator&lt;ValidatorResources&gt;,
@@ -221,7 +221,7 @@
         <span class="kw">let </span>stack = Stack::new();
         <span class="kw">let </span>abi_sig = abi::Aarch64ABI::sig(sig, <span class="kw-2">&amp;</span>CallingConvention::Default);
 
-        <span class="kw">let </span>defined_locals = DefinedLocals::new(<span class="kw-2">&amp;mut </span>body, validator)<span class="question-mark">?</span>;
+        <span class="kw">let </span>defined_locals = DefinedLocals::new(translation, <span class="kw-2">&amp;mut </span>body, validator)<span class="question-mark">?</span>;
         <span class="kw">let </span>frame = Frame::new::&lt;abi::Aarch64ABI&gt;(<span class="kw-2">&amp;</span>abi_sig, <span class="kw-2">&amp;</span>defined_locals)<span class="question-mark">?</span>;
         <span class="comment">// TODO: Add floating point bitmask
         </span><span class="kw">let </span>regalloc = RegAlloc::new(RegSet::new(ALL_GPR, <span class="number">0</span>), scratch());
@@ -246,7 +246,7 @@
 
     <span class="kw">fn </span>compile_trampoline(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        _ty: <span class="kw-2">&amp;</span>FuncType,
+        _ty: <span class="kw-2">&amp;</span>WasmFuncType,
         _kind: TrampolineKind,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;MachBufferFinalized&lt;Final&gt;&gt; {
         <span class="macro">todo!</span>()
