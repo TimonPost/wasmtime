@@ -1002,47 +1002,35 @@
 <a href="#1002" id="1002">1002</a>
 <a href="#1003" id="1003">1003</a>
 <a href="#1004" id="1004">1004</a>
-<a href="#1005" id="1005">1005</a>
-<a href="#1006" id="1006">1006</a>
-<a href="#1007" id="1007">1007</a>
-<a href="#1008" id="1008">1008</a>
-<a href="#1009" id="1009">1009</a>
-<a href="#1010" id="1010">1010</a>
-<a href="#1011" id="1011">1011</a>
-<a href="#1012" id="1012">1012</a>
-<a href="#1013" id="1013">1013</a>
-<a href="#1014" id="1014">1014</a>
-<a href="#1015" id="1015">1015</a>
-<a href="#1016" id="1016">1016</a>
-<a href="#1017" id="1017">1017</a>
-<a href="#1018" id="1018">1018</a>
-<a href="#1019" id="1019">1019</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::preview2::filesystem::{Dir, File, TableFsExt};
 <span class="kw">use </span><span class="kw">crate</span>::preview2::stream::TableStreamExt;
-<span class="kw">use </span><span class="kw">crate</span>::preview2::{wasi, DirPerms, FilePerms, Table, TableError, WasiView};
+<span class="kw">use </span><span class="kw">crate</span>::preview2::wasi::clocks::wall_clock;
+<span class="kw">use </span><span class="kw">crate</span>::preview2::wasi::filesystem::filesystem;
+<span class="kw">use </span><span class="kw">crate</span>::preview2::wasi::io::streams;
+<span class="kw">use </span><span class="kw">crate</span>::preview2::{DirPerms, FilePerms, Table, TableError, WasiView};
 
-<span class="kw">use </span>wasi::filesystem::ErrorCode;
+<span class="kw">use </span>filesystem::ErrorCode;
 
-<span class="kw">impl </span>From&lt;TableError&gt; <span class="kw">for </span>wasi::filesystem::Error {
-    <span class="kw">fn </span>from(error: TableError) -&gt; wasi::filesystem::Error {
+<span class="kw">impl </span>From&lt;TableError&gt; <span class="kw">for </span>filesystem::Error {
+    <span class="kw">fn </span>from(error: TableError) -&gt; filesystem::Error {
         <span class="kw">match </span>error {
-            TableError::Full =&gt; wasi::filesystem::Error::trap(<span class="macro">anyhow::anyhow!</span>(error)),
+            TableError::Full =&gt; filesystem::Error::trap(<span class="macro">anyhow::anyhow!</span>(error)),
             TableError::NotPresent | TableError::WrongType =&gt; ErrorCode::BadDescriptor.into(),
         }
     }
 }
 
 <span class="attr">#[async_trait::async_trait]
-</span><span class="kw">impl</span>&lt;T: WasiView&gt; wasi::filesystem::Host <span class="kw">for </span>T {
+</span><span class="kw">impl</span>&lt;T: WasiView&gt; filesystem::Host <span class="kw">for </span>T {
     <span class="kw">async fn </span>advise(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        fd: wasi::filesystem::Descriptor,
-        offset: wasi::filesystem::Filesize,
-        len: wasi::filesystem::Filesize,
-        advice: wasi::filesystem::Advice,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), wasi::filesystem::Error&gt; {
+        fd: filesystem::Descriptor,
+        offset: filesystem::Filesize,
+        len: filesystem::Filesize,
+        advice: filesystem::Advice,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), filesystem::Error&gt; {
+        <span class="kw">use </span>filesystem::Advice;
         <span class="kw">use </span>system_interface::fs::{Advice <span class="kw">as </span>A, FileIoExt};
-        <span class="kw">use </span>wasi::filesystem::Advice;
 
         <span class="kw">let </span>advice = <span class="kw">match </span>advice {
             Advice::Normal =&gt; A::Normal,
@@ -1058,10 +1046,7 @@
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">async fn </span>sync_data(
-        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        fd: wasi::filesystem::Descriptor,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), wasi::filesystem::Error&gt; {
+    <span class="kw">async fn </span>sync_data(<span class="kw-2">&amp;mut </span><span class="self">self</span>, fd: filesystem::Descriptor) -&gt; <span class="prelude-ty">Result</span>&lt;(), filesystem::Error&gt; {
         <span class="kw">let </span>table = <span class="self">self</span>.table();
         <span class="kw">if </span>table.is_file(fd) {
             <span class="kw">match </span>table.get_file(fd)<span class="question-mark">?</span>.file.sync_data() {
@@ -1091,11 +1076,11 @@
 
     <span class="kw">async fn </span>get_flags(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        fd: wasi::filesystem::Descriptor,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;wasi::filesystem::DescriptorFlags, wasi::filesystem::Error&gt; {
+        fd: filesystem::Descriptor,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;filesystem::DescriptorFlags, filesystem::Error&gt; {
         <span class="kw">use </span>cap_std::io_lifetimes::AsFilelike;
+        <span class="kw">use </span>filesystem::DescriptorFlags;
         <span class="kw">use </span>system_interface::fs::{FdFlags, GetSetFdFlags};
-        <span class="kw">use </span>wasi::filesystem::DescriptorFlags;
 
         <span class="kw">fn </span>get_from_fdflags(f: <span class="kw">impl </span>AsFilelike) -&gt; std::io::Result&lt;DescriptorFlags&gt; {
             <span class="kw">let </span>flags = f.as_filelike().get_fd_flags()<span class="question-mark">?</span>;
@@ -1140,15 +1125,15 @@
 
     <span class="kw">async fn </span>get_type(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        fd: wasi::filesystem::Descriptor,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;wasi::filesystem::DescriptorType, wasi::filesystem::Error&gt; {
+        fd: filesystem::Descriptor,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;filesystem::DescriptorType, filesystem::Error&gt; {
         <span class="kw">let </span>table = <span class="self">self</span>.table();
 
         <span class="kw">if </span>table.is_file(fd) {
             <span class="kw">let </span>meta = table.get_file(fd)<span class="question-mark">?</span>.file.metadata()<span class="question-mark">?</span>;
             <span class="prelude-val">Ok</span>(descriptortype_from(meta.file_type()))
         } <span class="kw">else if </span>table.is_dir(fd) {
-            <span class="prelude-val">Ok</span>(wasi::filesystem::DescriptorType::Directory)
+            <span class="prelude-val">Ok</span>(filesystem::DescriptorType::Directory)
         } <span class="kw">else </span>{
             <span class="prelude-val">Err</span>(ErrorCode::BadDescriptor.into())
         }
@@ -1156,9 +1141,9 @@
 
     <span class="kw">async fn </span>set_size(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        fd: wasi::filesystem::Descriptor,
-        size: wasi::filesystem::Filesize,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), wasi::filesystem::Error&gt; {
+        fd: filesystem::Descriptor,
+        size: filesystem::Filesize,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), filesystem::Error&gt; {
         <span class="kw">let </span>f = <span class="self">self</span>.table().get_file(fd)<span class="question-mark">?</span>;
         <span class="kw">if </span>!f.perms.contains(FilePerms::WRITE) {
             <span class="prelude-val">Err</span>(ErrorCode::NotPermitted)<span class="question-mark">?</span>;
@@ -1169,10 +1154,10 @@
 
     <span class="kw">async fn </span>set_times(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        fd: wasi::filesystem::Descriptor,
-        atim: wasi::filesystem::NewTimestamp,
-        mtim: wasi::filesystem::NewTimestamp,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), wasi::filesystem::Error&gt; {
+        fd: filesystem::Descriptor,
+        atim: filesystem::NewTimestamp,
+        mtim: filesystem::NewTimestamp,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), filesystem::Error&gt; {
         <span class="kw">use </span>fs_set_times::SetTimes;
 
         <span class="kw">let </span>table = <span class="self">self</span>.table();
@@ -1201,10 +1186,10 @@
 
     <span class="kw">async fn </span>read(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        fd: wasi::filesystem::Descriptor,
-        len: wasi::filesystem::Filesize,
-        offset: wasi::filesystem::Filesize,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(Vec&lt;u8&gt;, bool), wasi::filesystem::Error&gt; {
+        fd: filesystem::Descriptor,
+        len: filesystem::Filesize,
+        offset: filesystem::Filesize,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(Vec&lt;u8&gt;, bool), filesystem::Error&gt; {
         <span class="kw">use </span>std::io::IoSliceMut;
         <span class="kw">use </span>system_interface::fs::FileIoExt;
 
@@ -1232,10 +1217,10 @@
 
     <span class="kw">async fn </span>write(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        fd: wasi::filesystem::Descriptor,
+        fd: filesystem::Descriptor,
         buf: Vec&lt;u8&gt;,
-        offset: wasi::filesystem::Filesize,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;wasi::filesystem::Filesize, wasi::filesystem::Error&gt; {
+        offset: filesystem::Filesize,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;filesystem::Filesize, filesystem::Error&gt; {
         <span class="kw">use </span>std::io::IoSlice;
         <span class="kw">use </span>system_interface::fs::FileIoExt;
 
@@ -1247,13 +1232,13 @@
 
         <span class="kw">let </span>bytes_written = f.file.write_vectored_at(<span class="kw-2">&amp;</span>[IoSlice::new(<span class="kw-2">&amp;</span>buf)], offset)<span class="question-mark">?</span>;
 
-        <span class="prelude-val">Ok</span>(wasi::filesystem::Filesize::try_from(bytes_written).expect(<span class="string">&quot;usize fits in Filesize&quot;</span>))
+        <span class="prelude-val">Ok</span>(filesystem::Filesize::try_from(bytes_written).expect(<span class="string">&quot;usize fits in Filesize&quot;</span>))
     }
 
     <span class="kw">async fn </span>read_directory(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        fd: wasi::filesystem::Descriptor,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;wasi::filesystem::DirectoryEntryStream, wasi::filesystem::Error&gt; {
+        fd: filesystem::Descriptor,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;filesystem::DirectoryEntryStream, filesystem::Error&gt; {
         <span class="kw">use </span>cap_fs_ext::{DirEntryExt, MetadataExt};
 
         <span class="kw">let </span>table = <span class="self">self</span>.table_mut();
@@ -1281,7 +1266,7 @@
                 .file_name()
                 .into_string()
                 .map_err(|<span class="kw">_</span>| ReaddirError::IllegalSequence)<span class="question-mark">?</span>;
-            <span class="prelude-val">Ok</span>(wasi::filesystem::DirectoryEntry { inode, type_, name })
+            <span class="prelude-val">Ok</span>(filesystem::DirectoryEntry { inode, type_, name })
         });
         <span class="comment">// On windows, filter out files like `C:\DumpStack.log.tmp` which we
         // can&#39;t get full metadata for.
@@ -1299,7 +1284,7 @@
         </span>});
         <span class="kw">let </span>entries = entries.map(|r| <span class="kw">match </span>r {
             <span class="prelude-val">Ok</span>(r) =&gt; <span class="prelude-val">Ok</span>(r),
-            <span class="prelude-val">Err</span>(ReaddirError::Io(e)) =&gt; <span class="prelude-val">Err</span>(wasi::filesystem::Error::from(e)),
+            <span class="prelude-val">Err</span>(ReaddirError::Io(e)) =&gt; <span class="prelude-val">Err</span>(filesystem::Error::from(e)),
             <span class="prelude-val">Err</span>(ReaddirError::IllegalSequence) =&gt; <span class="prelude-val">Err</span>(ErrorCode::IllegalByteSequence.into()),
         });
         <span class="prelude-val">Ok</span>(table.push_readdir(ReaddirIterator::new(entries))<span class="question-mark">?</span>)
@@ -1307,8 +1292,8 @@
 
     <span class="kw">async fn </span>read_directory_entry(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        stream: wasi::filesystem::DirectoryEntryStream,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;wasi::filesystem::DirectoryEntry&gt;, wasi::filesystem::Error&gt; {
+        stream: filesystem::DirectoryEntryStream,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;filesystem::DirectoryEntry&gt;, filesystem::Error&gt; {
         <span class="kw">let </span>table = <span class="self">self</span>.table();
         <span class="kw">let </span>readdir = table.get_readdir(stream)<span class="question-mark">?</span>;
         readdir.next()
@@ -1316,16 +1301,13 @@
 
     <span class="kw">async fn </span>drop_directory_entry_stream(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        stream: wasi::filesystem::DirectoryEntryStream,
+        stream: filesystem::DirectoryEntryStream,
     ) -&gt; anyhow::Result&lt;()&gt; {
         <span class="self">self</span>.table_mut().delete_readdir(stream)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">async fn </span>sync(
-        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        fd: wasi::filesystem::Descriptor,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), wasi::filesystem::Error&gt; {
+    <span class="kw">async fn </span>sync(<span class="kw-2">&amp;mut </span><span class="self">self</span>, fd: filesystem::Descriptor) -&gt; <span class="prelude-ty">Result</span>&lt;(), filesystem::Error&gt; {
         <span class="kw">let </span>table = <span class="self">self</span>.table();
         <span class="kw">if </span>table.is_file(fd) {
             <span class="kw">match </span>table.get_file(fd)<span class="question-mark">?</span>.file.sync_all() {
@@ -1355,9 +1337,9 @@
 
     <span class="kw">async fn </span>create_directory_at(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        fd: wasi::filesystem::Descriptor,
+        fd: filesystem::Descriptor,
         path: String,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), wasi::filesystem::Error&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), filesystem::Error&gt; {
         <span class="kw">let </span>table = <span class="self">self</span>.table();
         <span class="kw">let </span>d = table.get_dir(fd)<span class="question-mark">?</span>;
         <span class="kw">if </span>!d.perms.contains(DirPerms::MUTATE) {
@@ -1369,8 +1351,8 @@
 
     <span class="kw">async fn </span>stat(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        fd: wasi::filesystem::Descriptor,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;wasi::filesystem::DescriptorStat, wasi::filesystem::Error&gt; {
+        fd: filesystem::Descriptor,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;filesystem::DescriptorStat, filesystem::Error&gt; {
         <span class="kw">let </span>table = <span class="self">self</span>.table();
         <span class="kw">if </span>table.is_file(fd) {
             <span class="kw">let </span>f = table.get_file(fd)<span class="question-mark">?</span>;
@@ -1393,10 +1375,10 @@
 
     <span class="kw">async fn </span>stat_at(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        fd: wasi::filesystem::Descriptor,
-        path_flags: wasi::filesystem::PathFlags,
+        fd: filesystem::Descriptor,
+        path_flags: filesystem::PathFlags,
         path: String,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;wasi::filesystem::DescriptorStat, wasi::filesystem::Error&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;filesystem::DescriptorStat, filesystem::Error&gt; {
         <span class="kw">let </span>table = <span class="self">self</span>.table();
         <span class="kw">let </span>d = table.get_dir(fd)<span class="question-mark">?</span>;
         <span class="kw">if </span>!d.perms.contains(DirPerms::READ) {
@@ -1413,12 +1395,12 @@
 
     <span class="kw">async fn </span>set_times_at(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        fd: wasi::filesystem::Descriptor,
-        path_flags: wasi::filesystem::PathFlags,
+        fd: filesystem::Descriptor,
+        path_flags: filesystem::PathFlags,
         path: String,
-        atim: wasi::filesystem::NewTimestamp,
-        mtim: wasi::filesystem::NewTimestamp,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), wasi::filesystem::Error&gt; {
+        atim: filesystem::NewTimestamp,
+        mtim: filesystem::NewTimestamp,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), filesystem::Error&gt; {
         <span class="kw">use </span>cap_fs_ext::DirExt;
 
         <span class="kw">let </span>table = <span class="self">self</span>.table();
@@ -1446,13 +1428,13 @@
 
     <span class="kw">async fn </span>link_at(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        fd: wasi::filesystem::Descriptor,
+        fd: filesystem::Descriptor,
         <span class="comment">// TODO delete the path flags from this function
-        </span>old_path_flags: wasi::filesystem::PathFlags,
+        </span>old_path_flags: filesystem::PathFlags,
         old_path: String,
-        new_descriptor: wasi::filesystem::Descriptor,
+        new_descriptor: filesystem::Descriptor,
         new_path: String,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), wasi::filesystem::Error&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), filesystem::Error&gt; {
         <span class="kw">let </span>table = <span class="self">self</span>.table();
         <span class="kw">let </span>old_dir = table.get_dir(fd)<span class="question-mark">?</span>;
         <span class="kw">if </span>!old_dir.perms.contains(DirPerms::MUTATE) {
@@ -1471,18 +1453,18 @@
 
     <span class="kw">async fn </span>open_at(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        fd: wasi::filesystem::Descriptor,
-        path_flags: wasi::filesystem::PathFlags,
+        fd: filesystem::Descriptor,
+        path_flags: filesystem::PathFlags,
         path: String,
-        oflags: wasi::filesystem::OpenFlags,
-        flags: wasi::filesystem::DescriptorFlags,
+        oflags: filesystem::OpenFlags,
+        flags: filesystem::DescriptorFlags,
         <span class="comment">// TODO: These are the permissions to use when creating a new file.
         // Not implemented yet.
-        </span>_mode: wasi::filesystem::Modes,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;wasi::filesystem::Descriptor, wasi::filesystem::Error&gt; {
+        </span>_mode: filesystem::Modes,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;filesystem::Descriptor, filesystem::Error&gt; {
         <span class="kw">use </span>cap_fs_ext::{FollowSymlinks, OpenOptionsFollowExt, OpenOptionsMaybeDirExt};
+        <span class="kw">use </span>filesystem::{DescriptorFlags, OpenFlags};
         <span class="kw">use </span>system_interface::fs::{FdFlags, GetSetFdFlags};
-        <span class="kw">use </span>wasi::filesystem::{DescriptorFlags, OpenFlags};
 
         <span class="kw">let </span>table = <span class="self">self</span>.table_mut();
         <span class="kw">if </span>table.is_file(fd) {
@@ -1567,7 +1549,7 @@
         }
     }
 
-    <span class="kw">async fn </span>drop_descriptor(<span class="kw-2">&amp;mut </span><span class="self">self</span>, fd: wasi::filesystem::Descriptor) -&gt; anyhow::Result&lt;()&gt; {
+    <span class="kw">async fn </span>drop_descriptor(<span class="kw-2">&amp;mut </span><span class="self">self</span>, fd: filesystem::Descriptor) -&gt; anyhow::Result&lt;()&gt; {
         <span class="kw">let </span>table = <span class="self">self</span>.table_mut();
         <span class="kw">if </span>table.delete_file(fd).is_err() {
             table.delete_dir(fd)<span class="question-mark">?</span>;
@@ -1577,9 +1559,9 @@
 
     <span class="kw">async fn </span>readlink_at(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        fd: wasi::filesystem::Descriptor,
+        fd: filesystem::Descriptor,
         path: String,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;String, wasi::filesystem::Error&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;String, filesystem::Error&gt; {
         <span class="kw">let </span>table = <span class="self">self</span>.table();
         <span class="kw">let </span>d = table.get_dir(fd)<span class="question-mark">?</span>;
         <span class="kw">if </span>!d.perms.contains(DirPerms::READ) {
@@ -1594,9 +1576,9 @@
 
     <span class="kw">async fn </span>remove_directory_at(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        fd: wasi::filesystem::Descriptor,
+        fd: filesystem::Descriptor,
         path: String,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), wasi::filesystem::Error&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), filesystem::Error&gt; {
         <span class="kw">let </span>table = <span class="self">self</span>.table();
         <span class="kw">let </span>d = table.get_dir(fd)<span class="question-mark">?</span>;
         <span class="kw">if </span>!d.perms.contains(DirPerms::MUTATE) {
@@ -1607,11 +1589,11 @@
 
     <span class="kw">async fn </span>rename_at(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        fd: wasi::filesystem::Descriptor,
+        fd: filesystem::Descriptor,
         old_path: String,
-        new_fd: wasi::filesystem::Descriptor,
+        new_fd: filesystem::Descriptor,
         new_path: String,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), wasi::filesystem::Error&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), filesystem::Error&gt; {
         <span class="kw">let </span>table = <span class="self">self</span>.table();
         <span class="kw">let </span>old_dir = table.get_dir(fd)<span class="question-mark">?</span>;
         <span class="kw">if </span>!old_dir.perms.contains(DirPerms::MUTATE) {
@@ -1627,10 +1609,10 @@
 
     <span class="kw">async fn </span>symlink_at(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        fd: wasi::filesystem::Descriptor,
+        fd: filesystem::Descriptor,
         src_path: String,
         dest_path: String,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), wasi::filesystem::Error&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), filesystem::Error&gt; {
         <span class="comment">// On windows, Dir.symlink is provided by DirExt
         </span><span class="attr">#[cfg(windows)]
         </span><span class="kw">use </span>cap_fs_ext::DirExt;
@@ -1646,9 +1628,9 @@
 
     <span class="kw">async fn </span>unlink_file_at(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        fd: wasi::filesystem::Descriptor,
+        fd: filesystem::Descriptor,
         path: String,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), wasi::filesystem::Error&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), filesystem::Error&gt; {
         <span class="kw">use </span>cap_fs_ext::DirExt;
 
         <span class="kw">let </span>table = <span class="self">self</span>.table();
@@ -1662,74 +1644,68 @@
 
     <span class="kw">async fn </span>access_at(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        _fd: wasi::filesystem::Descriptor,
-        _path_flags: wasi::filesystem::PathFlags,
+        _fd: filesystem::Descriptor,
+        _path_flags: filesystem::PathFlags,
         _path: String,
-        _access: wasi::filesystem::AccessType,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), wasi::filesystem::Error&gt; {
+        _access: filesystem::AccessType,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), filesystem::Error&gt; {
         <span class="macro">todo!</span>()
     }
 
     <span class="kw">async fn </span>change_file_permissions_at(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        _fd: wasi::filesystem::Descriptor,
-        _path_flags: wasi::filesystem::PathFlags,
+        _fd: filesystem::Descriptor,
+        _path_flags: filesystem::PathFlags,
         _path: String,
-        _mode: wasi::filesystem::Modes,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), wasi::filesystem::Error&gt; {
+        _mode: filesystem::Modes,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), filesystem::Error&gt; {
         <span class="macro">todo!</span>()
     }
 
     <span class="kw">async fn </span>change_directory_permissions_at(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        _fd: wasi::filesystem::Descriptor,
-        _path_flags: wasi::filesystem::PathFlags,
+        _fd: filesystem::Descriptor,
+        _path_flags: filesystem::PathFlags,
         _path: String,
-        _mode: wasi::filesystem::Modes,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), wasi::filesystem::Error&gt; {
+        _mode: filesystem::Modes,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), filesystem::Error&gt; {
         <span class="macro">todo!</span>()
     }
 
-    <span class="kw">async fn </span>lock_shared(
-        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        _fd: wasi::filesystem::Descriptor,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), wasi::filesystem::Error&gt; {
+    <span class="kw">async fn </span>lock_shared(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _fd: filesystem::Descriptor) -&gt; <span class="prelude-ty">Result</span>&lt;(), filesystem::Error&gt; {
         <span class="macro">todo!</span>()
     }
 
     <span class="kw">async fn </span>lock_exclusive(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        _fd: wasi::filesystem::Descriptor,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), wasi::filesystem::Error&gt; {
+        _fd: filesystem::Descriptor,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), filesystem::Error&gt; {
         <span class="macro">todo!</span>()
     }
 
     <span class="kw">async fn </span>try_lock_shared(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        _fd: wasi::filesystem::Descriptor,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), wasi::filesystem::Error&gt; {
+        _fd: filesystem::Descriptor,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), filesystem::Error&gt; {
         <span class="macro">todo!</span>()
     }
 
     <span class="kw">async fn </span>try_lock_exclusive(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        _fd: wasi::filesystem::Descriptor,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), wasi::filesystem::Error&gt; {
+        _fd: filesystem::Descriptor,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), filesystem::Error&gt; {
         <span class="macro">todo!</span>()
     }
 
-    <span class="kw">async fn </span>unlock(
-        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        _fd: wasi::filesystem::Descriptor,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), wasi::filesystem::Error&gt; {
+    <span class="kw">async fn </span>unlock(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _fd: filesystem::Descriptor) -&gt; <span class="prelude-ty">Result</span>&lt;(), filesystem::Error&gt; {
         <span class="macro">todo!</span>()
     }
 
     <span class="kw">async fn </span>read_via_stream(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        fd: wasi::filesystem::Descriptor,
-        offset: wasi::filesystem::Filesize,
-    ) -&gt; anyhow::Result&lt;wasi::streams::InputStream&gt; {
+        fd: filesystem::Descriptor,
+        offset: filesystem::Filesize,
+    ) -&gt; anyhow::Result&lt;streams::InputStream&gt; {
         <span class="comment">// FIXME: this skips the perm check. We can&#39;t return a NotPermitted
         // error code here. Do we need to change the interface?
 
@@ -1750,9 +1726,9 @@
 
     <span class="kw">async fn </span>write_via_stream(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        fd: wasi::filesystem::Descriptor,
-        offset: wasi::filesystem::Filesize,
-    ) -&gt; anyhow::Result&lt;wasi::streams::OutputStream&gt; {
+        fd: filesystem::Descriptor,
+        offset: filesystem::Filesize,
+    ) -&gt; anyhow::Result&lt;streams::OutputStream&gt; {
         <span class="comment">// Trap if fd lookup fails:
         </span><span class="kw">let </span>f = <span class="self">self</span>.table().get_file(fd)<span class="question-mark">?</span>;
 
@@ -1770,8 +1746,8 @@
 
     <span class="kw">async fn </span>append_via_stream(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        fd: wasi::filesystem::Descriptor,
-    ) -&gt; anyhow::Result&lt;wasi::streams::OutputStream&gt; {
+        fd: filesystem::Descriptor,
+    ) -&gt; anyhow::Result&lt;streams::OutputStream&gt; {
         <span class="comment">// Trap if fd lookup fails:
         </span><span class="kw">let </span>f = <span class="self">self</span>.table().get_file(fd)<span class="question-mark">?</span>;
 
@@ -1789,7 +1765,7 @@
 }
 
 <span class="attr">#[cfg(unix)]
-</span><span class="kw">fn </span>from_raw_os_error(err: <span class="prelude-ty">Option</span>&lt;i32&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;wasi::filesystem::Error&gt; {
+</span><span class="kw">fn </span>from_raw_os_error(err: <span class="prelude-ty">Option</span>&lt;i32&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;filesystem::Error&gt; {
     <span class="kw">use </span>rustix::io::Errno <span class="kw">as </span>RustixErrno;
     <span class="kw">if </span>err.is_none() {
         <span class="kw">return </span><span class="prelude-val">None</span>;
@@ -1829,7 +1805,7 @@
     })
 }
 <span class="attr">#[cfg(windows)]
-</span><span class="kw">fn </span>from_raw_os_error(raw_os_error: <span class="prelude-ty">Option</span>&lt;i32&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;wasi::filesystem::Error&gt; {
+</span><span class="kw">fn </span>from_raw_os_error(raw_os_error: <span class="prelude-ty">Option</span>&lt;i32&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;filesystem::Error&gt; {
     <span class="kw">use </span>windows_sys::Win32::Foundation;
     <span class="prelude-val">Some</span>(<span class="kw">match </span>raw_os_error.map(|code| code <span class="kw">as </span>u32) {
         <span class="prelude-val">Some</span>(Foundation::ERROR_FILE_NOT_FOUND) =&gt; ErrorCode::NoEntry.into(),
@@ -1858,8 +1834,8 @@
     })
 }
 
-<span class="kw">impl </span>From&lt;std::io::Error&gt; <span class="kw">for </span>wasi::filesystem::Error {
-    <span class="kw">fn </span>from(err: std::io::Error) -&gt; wasi::filesystem::Error {
+<span class="kw">impl </span>From&lt;std::io::Error&gt; <span class="kw">for </span>filesystem::Error {
+    <span class="kw">fn </span>from(err: std::io::Error) -&gt; filesystem::Error {
         <span class="kw">match </span>from_raw_os_error(err.raw_os_error()) {
             <span class="prelude-val">Some</span>(errno) =&gt; errno,
             <span class="prelude-val">None </span>=&gt; <span class="kw">match </span>err.kind() {
@@ -1867,31 +1843,29 @@
                 std::io::ErrorKind::PermissionDenied =&gt; ErrorCode::NotPermitted.into(),
                 std::io::ErrorKind::AlreadyExists =&gt; ErrorCode::Exist.into(),
                 std::io::ErrorKind::InvalidInput =&gt; ErrorCode::Invalid.into(),
-                <span class="kw">_ </span>=&gt; {
-                    wasi::filesystem::Error::trap(<span class="macro">anyhow::anyhow!</span>(err).context(<span class="string">&quot;Unknown OS error&quot;</span>))
-                }
+                <span class="kw">_ </span>=&gt; filesystem::Error::trap(<span class="macro">anyhow::anyhow!</span>(err).context(<span class="string">&quot;Unknown OS error&quot;</span>)),
             },
         }
     }
 }
 
-<span class="kw">impl </span>From&lt;cap_rand::Error&gt; <span class="kw">for </span>wasi::filesystem::Error {
-    <span class="kw">fn </span>from(err: cap_rand::Error) -&gt; wasi::filesystem::Error {
+<span class="kw">impl </span>From&lt;cap_rand::Error&gt; <span class="kw">for </span>filesystem::Error {
+    <span class="kw">fn </span>from(err: cap_rand::Error) -&gt; filesystem::Error {
         <span class="comment">// I picked Error::Io as a &#39;reasonable default&#39;, FIXME dan is this ok?
         </span>from_raw_os_error(err.raw_os_error())
-            .unwrap_or_else(|| wasi::filesystem::Error::from(ErrorCode::Io))
+            .unwrap_or_else(|| filesystem::Error::from(ErrorCode::Io))
     }
 }
 
-<span class="kw">impl </span>From&lt;std::num::TryFromIntError&gt; <span class="kw">for </span>wasi::filesystem::Error {
-    <span class="kw">fn </span>from(_err: std::num::TryFromIntError) -&gt; wasi::filesystem::Error {
+<span class="kw">impl </span>From&lt;std::num::TryFromIntError&gt; <span class="kw">for </span>filesystem::Error {
+    <span class="kw">fn </span>from(_err: std::num::TryFromIntError) -&gt; filesystem::Error {
         ErrorCode::Overflow.into()
     }
 }
 
-<span class="kw">fn </span>descriptortype_from(ft: cap_std::fs::FileType) -&gt; wasi::filesystem::DescriptorType {
+<span class="kw">fn </span>descriptortype_from(ft: cap_std::fs::FileType) -&gt; filesystem::DescriptorType {
     <span class="kw">use </span>cap_fs_ext::FileTypeExt;
-    <span class="kw">use </span>wasi::filesystem::DescriptorType;
+    <span class="kw">use </span>filesystem::DescriptorType;
     <span class="kw">if </span>ft.is_dir() {
         DescriptorType::Directory
     } <span class="kw">else if </span>ft.is_symlink() {
@@ -1908,10 +1882,10 @@
 }
 
 <span class="kw">fn </span>systemtimespec_from(
-    t: wasi::filesystem::NewTimestamp,
-) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;fs_set_times::SystemTimeSpec&gt;, wasi::filesystem::Error&gt; {
+    t: filesystem::NewTimestamp,
+) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;fs_set_times::SystemTimeSpec&gt;, filesystem::Error&gt; {
+    <span class="kw">use </span>filesystem::NewTimestamp;
     <span class="kw">use </span>fs_set_times::SystemTimeSpec;
-    <span class="kw">use </span>wasi::filesystem::NewTimestamp;
     <span class="kw">match </span>t {
         NewTimestamp::NoChange =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
         NewTimestamp::Now =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(SystemTimeSpec::SymbolicNow)),
@@ -1919,23 +1893,21 @@
     }
 }
 
-<span class="kw">fn </span>systemtime_from(
-    t: wasi::wall_clock::Datetime,
-) -&gt; <span class="prelude-ty">Result</span>&lt;std::time::SystemTime, wasi::filesystem::Error&gt; {
+<span class="kw">fn </span>systemtime_from(t: wall_clock::Datetime) -&gt; <span class="prelude-ty">Result</span>&lt;std::time::SystemTime, filesystem::Error&gt; {
     <span class="kw">use </span>std::time::{Duration, SystemTime};
     SystemTime::UNIX_EPOCH
         .checked_add(Duration::new(t.seconds, t.nanoseconds))
         .ok_or_else(|| ErrorCode::Overflow.into())
 }
 
-<span class="kw">fn </span>datetime_from(t: std::time::SystemTime) -&gt; wasi::wall_clock::Datetime {
+<span class="kw">fn </span>datetime_from(t: std::time::SystemTime) -&gt; wall_clock::Datetime {
     <span class="comment">// FIXME make this infallible or handle errors properly
-    </span>wasi::wall_clock::Datetime::try_from(cap_std::time::SystemTime::from_std(t)).unwrap()
+    </span>wall_clock::Datetime::try_from(cap_std::time::SystemTime::from_std(t)).unwrap()
 }
 
-<span class="kw">fn </span>descriptorstat_from(meta: cap_std::fs::Metadata) -&gt; wasi::filesystem::DescriptorStat {
+<span class="kw">fn </span>descriptorstat_from(meta: cap_std::fs::Metadata) -&gt; filesystem::DescriptorStat {
     <span class="kw">use </span>cap_fs_ext::MetadataExt;
-    wasi::filesystem::DescriptorStat {
+    filesystem::DescriptorStat {
         <span class="comment">// FIXME didn&#39;t we agree that the wit could be changed to make the device and ino fields
         // optional?
         </span>device: meta.dev(),
@@ -1947,35 +1919,35 @@
         </span>data_access_timestamp: meta
             .accessed()
             .map(|t| datetime_from(t.into_std()))
-            .unwrap_or(wasi::wall_clock::Datetime {
+            .unwrap_or(wall_clock::Datetime {
                 seconds: <span class="number">0</span>,
                 nanoseconds: <span class="number">0</span>,
             }),
         data_modification_timestamp: meta
             .modified()
             .map(|t| datetime_from(t.into_std()))
-            .unwrap_or(wasi::wall_clock::Datetime {
+            .unwrap_or(wall_clock::Datetime {
                 seconds: <span class="number">0</span>,
                 nanoseconds: <span class="number">0</span>,
             }),
         status_change_timestamp: meta
             .created()
             .map(|t| datetime_from(t.into_std()))
-            .unwrap_or(wasi::wall_clock::Datetime {
+            .unwrap_or(wall_clock::Datetime {
                 seconds: <span class="number">0</span>,
                 nanoseconds: <span class="number">0</span>,
             }),
     }
 }
 
-<span class="kw">fn </span>symlink_follow(path_flags: wasi::filesystem::PathFlags) -&gt; bool {
-    path_flags.contains(wasi::filesystem::PathFlags::SYMLINK_FOLLOW)
+<span class="kw">fn </span>symlink_follow(path_flags: filesystem::PathFlags) -&gt; bool {
+    path_flags.contains(filesystem::PathFlags::SYMLINK_FOLLOW)
 }
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>ReaddirIterator(
     std::sync::Mutex&lt;
         Box&lt;
-            <span class="kw">dyn </span>Iterator&lt;Item = <span class="prelude-ty">Result</span>&lt;wasi::filesystem::DirectoryEntry, wasi::filesystem::Error&gt;&gt;
+            <span class="kw">dyn </span>Iterator&lt;Item = <span class="prelude-ty">Result</span>&lt;filesystem::DirectoryEntry, filesystem::Error&gt;&gt;
                 + Send
                 + <span class="lifetime">&#39;static</span>,
         &gt;,
@@ -1984,19 +1956,17 @@
 
 <span class="kw">impl </span>ReaddirIterator {
     <span class="kw">fn </span>new(
-        i: <span class="kw">impl </span>Iterator&lt;Item = <span class="prelude-ty">Result</span>&lt;wasi::filesystem::DirectoryEntry, wasi::filesystem::Error&gt;&gt;
-            + Send
-            + <span class="lifetime">&#39;static</span>,
+        i: <span class="kw">impl </span>Iterator&lt;Item = <span class="prelude-ty">Result</span>&lt;filesystem::DirectoryEntry, filesystem::Error&gt;&gt; + Send + <span class="lifetime">&#39;static</span>,
     ) -&gt; <span class="self">Self </span>{
         ReaddirIterator(std::sync::Mutex::new(Box::new(i)))
     }
-    <span class="kw">fn </span>next(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;wasi::filesystem::DirectoryEntry&gt;, wasi::filesystem::Error&gt; {
+    <span class="kw">fn </span>next(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;filesystem::DirectoryEntry&gt;, filesystem::Error&gt; {
         <span class="self">self</span>.<span class="number">0</span>.lock().unwrap().next().transpose()
     }
 }
 
 <span class="kw">impl </span>IntoIterator <span class="kw">for </span>ReaddirIterator {
-    <span class="kw">type </span>Item = <span class="prelude-ty">Result</span>&lt;wasi::filesystem::DirectoryEntry, wasi::filesystem::Error&gt;;
+    <span class="kw">type </span>Item = <span class="prelude-ty">Result</span>&lt;filesystem::DirectoryEntry, filesystem::Error&gt;;
     <span class="kw">type </span>IntoIter = Box&lt;<span class="kw">dyn </span>Iterator&lt;Item = <span class="self">Self</span>::Item&gt;&gt;;
 
     <span class="kw">fn </span>into_iter(<span class="self">self</span>) -&gt; <span class="self">Self</span>::IntoIter {

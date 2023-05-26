@@ -25,7 +25,15 @@
 <a href="#25" id="25">25</a>
 <a href="#26" id="26">26</a>
 <a href="#27" id="27">27</a>
-</pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::component_impl::add_component_to_linker;
+<a href="#28" id="28">28</a>
+<a href="#29" id="29">29</a>
+<a href="#30" id="30">30</a>
+<a href="#31" id="31">31</a>
+</pre><pre class="rust"><code><span class="comment">// NB: this crate is temporarily disabled for a breaking change to WIT. This can
+// be re-enabled when the WIT in the wasi-http submodule is updated.
+</span><span class="attr">#![cfg(FALSE)]
+
+</span><span class="kw">use </span><span class="kw">crate</span>::component_impl::add_component_to_linker;
 <span class="kw">pub use crate</span>::r#struct::WasiHttp;
 
 <span class="macro">wasmtime::component::bindgen!</span>({ path: <span class="string">&quot;wasi-http/wit&quot;</span>, world: <span class="string">&quot;proxy&quot;</span>});

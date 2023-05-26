@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["drop_pollable","poll_oneoff"],"type":["Pollable"]};

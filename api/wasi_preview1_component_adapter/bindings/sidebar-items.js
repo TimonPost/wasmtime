@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["console","default_outgoing_http","environment","exit","filesystem","insecure_random","insecure_random_seed","instance_network","ip_name_lookup","monotonic_clock","network","poll","preopens","random","stderr","stdin","stdout","streams","tcp","tcp_create_socket","timezone","types","udp","udp_create_socket","wall_clock"]};
+window.SIDEBAR_ITEMS = {"mod":["wasi"]};

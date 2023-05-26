@@ -16,7 +16,9 @@ bindings.</p>
 <p>For example if your project contained:</p>
 <div class="example-wrap"><pre class="language-text,ignore"><code>// wit/my-component.wit
 
-default world hello-world {
+package my:project
+
+world hello-world {
     import name: func() -&gt; string
     export greet: func()
 }
@@ -86,13 +88,15 @@ worlds, which can be bound here as well:</p>
 <p>For example this WIT input</p>
 <div class="example-wrap"><pre class="language-text,ignore"><code>// wit/my-component.wit
 
+package my:project
+
 interface host {
     gen-random-integer: func() -&gt; u32
     sha256: func(bytes: list&lt;u8&gt;) -&gt; string
 }
 
 default world hello-world {
-    import host: self.host
+    import host
 
     export demo: interface {
         run: func()
@@ -103,6 +107,7 @@ default world hello-world {
 
 <div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="kw">use </span>wasmtime::component::<span class="kw-2">*</span>;
 <span class="kw">use </span>wasmtime::{Config, Engine, Store};
+<span class="kw">use </span>my::project::host::Host;
 
 <span class="macro">bindgen!</span>();
 
@@ -111,7 +116,7 @@ default world hello-world {
 </span>}
 
 <span class="comment">// Note that the trait here is per-interface and within a submodule now.
-</span><span class="kw">impl </span>host::Host <span class="kw">for </span>MyState {
+</span><span class="kw">impl </span>Host <span class="kw">for </span>MyState {
     <span class="kw">fn </span>gen_random_integer(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; wasmtime::Result&lt;u32&gt; {
         <span class="prelude-val">Ok</span>(rand::thread_rng().gen())
     }
@@ -155,18 +160,12 @@ the bindings themselves which can additionally be specified.</p>
 </span><span class="macro">bindgen!</span>();
 
 <span class="comment">// Parse the `wit/` folder adjacent to this crate&#39;s `Cargo.toml` and look
-// for the document `foo`, which must have a `default world` contained
-// within it.
+// for the world `foo` contained in it.
 </span><span class="macro">bindgen!</span>(<span class="string">&quot;foo&quot;</span>);
-
-<span class="comment">// Parse the `wit/` folder adjacent to `Cargo.toml` and look up the document
-// `foo` and the world named `bar`.
-</span><span class="macro">bindgen!</span>(<span class="string">&quot;foo.bar&quot;</span>);
 
 <span class="comment">// Parse the folder `other/wit/folder` adjacent to `Cargo.toml`.
 </span><span class="macro">bindgen!</span>(<span class="kw">in </span><span class="string">&quot;other/wit/folder&quot;</span>);
 <span class="macro">bindgen!</span>(<span class="string">&quot;foo&quot; </span><span class="kw">in </span><span class="string">&quot;other/wit/folder&quot;</span>);
-<span class="macro">bindgen!</span>(<span class="string">&quot;foo.bar&quot; </span><span class="kw">in </span><span class="string">&quot;other/wit/folder&quot;</span>);
 
 <span class="comment">// Parse the file `foo.wit` as a single-file WIT package with no
 // dependencies.
@@ -174,8 +173,7 @@ the bindings themselves which can additionally be specified.</p>
 <p>A more configured version of invoking this macro looks like:</p>
 
 <div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="macro">bindgen!</span>({
-    world: <span class="string">&quot;foo&quot;</span>, <span class="comment">// or &quot;foo.bar&quot;, same as in `bindgen!(&quot;foo&quot;)`
-                  // not needed if `path` has one `default world`
+    world: <span class="string">&quot;foo&quot;</span>, <span class="comment">// not needed if `path` has one `world`
 
     // same as in `bindgen!(in &quot;other/wit/folder&quot;)
     </span>path: <span class="string">&quot;other/wit/folder&quot;</span>,
@@ -183,7 +181,9 @@ the bindings themselves which can additionally be specified.</p>
     <span class="comment">// Instead of `path` the WIT document can be provided inline if
     // desired.
     </span>inline: <span class="string">&quot;
-        default world foo {
+        package my:inline
+
+        world foo {
             // ...
         }
     &quot;</span>,
@@ -219,7 +219,7 @@ the bindings themselves which can additionally be specified.</p>
     <span class="comment">// Restrict the code generated to what&#39;s needed for the interface
     // imports in the inlined WIT document fragment.
     </span>interfaces: <span class="string">&quot;
-        import foo: package.foo;
+        import package.foo
     &quot;</span>,
 
     <span class="comment">// Remap interface names to module names, imported from elsewhere.

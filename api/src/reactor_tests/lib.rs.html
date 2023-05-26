@@ -35,7 +35,7 @@
 <a href="#35" id="35">35</a>
 <a href="#36" id="36">36</a>
 <a href="#37" id="37">37</a>
-</pre><pre class="rust"><code><span class="macro">wit_bindgen::generate!</span>(<span class="string">&quot;test-reactor&quot;</span>);
+</pre><pre class="rust"><code><span class="macro">wit_bindgen::generate!</span>(<span class="string">&quot;test-reactor&quot; </span><span class="kw">in </span><span class="string">&quot;../../wasi/wit&quot;</span>);
 
 <span class="macro">export_test_reactor!</span>(T);
 
@@ -63,12 +63,12 @@
     <span class="kw">fn </span>write_strings_to(o: OutputStream) -&gt; <span class="prelude-ty">Result</span>&lt;(), ()&gt; {
         <span class="kw">unsafe </span>{
             <span class="kw">for </span>s <span class="kw">in </span>STATE.iter() {
-                streams::write(o, s.as_bytes()).map_err(|<span class="kw">_</span>| ())<span class="question-mark">?</span>;
+                wasi::io::streams::write(o, s.as_bytes()).map_err(|<span class="kw">_</span>| ())<span class="question-mark">?</span>;
             }
             <span class="prelude-val">Ok</span>(())
         }
     }
-    <span class="kw">fn </span>pass_an_imported_record(stat: filesystem::DescriptorStat) -&gt; String {
+    <span class="kw">fn </span>pass_an_imported_record(stat: wasi::filesystem::filesystem::DescriptorStat) -&gt; String {
         <span class="macro">format!</span>(<span class="string">&quot;{stat:?}&quot;</span>)
     }
 }

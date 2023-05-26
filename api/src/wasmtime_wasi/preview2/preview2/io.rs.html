@@ -216,8 +216,8 @@
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::preview2::{
     preview2::poll::PollableEntry,
     stream::TableStreamExt,
-    wasi::poll::Pollable,
-    wasi::streams::{<span class="self">self</span>, InputStream, OutputStream, StreamError},
+    wasi::io::streams::{<span class="self">self</span>, InputStream, OutputStream, StreamError},
+    wasi::poll::poll::Pollable,
     TableError, WasiView,
 };
 <span class="kw">use </span>anyhow::anyhow;

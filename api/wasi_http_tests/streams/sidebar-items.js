@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["drop_input_stream","drop_output_stream","forward","read","skip","splice","subscribe_to_input_stream","subscribe_to_output_stream","write","write_zeroes"],"struct":["StreamError"],"type":["InputStream","OutputStream","Pollable"]};

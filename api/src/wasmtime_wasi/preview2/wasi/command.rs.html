@@ -41,12 +41,10 @@
 <a href="#41" id="41">41</a>
 <a href="#42" id="42">42</a>
 <a href="#43" id="43">43</a>
-<a href="#44" id="44">44</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::preview2::WasiView;
 
 <span class="macro">wasmtime::component::bindgen!</span>({
-    path: <span class="string">&quot;wit&quot;</span>,
-    world: <span class="string">&quot;command&quot;</span>,
+    world: <span class="string">&quot;wasi:preview/command&quot;</span>,
     tracing: <span class="bool-val">true</span>,
     <span class="kw">async</span>: <span class="bool-val">true</span>,
     trappable_error_type: {
@@ -54,36 +52,36 @@
         <span class="string">&quot;streams&quot;</span>::<span class="string">&quot;stream-error&quot;</span>: Error,
     },
     with: {
-       <span class="string">&quot;filesystem&quot;</span>: <span class="kw">crate</span>::preview2::wasi::filesystem,
-       <span class="string">&quot;monotonic_clock&quot;</span>: <span class="kw">crate</span>::preview2::wasi::monotonic_clock,
-       <span class="string">&quot;poll&quot;</span>: <span class="kw">crate</span>::preview2::wasi::poll,
-       <span class="string">&quot;streams&quot;</span>: <span class="kw">crate</span>::preview2::wasi::streams,
-       <span class="string">&quot;timezone&quot;</span>: <span class="kw">crate</span>::preview2::wasi::timezone,
-       <span class="string">&quot;wall_clock&quot;</span>: <span class="kw">crate</span>::preview2::wasi::wall_clock,
-       <span class="string">&quot;random&quot;</span>: <span class="kw">crate</span>::preview2::wasi::random,
-       <span class="string">&quot;environment&quot;</span>: <span class="kw">crate</span>::preview2::wasi::environment,
-       <span class="string">&quot;exit&quot;</span>: <span class="kw">crate</span>::preview2::wasi::exit,
-       <span class="string">&quot;preopens&quot;</span>: <span class="kw">crate</span>::preview2::wasi::preopens,
-       <span class="string">&quot;stdin&quot;</span>: <span class="kw">crate</span>::preview2::wasi::stdin,
-       <span class="string">&quot;stdout&quot;</span>: <span class="kw">crate</span>::preview2::wasi::stdout,
-       <span class="string">&quot;stderr&quot;</span>: <span class="kw">crate</span>::preview2::wasi::stderr,
+       <span class="string">&quot;wasi:filesystem/filesystem&quot;</span>: <span class="kw">crate</span>::preview2::wasi::filesystem::filesystem,
+       <span class="string">&quot;wasi:clocks/monotonic_clock&quot;</span>: <span class="kw">crate</span>::preview2::wasi::clocks::monotonic_clock,
+       <span class="string">&quot;wasi:poll/poll&quot;</span>: <span class="kw">crate</span>::preview2::wasi::poll::poll,
+       <span class="string">&quot;wasi:io/streams&quot;</span>: <span class="kw">crate</span>::preview2::wasi::io::streams,
+       <span class="string">&quot;wasi:clocks/timezone&quot;</span>: <span class="kw">crate</span>::preview2::wasi::clocks::timezone,
+       <span class="string">&quot;wasi:clocks/wall_clock&quot;</span>: <span class="kw">crate</span>::preview2::wasi::clocks::wall_clock,
+       <span class="string">&quot;wasi:random/random&quot;</span>: <span class="kw">crate</span>::preview2::wasi::random::random,
+       <span class="string">&quot;wasi:cli_base/environment&quot;</span>: <span class="kw">crate</span>::preview2::wasi::cli_base::environment,
+       <span class="string">&quot;wasi:cli_base/exit&quot;</span>: <span class="kw">crate</span>::preview2::wasi::cli_base::exit,
+       <span class="string">&quot;wasi:cli_base/preopens&quot;</span>: <span class="kw">crate</span>::preview2::wasi::cli_base::preopens,
+       <span class="string">&quot;wasi:cli_base/stdin&quot;</span>: <span class="kw">crate</span>::preview2::wasi::cli_base::stdin,
+       <span class="string">&quot;wasi:cli_base/stdout&quot;</span>: <span class="kw">crate</span>::preview2::wasi::cli_base::stdout,
+       <span class="string">&quot;wasi:cli_base/stderr&quot;</span>: <span class="kw">crate</span>::preview2::wasi::cli_base::stderr,
     },
 });
 
 <span class="kw">pub fn </span>add_to_linker&lt;T: WasiView&gt;(l: <span class="kw-2">&amp;mut </span>wasmtime::component::Linker&lt;T&gt;) -&gt; anyhow::Result&lt;()&gt; {
-    <span class="kw">crate</span>::preview2::wasi::wall_clock::add_to_linker(l, |t| t)<span class="question-mark">?</span>;
-    <span class="kw">crate</span>::preview2::wasi::monotonic_clock::add_to_linker(l, |t| t)<span class="question-mark">?</span>;
-    <span class="kw">crate</span>::preview2::wasi::timezone::add_to_linker(l, |t| t)<span class="question-mark">?</span>;
-    <span class="kw">crate</span>::preview2::wasi::filesystem::add_to_linker(l, |t| t)<span class="question-mark">?</span>;
-    <span class="kw">crate</span>::preview2::wasi::poll::add_to_linker(l, |t| t)<span class="question-mark">?</span>;
-    <span class="kw">crate</span>::preview2::wasi::streams::add_to_linker(l, |t| t)<span class="question-mark">?</span>;
-    <span class="kw">crate</span>::preview2::wasi::random::add_to_linker(l, |t| t)<span class="question-mark">?</span>;
-    <span class="kw">crate</span>::preview2::wasi::exit::add_to_linker(l, |t| t)<span class="question-mark">?</span>;
-    <span class="kw">crate</span>::preview2::wasi::environment::add_to_linker(l, |t| t)<span class="question-mark">?</span>;
-    <span class="kw">crate</span>::preview2::wasi::preopens::add_to_linker(l, |t| t)<span class="question-mark">?</span>;
-    <span class="kw">crate</span>::preview2::wasi::stdin::add_to_linker(l, |t| t)<span class="question-mark">?</span>;
-    <span class="kw">crate</span>::preview2::wasi::stdout::add_to_linker(l, |t| t)<span class="question-mark">?</span>;
-    <span class="kw">crate</span>::preview2::wasi::stderr::add_to_linker(l, |t| t)<span class="question-mark">?</span>;
+    <span class="kw">crate</span>::preview2::wasi::clocks::wall_clock::add_to_linker(l, |t| t)<span class="question-mark">?</span>;
+    <span class="kw">crate</span>::preview2::wasi::clocks::monotonic_clock::add_to_linker(l, |t| t)<span class="question-mark">?</span>;
+    <span class="kw">crate</span>::preview2::wasi::clocks::timezone::add_to_linker(l, |t| t)<span class="question-mark">?</span>;
+    <span class="kw">crate</span>::preview2::wasi::filesystem::filesystem::add_to_linker(l, |t| t)<span class="question-mark">?</span>;
+    <span class="kw">crate</span>::preview2::wasi::poll::poll::add_to_linker(l, |t| t)<span class="question-mark">?</span>;
+    <span class="kw">crate</span>::preview2::wasi::io::streams::add_to_linker(l, |t| t)<span class="question-mark">?</span>;
+    <span class="kw">crate</span>::preview2::wasi::random::random::add_to_linker(l, |t| t)<span class="question-mark">?</span>;
+    <span class="kw">crate</span>::preview2::wasi::cli_base::exit::add_to_linker(l, |t| t)<span class="question-mark">?</span>;
+    <span class="kw">crate</span>::preview2::wasi::cli_base::environment::add_to_linker(l, |t| t)<span class="question-mark">?</span>;
+    <span class="kw">crate</span>::preview2::wasi::cli_base::preopens::add_to_linker(l, |t| t)<span class="question-mark">?</span>;
+    <span class="kw">crate</span>::preview2::wasi::cli_base::stdin::add_to_linker(l, |t| t)<span class="question-mark">?</span>;
+    <span class="kw">crate</span>::preview2::wasi::cli_base::stdout::add_to_linker(l, |t| t)<span class="question-mark">?</span>;
+    <span class="kw">crate</span>::preview2::wasi::cli_base::stderr::add_to_linker(l, |t| t)<span class="question-mark">?</span>;
     <span class="prelude-val">Ok</span>(())
 }
 </code></pre></div>

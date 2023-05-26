@@ -1914,9 +1914,6 @@
 <a href="#1914" id="1914">1914</a>
 <a href="#1915" id="1915">1915</a>
 <a href="#1916" id="1916">1916</a>
-<a href="#1917" id="1917">1917</a>
-<a href="#1918" id="1918">1918</a>
-<a href="#1919" id="1919">1919</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::component::{MAX_FLAT_PARAMS, MAX_FLAT_RESULTS};
 <span class="kw">use crate</span>::{
     EntityType, ModuleTypes, ModuleTypesBuilder, PrimaryMap, SignatureIndex, TypeConvert,
@@ -2418,6 +2415,9 @@
                     <span class="kw">let </span>ty = TypeDef::CoreFunc(<span class="self">self</span>.module_types.wasm_func_type(f));
                     <span class="self">self</span>.push_core_typedef(ty);
                 }
+                wasmparser::ModuleTypeDeclaration::Type(wasmparser::Type::Array(<span class="kw">_</span>)) =&gt; {
+                    <span class="macro">unimplemented!</span>(<span class="string">&quot;gc types&quot;</span>);
+                }
                 wasmparser::ModuleTypeDeclaration::Export { name, ty } =&gt; {
                     <span class="kw">let </span>prev = result
                         .exports
@@ -2475,17 +2475,13 @@
                 ComponentTypeDeclaration::Type(ty) =&gt; <span class="self">self</span>.type_declaration_type(ty)<span class="question-mark">?</span>,
                 ComponentTypeDeclaration::CoreType(ty) =&gt; <span class="self">self</span>.type_declaration_core_type(ty)<span class="question-mark">?</span>,
                 ComponentTypeDeclaration::Alias(alias) =&gt; <span class="self">self</span>.type_declaration_alias(alias)<span class="question-mark">?</span>,
-                ComponentTypeDeclaration::Export { name, url, ty } =&gt; {
+                ComponentTypeDeclaration::Export { name, ty } =&gt; {
                     <span class="kw">let </span>ty = <span class="self">self</span>.type_declaration_define(ty);
-                    result
-                        .exports
-                        .insert(name.to_string(), (url.to_string(), ty));
+                    result.exports.insert(name.as_str().to_string(), ty);
                 }
                 ComponentTypeDeclaration::Import(import) =&gt; {
                     <span class="kw">let </span>ty = <span class="self">self</span>.type_declaration_define(<span class="kw-2">&amp;</span>import.ty);
-                    result
-                        .imports
-                        .insert(import.name.to_string(), (import.url.to_string(), ty));
+                    result.imports.insert(import.name.as_str().to_string(), ty);
                 }
             }
         }
@@ -2507,11 +2503,9 @@
                 InstanceTypeDeclaration::Type(ty) =&gt; <span class="self">self</span>.type_declaration_type(ty)<span class="question-mark">?</span>,
                 InstanceTypeDeclaration::CoreType(ty) =&gt; <span class="self">self</span>.type_declaration_core_type(ty)<span class="question-mark">?</span>,
                 InstanceTypeDeclaration::Alias(alias) =&gt; <span class="self">self</span>.type_declaration_alias(alias)<span class="question-mark">?</span>,
-                InstanceTypeDeclaration::Export { name, url, ty } =&gt; {
+                InstanceTypeDeclaration::Export { name, ty } =&gt; {
                     <span class="kw">let </span>ty = <span class="self">self</span>.type_declaration_define(ty);
-                    result
-                        .exports
-                        .insert(name.to_string(), (url.to_string(), ty));
+                    result.exports.insert(name.as_str().to_string(), ty);
                 }
             }
         }
@@ -2558,7 +2552,7 @@
             } =&gt; {
                 <span class="kw">let </span>ty = <span class="self">self</span>.type_scopes.last().unwrap().instances
                     [ComponentInstanceIndex::from_u32(<span class="kw-2">*</span>instance_index)];
-                <span class="kw">let </span>(<span class="kw">_</span>, ty) = <span class="self">self</span>.component_types[ty].exports[<span class="kw-2">*</span>name];
+                <span class="kw">let </span>ty = <span class="self">self</span>.component_types[ty].exports[<span class="kw-2">*</span>name];
                 <span class="self">self</span>.push_component_typedef(ty);
             }
             a =&gt; <span class="macro">unreachable!</span>(<span class="string">&quot;invalid alias {a:?}&quot;</span>),
@@ -2950,9 +2944,9 @@
 </span><span class="attr">#[derive(Serialize, Deserialize, Default)]
 </span><span class="kw">pub struct </span>TypeComponent {
     <span class="doccomment">/// The named values that this component imports.
-    </span><span class="kw">pub </span>imports: IndexMap&lt;String, (String, TypeDef)&gt;,
+    </span><span class="kw">pub </span>imports: IndexMap&lt;String, TypeDef&gt;,
     <span class="doccomment">/// The named values that this component exports.
-    </span><span class="kw">pub </span>exports: IndexMap&lt;String, (String, TypeDef)&gt;,
+    </span><span class="kw">pub </span>exports: IndexMap&lt;String, TypeDef&gt;,
 }
 
 <span class="doccomment">/// The type of a component instance in the component model, or an instantiated
@@ -2962,7 +2956,7 @@
 </span><span class="attr">#[derive(Serialize, Deserialize, Default)]
 </span><span class="kw">pub struct </span>TypeComponentInstance {
     <span class="doccomment">/// The list of exports that this component has along with their types.
-    </span><span class="kw">pub </span>exports: IndexMap&lt;String, (String, TypeDef)&gt;,
+    </span><span class="kw">pub </span>exports: IndexMap&lt;String, TypeDef&gt;,
 }
 
 <span class="doccomment">/// A component function type in the component model.

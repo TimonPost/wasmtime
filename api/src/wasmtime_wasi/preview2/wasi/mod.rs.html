@@ -26,26 +26,28 @@
 <a href="#26" id="26">26</a>
 <a href="#27" id="27">27</a>
 <a href="#28" id="28">28</a>
+<a href="#29" id="29">29</a>
+<a href="#30" id="30">30</a>
 </pre><pre class="rust"><code><span class="kw">pub mod </span>command;
 
 <span class="macro">wasmtime::component::bindgen!</span>({
     path: <span class="string">&quot;wit&quot;</span>,
     interfaces: <span class="string">&quot;
-      import wall-clock: clocks.wall-clock
-      import monotonic-clock: clocks.monotonic-clock
-      import timezone: clocks.timezone
-      import filesystem: filesystem.filesystem
-      import random: random.random
-      import insecure-random: random.insecure
-      import insecure-random-seed: random.insecure-seed
-      import poll: poll.poll
-      import streams: io.streams
-      import environment: wasi-cli-base.environment
-      import preopens: wasi-cli-base.preopens
-      import stdin: wasi-cli-base.stdio.stdin
-      import stdout: wasi-cli-base.stdio.stdout
-      import stderr: wasi-cli-base.stdio.stderr
-      import exit: wasi-cli-base.exit
+      import wasi:clocks/wall-clock
+      import wasi:clocks/monotonic-clock
+      import wasi:clocks/timezone
+      import wasi:filesystem/filesystem
+      import wasi:random/random
+      import wasi:random/insecure
+      import wasi:random/insecure-seed
+      import wasi:poll/poll
+      import wasi:io/streams
+      import wasi:cli-base/environment
+      import wasi:cli-base/preopens
+      import wasi:cli-base/exit
+      import wasi:cli-base/stdin
+      import wasi:cli-base/stdout
+      import wasi:cli-base/stderr
     &quot;</span>,
     tracing: <span class="bool-val">true</span>,
     <span class="kw">async</span>: <span class="bool-val">true</span>,
@@ -54,5 +56,7 @@
         <span class="string">&quot;streams&quot;</span>::<span class="string">&quot;stream-error&quot;</span>: Error,
     }
 });
+
+<span class="kw">pub use </span>wasi::<span class="kw-2">*</span>;
 </code></pre></div>
 </section></main></body></html>

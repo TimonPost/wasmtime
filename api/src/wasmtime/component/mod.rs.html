@@ -386,7 +386,9 @@
 /// ```text,ignore
 /// // wit/my-component.wit
 ///
-/// default world hello-world {
+/// package my:project
+///
+/// world hello-world {
 ///     import name: func() -&gt; string
 ///     export greet: func()
 /// }
@@ -463,13 +465,15 @@
 /// ```text,ignore
 /// // wit/my-component.wit
 ///
+/// package my:project
+///
 /// interface host {
 ///     gen-random-integer: func() -&gt; u32
 ///     sha256: func(bytes: list&lt;u8&gt;) -&gt; string
 /// }
 ///
 /// default world hello-world {
-///     import host: self.host
+///     import host
 ///
 ///     export demo: interface {
 ///         run: func()
@@ -482,6 +486,7 @@
 /// ```rust,ignore
 /// use wasmtime::component::*;
 /// use wasmtime::{Config, Engine, Store};
+/// use my::project::host::Host;
 ///
 /// bindgen!();
 ///
@@ -490,7 +495,7 @@
 /// }
 ///
 /// // Note that the trait here is per-interface and within a submodule now.
-/// impl host::Host for MyState {
+/// impl Host for MyState {
 ///     fn gen_random_integer(&amp;mut self) -&gt; wasmtime::Result&lt;u32&gt; {
 ///         Ok(rand::thread_rng().gen())
 ///     }
@@ -541,18 +546,12 @@
 /// bindgen!();
 ///
 /// // Parse the `wit/` folder adjacent to this crate&#39;s `Cargo.toml` and look
-/// // for the document `foo`, which must have a `default world` contained
-/// // within it.
+/// // for the world `foo` contained in it.
 /// bindgen!(&quot;foo&quot;);
-///
-/// // Parse the `wit/` folder adjacent to `Cargo.toml` and look up the document
-/// // `foo` and the world named `bar`.
-/// bindgen!(&quot;foo.bar&quot;);
 ///
 /// // Parse the folder `other/wit/folder` adjacent to `Cargo.toml`.
 /// bindgen!(in &quot;other/wit/folder&quot;);
 /// bindgen!(&quot;foo&quot; in &quot;other/wit/folder&quot;);
-/// bindgen!(&quot;foo.bar&quot; in &quot;other/wit/folder&quot;);
 ///
 /// // Parse the file `foo.wit` as a single-file WIT package with no
 /// // dependencies.
@@ -563,8 +562,7 @@
 ///
 /// ```rust,ignore
 /// bindgen!({
-///     world: &quot;foo&quot;, // or &quot;foo.bar&quot;, same as in `bindgen!(&quot;foo&quot;)`
-///                   // not needed if `path` has one `default world`
+///     world: &quot;foo&quot;, // not needed if `path` has one `world`
 ///
 ///     // same as in `bindgen!(in &quot;other/wit/folder&quot;)
 ///     path: &quot;other/wit/folder&quot;,
@@ -572,7 +570,9 @@
 ///     // Instead of `path` the WIT document can be provided inline if
 ///     // desired.
 ///     inline: &quot;
-///         default world foo {
+///         package my:inline
+///
+///         world foo {
 ///             // ...
 ///         }
 ///     &quot;,
@@ -608,7 +608,7 @@
 ///     // Restrict the code generated to what&#39;s needed for the interface
 ///     // imports in the inlined WIT document fragment.
 ///     interfaces: &quot;
-///         import foo: package.foo;
+///         import package.foo
 ///     &quot;,
 ///
 ///     // Remap interface names to module names, imported from elsewhere.

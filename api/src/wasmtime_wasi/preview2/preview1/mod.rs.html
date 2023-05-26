@@ -1858,52 +1858,30 @@
 <a href="#1858" id="1858">1858</a>
 <a href="#1859" id="1859">1859</a>
 <a href="#1860" id="1860">1860</a>
-<a href="#1861" id="1861">1861</a>
-<a href="#1862" id="1862">1862</a>
-<a href="#1863" id="1863">1863</a>
-<a href="#1864" id="1864">1864</a>
-<a href="#1865" id="1865">1865</a>
-<a href="#1866" id="1866">1866</a>
-<a href="#1867" id="1867">1867</a>
-<a href="#1868" id="1868">1868</a>
-<a href="#1869" id="1869">1869</a>
-<a href="#1870" id="1870">1870</a>
-<a href="#1871" id="1871">1871</a>
-<a href="#1872" id="1872">1872</a>
-<a href="#1873" id="1873">1873</a>
-<a href="#1874" id="1874">1874</a>
-<a href="#1875" id="1875">1875</a>
-<a href="#1876" id="1876">1876</a>
-<a href="#1877" id="1877">1877</a>
-<a href="#1878" id="1878">1878</a>
-<a href="#1879" id="1879">1879</a>
-<a href="#1880" id="1880">1880</a>
-<a href="#1881" id="1881">1881</a>
-<a href="#1882" id="1882">1882</a>
-<a href="#1883" id="1883">1883</a>
-<a href="#1884" id="1884">1884</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::preview2::filesystem::TableFsExt;
 <span class="kw">use </span><span class="kw">crate</span>::preview2::preview2::filesystem::TableReaddirExt;
+<span class="kw">use </span><span class="kw">crate</span>::preview2::wasi::cli_base::{preopens, stderr, stdin, stdout};
+<span class="kw">use </span><span class="kw">crate</span>::preview2::wasi::clocks::monotonic_clock;
+<span class="kw">use </span><span class="kw">crate</span>::preview2::wasi::clocks::wall_clock;
+<span class="kw">use </span><span class="kw">crate</span>::preview2::wasi::filesystem::filesystem;
+<span class="kw">use </span><span class="kw">crate</span>::preview2::wasi::io::streams;
 <span class="kw">use </span><span class="kw">crate</span>::preview2::{wasi, TableError, WasiView};
-
-<span class="kw">use </span>core::borrow::Borrow;
-<span class="kw">use </span>core::cell::Cell;
-<span class="kw">use </span>core::mem::{size_of, size_of_val};
-<span class="kw">use </span>core::ops::{Deref, DerefMut};
-<span class="kw">use </span>core::slice;
-<span class="kw">use </span>core::sync::atomic::{AtomicU64, Ordering};
-
-<span class="kw">use </span>std::collections::BTreeMap;
-<span class="kw">use </span>std::sync::Arc;
-
 <span class="kw">use </span>anyhow::{anyhow, bail, Context};
+<span class="kw">use </span>std::borrow::Borrow;
+<span class="kw">use </span>std::cell::Cell;
+<span class="kw">use </span>std::collections::BTreeMap;
+<span class="kw">use </span>std::mem::{size_of, size_of_val};
+<span class="kw">use </span>std::ops::{Deref, DerefMut};
+<span class="kw">use </span>std::slice;
+<span class="kw">use </span>std::sync::atomic::{AtomicU64, Ordering};
+<span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>wiggle::tracing::instrument;
 <span class="kw">use </span>wiggle::{GuestPtr, GuestSliceMut, GuestStrCow, GuestType};
 
 <span class="attr">#[derive(Clone, Debug)]
 </span><span class="kw">struct </span>File {
     <span class="doccomment">/// The handle to the preview2 descriptor that this file is referencing.
-    </span>fd: wasi::filesystem::Descriptor,
+    </span>fd: filesystem::Descriptor,
 
     <span class="doccomment">/// The current-position pointer.
     </span>position: Arc&lt;AtomicU64&gt;,
@@ -1919,10 +1897,10 @@
 
 <span class="attr">#[derive(Clone, Debug)]
 </span><span class="kw">enum </span>Descriptor {
-    Stdin(wasi::preopens::InputStream),
-    Stdout(wasi::preopens::OutputStream),
-    Stderr(wasi::preopens::OutputStream),
-    PreopenDirectory((wasi::filesystem::Descriptor, String)),
+    Stdin(preopens::InputStream),
+    Stdout(preopens::OutputStream),
+    Stderr(preopens::OutputStream),
+    PreopenDirectory((filesystem::Descriptor, String)),
     File(File),
 }
 
@@ -1954,11 +1932,7 @@
 <span class="kw">impl </span>Descriptors {
     <span class="doccomment">/// Initializes [Self] using `preopens`
     </span><span class="kw">async fn </span>new(
-        preopens: <span class="kw-2">&amp;mut </span>(<span class="kw">impl </span>wasi::preopens::Host
-                  + wasi::stdin::Host
-                  + wasi::stdout::Host
-                  + wasi::stderr::Host
-                  + <span class="question-mark">?</span>Sized),
+        preopens: <span class="kw-2">&amp;mut </span>(<span class="kw">impl </span>preopens::Host + stdin::Host + stdout::Host + stderr::Host + <span class="question-mark">?</span>Sized),
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, types::Error&gt; {
         <span class="kw">let </span>stdin = preopens
             .get_stdin()
@@ -2129,8 +2103,8 @@
         }
     }
 
-    <span class="doccomment">/// Returns [`wasi::filesystem::Descriptor`] corresponding to `fd`
-    </span><span class="kw">fn </span>get_fd(<span class="kw-2">&amp;mut </span><span class="self">self</span>, fd: types::Fd) -&gt; ErrnoResult&lt;wasi::filesystem::Descriptor&gt; {
+    <span class="doccomment">/// Returns [`filesystem::Descriptor`] corresponding to `fd`
+    </span><span class="kw">fn </span>get_fd(<span class="kw-2">&amp;mut </span><span class="self">self</span>, fd: types::Fd) -&gt; ErrnoResult&lt;filesystem::Descriptor&gt; {
         <span class="kw">match </span><span class="self">self</span>.get_descriptor(fd)<span class="question-mark">? </span>{
             Descriptor::File(File { fd, .. }) =&gt; <span class="prelude-val">Ok</span>(<span class="kw-2">*</span>fd),
             Descriptor::PreopenDirectory((fd, <span class="kw">_</span>)) =&gt; <span class="prelude-val">Ok</span>(<span class="kw-2">*</span>fd),
@@ -2139,16 +2113,16 @@
         }
     }
 
-    <span class="doccomment">/// Returns [`wasi::filesystem::Descriptor`] corresponding to `fd`
+    <span class="doccomment">/// Returns [`filesystem::Descriptor`] corresponding to `fd`
     /// if it describes a [`Descriptor::File`] of [`crate::preview2::filesystem::File`] type
-    </span><span class="kw">fn </span>get_file_fd(<span class="kw-2">&amp;mut </span><span class="self">self</span>, fd: types::Fd) -&gt; ErrnoResult&lt;wasi::filesystem::Descriptor&gt; {
+    </span><span class="kw">fn </span>get_file_fd(<span class="kw-2">&amp;mut </span><span class="self">self</span>, fd: types::Fd) -&gt; ErrnoResult&lt;filesystem::Descriptor&gt; {
         <span class="self">self</span>.get_file(fd).map(|File { fd, .. }| <span class="kw-2">*</span>fd)
     }
 
-    <span class="doccomment">/// Returns [`wasi::filesystem::Descriptor`] corresponding to `fd`
+    <span class="doccomment">/// Returns [`filesystem::Descriptor`] corresponding to `fd`
     /// if it describes a [`Descriptor::File`] or [`Descriptor::PreopenDirectory`]
     /// of [`crate::preview2::filesystem::Dir`] type
-    </span><span class="kw">fn </span>get_dir_fd(<span class="kw-2">&amp;mut </span><span class="self">self</span>, fd: types::Fd) -&gt; ErrnoResult&lt;wasi::filesystem::Descriptor&gt; {
+    </span><span class="kw">fn </span>get_dir_fd(<span class="kw-2">&amp;mut </span><span class="self">self</span>, fd: types::Fd) -&gt; ErrnoResult&lt;filesystem::Descriptor&gt; {
         <span class="kw">let </span>fd = fd.into();
         <span class="kw">match </span><span class="self">self</span>.descriptors.get_mut().get(<span class="kw-2">&amp;</span>fd) {
             <span class="prelude-val">Some</span>(Descriptor::File(File { fd, .. })) <span class="kw">if </span><span class="self">self</span>.view.table().is_dir(<span class="kw-2">*</span>fd) =&gt; <span class="prelude-val">Ok</span>(<span class="kw-2">*</span>fd),
@@ -2160,11 +2134,7 @@
 
 <span class="attr">#[wiggle::async_trait]
 </span><span class="kw">trait </span>WasiPreview1ViewExt:
-    WasiPreview1View
-    + wasi::preopens::Host
-    + wasi::stdin::Host
-    + wasi::stdout::Host
-    + wasi::stderr::Host
+    WasiPreview1View + preopens::Host + stdin::Host + stdout::Host + stderr::Host
 {
     <span class="doccomment">/// Lazily initializes [`WasiPreview1Adapter`] returned by [`WasiPreview1View::adapter_mut`]
     /// and returns [`Transaction`] on success
@@ -2182,55 +2152,46 @@
     }
 
     <span class="doccomment">/// Lazily initializes [`WasiPreview1Adapter`] returned by [`WasiPreview1View::adapter_mut`]
-    /// and returns [`wasi::filesystem::Descriptor`] corresponding to `fd`
-    </span><span class="kw">async fn </span>get_fd(
-        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        fd: types::Fd,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;wasi::filesystem::Descriptor, types::Error&gt; {
+    /// and returns [`filesystem::Descriptor`] corresponding to `fd`
+    </span><span class="kw">async fn </span>get_fd(<span class="kw-2">&amp;mut </span><span class="self">self</span>, fd: types::Fd) -&gt; <span class="prelude-ty">Result</span>&lt;filesystem::Descriptor, types::Error&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>st = <span class="self">self</span>.transact().<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let </span>fd = st.get_fd(fd)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(fd)
     }
 
     <span class="doccomment">/// Lazily initializes [`WasiPreview1Adapter`] returned by [`WasiPreview1View::adapter_mut`]
-    /// and returns [`wasi::filesystem::Descriptor`] corresponding to `fd`
+    /// and returns [`filesystem::Descriptor`] corresponding to `fd`
     /// if it describes a [`Descriptor::File`] of [`crate::preview2::filesystem::File`] type
-    </span><span class="kw">async fn </span>get_file_fd(
-        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        fd: types::Fd,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;wasi::filesystem::Descriptor, types::Error&gt; {
+    </span><span class="kw">async fn </span>get_file_fd(<span class="kw-2">&amp;mut </span><span class="self">self</span>, fd: types::Fd) -&gt; <span class="prelude-ty">Result</span>&lt;filesystem::Descriptor, types::Error&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>st = <span class="self">self</span>.transact().<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let </span>fd = st.get_file_fd(fd)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(fd)
     }
 
     <span class="doccomment">/// Lazily initializes [`WasiPreview1Adapter`] returned by [`WasiPreview1View::adapter_mut`]
-    /// and returns [`wasi::filesystem::Descriptor`] corresponding to `fd`
+    /// and returns [`filesystem::Descriptor`] corresponding to `fd`
     /// if it describes a [`Descriptor::File`] or [`Descriptor::PreopenDirectory`]
     /// of [`crate::preview2::filesystem::Dir`] type
-    </span><span class="kw">async fn </span>get_dir_fd(
-        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        fd: types::Fd,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;wasi::filesystem::Descriptor, types::Error&gt; {
+    </span><span class="kw">async fn </span>get_dir_fd(<span class="kw-2">&amp;mut </span><span class="self">self</span>, fd: types::Fd) -&gt; <span class="prelude-ty">Result</span>&lt;filesystem::Descriptor, types::Error&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>st = <span class="self">self</span>.transact().<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let </span>fd = st.get_dir_fd(fd)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(fd)
     }
 }
 
-<span class="kw">impl</span>&lt;T: WasiPreview1View + wasi::preopens::Host&gt; WasiPreview1ViewExt <span class="kw">for </span>T {}
+<span class="kw">impl</span>&lt;T: WasiPreview1View + preopens::Host&gt; WasiPreview1ViewExt <span class="kw">for </span>T {}
 
 <span class="kw">pub fn </span>add_to_linker&lt;
     T: WasiPreview1View
-        + wasi::environment::Host
-        + wasi::exit::Host
-        + wasi::filesystem::Host
-        + wasi::monotonic_clock::Host
-        + wasi::poll::Host
-        + wasi::preopens::Host
-        + wasi::random::Host
-        + wasi::streams::Host
-        + wasi::wall_clock::Host,
+        + wasi::cli_base::environment::Host
+        + wasi::cli_base::exit::Host
+        + wasi::cli_base::preopens::Host
+        + wasi::filesystem::filesystem::Host
+        + wasi::poll::poll::Host
+        + wasi::random::random::Host
+        + wasi::io::streams::Host
+        + wasi::clocks::monotonic_clock::Host
+        + wasi::clocks::wall_clock::Host,
 &gt;(
     linker: <span class="kw-2">&amp;mut </span>wasmtime::Linker&lt;T&gt;,
 ) -&gt; anyhow::Result&lt;()&gt; {
@@ -2257,31 +2218,29 @@
     set: bool,
     ts: types::Timestamp,
     now: bool,
-) -&gt; ErrnoResult&lt;wasi::filesystem::NewTimestamp&gt; {
+) -&gt; ErrnoResult&lt;filesystem::NewTimestamp&gt; {
     <span class="kw">if </span>set &amp;&amp; now {
         <span class="prelude-val">Err</span>(types::Errno::Inval)
     } <span class="kw">else if </span>set {
-        <span class="prelude-val">Ok</span>(wasi::filesystem::NewTimestamp::Timestamp(
-            wasi::filesystem::Datetime {
-                seconds: ts / <span class="number">1_000_000_000</span>,
-                nanoseconds: (ts % <span class="number">1_000_000_000</span>) <span class="kw">as _</span>,
-            },
-        ))
+        <span class="prelude-val">Ok</span>(filesystem::NewTimestamp::Timestamp(filesystem::Datetime {
+            seconds: ts / <span class="number">1_000_000_000</span>,
+            nanoseconds: (ts % <span class="number">1_000_000_000</span>) <span class="kw">as _</span>,
+        }))
     } <span class="kw">else if </span>now {
-        <span class="prelude-val">Ok</span>(wasi::filesystem::NewTimestamp::Now)
+        <span class="prelude-val">Ok</span>(filesystem::NewTimestamp::Now)
     } <span class="kw">else </span>{
-        <span class="prelude-val">Ok</span>(wasi::filesystem::NewTimestamp::NoChange)
+        <span class="prelude-val">Ok</span>(filesystem::NewTimestamp::NoChange)
     }
 }
 
-<span class="kw">impl </span>TryFrom&lt;wasi::wall_clock::Datetime&gt; <span class="kw">for </span>types::Timestamp {
+<span class="kw">impl </span>TryFrom&lt;wall_clock::Datetime&gt; <span class="kw">for </span>types::Timestamp {
     <span class="kw">type </span>Error = types::Errno;
 
     <span class="kw">fn </span>try_from(
-        wasi::wall_clock::Datetime {
+        wall_clock::Datetime {
             seconds,
             nanoseconds,
-        }: wasi::wall_clock::Datetime,
+        }: wall_clock::Datetime,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
         types::Timestamp::from(seconds)
             .checked_mul(<span class="number">1_000_000_000</span>)
@@ -2290,126 +2249,124 @@
     }
 }
 
-<span class="kw">impl </span>From&lt;types::Lookupflags&gt; <span class="kw">for </span>wasi::filesystem::PathFlags {
+<span class="kw">impl </span>From&lt;types::Lookupflags&gt; <span class="kw">for </span>filesystem::PathFlags {
     <span class="kw">fn </span>from(flags: types::Lookupflags) -&gt; <span class="self">Self </span>{
         <span class="kw">if </span>flags.contains(types::Lookupflags::SYMLINK_FOLLOW) {
-            wasi::filesystem::PathFlags::SYMLINK_FOLLOW
+            filesystem::PathFlags::SYMLINK_FOLLOW
         } <span class="kw">else </span>{
-            wasi::filesystem::PathFlags::empty()
+            filesystem::PathFlags::empty()
         }
     }
 }
 
-<span class="kw">impl </span>From&lt;types::Oflags&gt; <span class="kw">for </span>wasi::filesystem::OpenFlags {
+<span class="kw">impl </span>From&lt;types::Oflags&gt; <span class="kw">for </span>filesystem::OpenFlags {
     <span class="kw">fn </span>from(flags: types::Oflags) -&gt; <span class="self">Self </span>{
-        <span class="kw">let </span><span class="kw-2">mut </span>out = wasi::filesystem::OpenFlags::empty();
+        <span class="kw">let </span><span class="kw-2">mut </span>out = filesystem::OpenFlags::empty();
         <span class="kw">if </span>flags.contains(types::Oflags::CREAT) {
-            out |= wasi::filesystem::OpenFlags::CREATE;
+            out |= filesystem::OpenFlags::CREATE;
         }
         <span class="kw">if </span>flags.contains(types::Oflags::DIRECTORY) {
-            out |= wasi::filesystem::OpenFlags::DIRECTORY;
+            out |= filesystem::OpenFlags::DIRECTORY;
         }
         <span class="kw">if </span>flags.contains(types::Oflags::EXCL) {
-            out |= wasi::filesystem::OpenFlags::EXCLUSIVE;
+            out |= filesystem::OpenFlags::EXCLUSIVE;
         }
         <span class="kw">if </span>flags.contains(types::Oflags::TRUNC) {
-            out |= wasi::filesystem::OpenFlags::TRUNCATE;
+            out |= filesystem::OpenFlags::TRUNCATE;
         }
         out
     }
 }
 
-<span class="kw">impl </span>From&lt;types::Advice&gt; <span class="kw">for </span>wasi::filesystem::Advice {
+<span class="kw">impl </span>From&lt;types::Advice&gt; <span class="kw">for </span>filesystem::Advice {
     <span class="kw">fn </span>from(advice: types::Advice) -&gt; <span class="self">Self </span>{
         <span class="kw">match </span>advice {
-            types::Advice::Normal =&gt; wasi::filesystem::Advice::Normal,
-            types::Advice::Sequential =&gt; wasi::filesystem::Advice::Sequential,
-            types::Advice::Random =&gt; wasi::filesystem::Advice::Random,
-            types::Advice::Willneed =&gt; wasi::filesystem::Advice::WillNeed,
-            types::Advice::Dontneed =&gt; wasi::filesystem::Advice::DontNeed,
-            types::Advice::Noreuse =&gt; wasi::filesystem::Advice::NoReuse,
+            types::Advice::Normal =&gt; filesystem::Advice::Normal,
+            types::Advice::Sequential =&gt; filesystem::Advice::Sequential,
+            types::Advice::Random =&gt; filesystem::Advice::Random,
+            types::Advice::Willneed =&gt; filesystem::Advice::WillNeed,
+            types::Advice::Dontneed =&gt; filesystem::Advice::DontNeed,
+            types::Advice::Noreuse =&gt; filesystem::Advice::NoReuse,
         }
     }
 }
 
-<span class="kw">impl </span>TryFrom&lt;wasi::filesystem::DescriptorType&gt; <span class="kw">for </span>types::Filetype {
+<span class="kw">impl </span>TryFrom&lt;filesystem::DescriptorType&gt; <span class="kw">for </span>types::Filetype {
     <span class="kw">type </span>Error = anyhow::Error;
 
-    <span class="kw">fn </span>try_from(ty: wasi::filesystem::DescriptorType) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
+    <span class="kw">fn </span>try_from(ty: filesystem::DescriptorType) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
         <span class="kw">match </span>ty {
-            wasi::filesystem::DescriptorType::RegularFile =&gt; <span class="prelude-val">Ok</span>(types::Filetype::RegularFile),
-            wasi::filesystem::DescriptorType::Directory =&gt; <span class="prelude-val">Ok</span>(types::Filetype::Directory),
-            wasi::filesystem::DescriptorType::BlockDevice =&gt; <span class="prelude-val">Ok</span>(types::Filetype::BlockDevice),
-            wasi::filesystem::DescriptorType::CharacterDevice =&gt; {
-                <span class="prelude-val">Ok</span>(types::Filetype::CharacterDevice)
-            }
+            filesystem::DescriptorType::RegularFile =&gt; <span class="prelude-val">Ok</span>(types::Filetype::RegularFile),
+            filesystem::DescriptorType::Directory =&gt; <span class="prelude-val">Ok</span>(types::Filetype::Directory),
+            filesystem::DescriptorType::BlockDevice =&gt; <span class="prelude-val">Ok</span>(types::Filetype::BlockDevice),
+            filesystem::DescriptorType::CharacterDevice =&gt; <span class="prelude-val">Ok</span>(types::Filetype::CharacterDevice),
             <span class="comment">// preview1 never had a FIFO code.
-            </span>wasi::filesystem::DescriptorType::Fifo =&gt; <span class="prelude-val">Ok</span>(types::Filetype::Unknown),
+            </span>filesystem::DescriptorType::Fifo =&gt; <span class="prelude-val">Ok</span>(types::Filetype::Unknown),
             <span class="comment">// TODO: Add a way to disginguish between FILETYPE_SOCKET_STREAM and
             // FILETYPE_SOCKET_DGRAM.
-            </span>wasi::filesystem::DescriptorType::Socket =&gt; {
+            </span>filesystem::DescriptorType::Socket =&gt; {
                 <span class="macro">bail!</span>(<span class="string">&quot;sockets are not currently supported&quot;</span>)
             }
-            wasi::filesystem::DescriptorType::SymbolicLink =&gt; <span class="prelude-val">Ok</span>(types::Filetype::SymbolicLink),
-            wasi::filesystem::DescriptorType::Unknown =&gt; <span class="prelude-val">Ok</span>(types::Filetype::Unknown),
+            filesystem::DescriptorType::SymbolicLink =&gt; <span class="prelude-val">Ok</span>(types::Filetype::SymbolicLink),
+            filesystem::DescriptorType::Unknown =&gt; <span class="prelude-val">Ok</span>(types::Filetype::Unknown),
         }
     }
 }
 
-<span class="kw">impl </span>From&lt;wasi::filesystem::ErrorCode&gt; <span class="kw">for </span>types::Errno {
-    <span class="kw">fn </span>from(code: wasi::filesystem::ErrorCode) -&gt; <span class="self">Self </span>{
+<span class="kw">impl </span>From&lt;filesystem::ErrorCode&gt; <span class="kw">for </span>types::Errno {
+    <span class="kw">fn </span>from(code: filesystem::ErrorCode) -&gt; <span class="self">Self </span>{
         <span class="kw">match </span>code {
-            wasi::filesystem::ErrorCode::Access =&gt; types::Errno::Acces,
-            wasi::filesystem::ErrorCode::WouldBlock =&gt; types::Errno::Again,
-            wasi::filesystem::ErrorCode::Already =&gt; types::Errno::Already,
-            wasi::filesystem::ErrorCode::BadDescriptor =&gt; types::Errno::Badf,
-            wasi::filesystem::ErrorCode::Busy =&gt; types::Errno::Busy,
-            wasi::filesystem::ErrorCode::Deadlock =&gt; types::Errno::Deadlk,
-            wasi::filesystem::ErrorCode::Quota =&gt; types::Errno::Dquot,
-            wasi::filesystem::ErrorCode::Exist =&gt; types::Errno::Exist,
-            wasi::filesystem::ErrorCode::FileTooLarge =&gt; types::Errno::Fbig,
-            wasi::filesystem::ErrorCode::IllegalByteSequence =&gt; types::Errno::Ilseq,
-            wasi::filesystem::ErrorCode::InProgress =&gt; types::Errno::Inprogress,
-            wasi::filesystem::ErrorCode::Interrupted =&gt; types::Errno::Intr,
-            wasi::filesystem::ErrorCode::Invalid =&gt; types::Errno::Inval,
-            wasi::filesystem::ErrorCode::Io =&gt; types::Errno::Io,
-            wasi::filesystem::ErrorCode::IsDirectory =&gt; types::Errno::Isdir,
-            wasi::filesystem::ErrorCode::Loop =&gt; types::Errno::Loop,
-            wasi::filesystem::ErrorCode::TooManyLinks =&gt; types::Errno::Mlink,
-            wasi::filesystem::ErrorCode::MessageSize =&gt; types::Errno::Msgsize,
-            wasi::filesystem::ErrorCode::NameTooLong =&gt; types::Errno::Nametoolong,
-            wasi::filesystem::ErrorCode::NoDevice =&gt; types::Errno::Nodev,
-            wasi::filesystem::ErrorCode::NoEntry =&gt; types::Errno::Noent,
-            wasi::filesystem::ErrorCode::NoLock =&gt; types::Errno::Nolck,
-            wasi::filesystem::ErrorCode::InsufficientMemory =&gt; types::Errno::Nomem,
-            wasi::filesystem::ErrorCode::InsufficientSpace =&gt; types::Errno::Nospc,
-            wasi::filesystem::ErrorCode::Unsupported =&gt; types::Errno::Notsup,
-            wasi::filesystem::ErrorCode::NotDirectory =&gt; types::Errno::Notdir,
-            wasi::filesystem::ErrorCode::NotEmpty =&gt; types::Errno::Notempty,
-            wasi::filesystem::ErrorCode::NotRecoverable =&gt; types::Errno::Notrecoverable,
-            wasi::filesystem::ErrorCode::NoTty =&gt; types::Errno::Notty,
-            wasi::filesystem::ErrorCode::NoSuchDevice =&gt; types::Errno::Nxio,
-            wasi::filesystem::ErrorCode::Overflow =&gt; types::Errno::Overflow,
-            wasi::filesystem::ErrorCode::NotPermitted =&gt; types::Errno::Perm,
-            wasi::filesystem::ErrorCode::Pipe =&gt; types::Errno::Pipe,
-            wasi::filesystem::ErrorCode::ReadOnly =&gt; types::Errno::Rofs,
-            wasi::filesystem::ErrorCode::InvalidSeek =&gt; types::Errno::Spipe,
-            wasi::filesystem::ErrorCode::TextFileBusy =&gt; types::Errno::Txtbsy,
-            wasi::filesystem::ErrorCode::CrossDevice =&gt; types::Errno::Xdev,
+            filesystem::ErrorCode::Access =&gt; types::Errno::Acces,
+            filesystem::ErrorCode::WouldBlock =&gt; types::Errno::Again,
+            filesystem::ErrorCode::Already =&gt; types::Errno::Already,
+            filesystem::ErrorCode::BadDescriptor =&gt; types::Errno::Badf,
+            filesystem::ErrorCode::Busy =&gt; types::Errno::Busy,
+            filesystem::ErrorCode::Deadlock =&gt; types::Errno::Deadlk,
+            filesystem::ErrorCode::Quota =&gt; types::Errno::Dquot,
+            filesystem::ErrorCode::Exist =&gt; types::Errno::Exist,
+            filesystem::ErrorCode::FileTooLarge =&gt; types::Errno::Fbig,
+            filesystem::ErrorCode::IllegalByteSequence =&gt; types::Errno::Ilseq,
+            filesystem::ErrorCode::InProgress =&gt; types::Errno::Inprogress,
+            filesystem::ErrorCode::Interrupted =&gt; types::Errno::Intr,
+            filesystem::ErrorCode::Invalid =&gt; types::Errno::Inval,
+            filesystem::ErrorCode::Io =&gt; types::Errno::Io,
+            filesystem::ErrorCode::IsDirectory =&gt; types::Errno::Isdir,
+            filesystem::ErrorCode::Loop =&gt; types::Errno::Loop,
+            filesystem::ErrorCode::TooManyLinks =&gt; types::Errno::Mlink,
+            filesystem::ErrorCode::MessageSize =&gt; types::Errno::Msgsize,
+            filesystem::ErrorCode::NameTooLong =&gt; types::Errno::Nametoolong,
+            filesystem::ErrorCode::NoDevice =&gt; types::Errno::Nodev,
+            filesystem::ErrorCode::NoEntry =&gt; types::Errno::Noent,
+            filesystem::ErrorCode::NoLock =&gt; types::Errno::Nolck,
+            filesystem::ErrorCode::InsufficientMemory =&gt; types::Errno::Nomem,
+            filesystem::ErrorCode::InsufficientSpace =&gt; types::Errno::Nospc,
+            filesystem::ErrorCode::Unsupported =&gt; types::Errno::Notsup,
+            filesystem::ErrorCode::NotDirectory =&gt; types::Errno::Notdir,
+            filesystem::ErrorCode::NotEmpty =&gt; types::Errno::Notempty,
+            filesystem::ErrorCode::NotRecoverable =&gt; types::Errno::Notrecoverable,
+            filesystem::ErrorCode::NoTty =&gt; types::Errno::Notty,
+            filesystem::ErrorCode::NoSuchDevice =&gt; types::Errno::Nxio,
+            filesystem::ErrorCode::Overflow =&gt; types::Errno::Overflow,
+            filesystem::ErrorCode::NotPermitted =&gt; types::Errno::Perm,
+            filesystem::ErrorCode::Pipe =&gt; types::Errno::Pipe,
+            filesystem::ErrorCode::ReadOnly =&gt; types::Errno::Rofs,
+            filesystem::ErrorCode::InvalidSeek =&gt; types::Errno::Spipe,
+            filesystem::ErrorCode::TextFileBusy =&gt; types::Errno::Txtbsy,
+            filesystem::ErrorCode::CrossDevice =&gt; types::Errno::Xdev,
         }
     }
 }
 
-<span class="kw">impl </span>From&lt;wasi::filesystem::ErrorCode&gt; <span class="kw">for </span>types::Error {
-    <span class="kw">fn </span>from(code: wasi::filesystem::ErrorCode) -&gt; <span class="self">Self </span>{
+<span class="kw">impl </span>From&lt;filesystem::ErrorCode&gt; <span class="kw">for </span>types::Error {
+    <span class="kw">fn </span>from(code: filesystem::ErrorCode) -&gt; <span class="self">Self </span>{
         types::Errno::from(code).into()
     }
 }
 
-<span class="kw">impl </span>TryFrom&lt;wasi::filesystem::Error&gt; <span class="kw">for </span>types::Errno {
+<span class="kw">impl </span>TryFrom&lt;filesystem::Error&gt; <span class="kw">for </span>types::Errno {
     <span class="kw">type </span>Error = anyhow::Error;
 
-    <span class="kw">fn </span>try_from(err: wasi::filesystem::Error) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
+    <span class="kw">fn </span>try_from(err: filesystem::Error) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
         <span class="kw">match </span>err.downcast() {
             <span class="prelude-val">Ok</span>(code) =&gt; <span class="prelude-val">Ok</span>(code.into()),
             <span class="prelude-val">Err</span>(e) =&gt; <span class="prelude-val">Err</span>(e),
@@ -2417,10 +2374,10 @@
     }
 }
 
-<span class="kw">impl </span>TryFrom&lt;wasi::filesystem::Error&gt; <span class="kw">for </span>types::Error {
+<span class="kw">impl </span>TryFrom&lt;filesystem::Error&gt; <span class="kw">for </span>types::Error {
     <span class="kw">type </span>Error = anyhow::Error;
 
-    <span class="kw">fn </span>try_from(err: wasi::filesystem::Error) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
+    <span class="kw">fn </span>try_from(err: filesystem::Error) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
         <span class="kw">match </span>err.downcast() {
             <span class="prelude-val">Ok</span>(code) =&gt; <span class="prelude-val">Ok</span>(code.into()),
             <span class="prelude-val">Err</span>(e) =&gt; <span class="prelude-val">Err</span>(e),
@@ -2526,15 +2483,15 @@
 </span><span class="attr">#[wiggle::async_trait]
 </span><span class="kw">impl</span>&lt;
         T: WasiPreview1View
-            + wasi::environment::Host
-            + wasi::exit::Host
-            + wasi::filesystem::Host
-            + wasi::monotonic_clock::Host
-            + wasi::poll::Host
-            + wasi::preopens::Host
-            + wasi::random::Host
-            + wasi::streams::Host
-            + wasi::wall_clock::Host,
+            + wasi::cli_base::environment::Host
+            + wasi::cli_base::exit::Host
+            + wasi::cli_base::preopens::Host
+            + wasi::filesystem::filesystem::Host
+            + wasi::poll::poll::Host
+            + wasi::random::random::Host
+            + wasi::io::streams::Host
+            + wasi::clocks::monotonic_clock::Host
+            + wasi::clocks::wall_clock::Host,
     &gt; wasi_snapshot_preview1::WasiSnapshotPreview1 <span class="kw">for </span>T
 {
     <span class="attr">#[instrument(skip(<span class="self">self</span>))]
@@ -2640,12 +2597,12 @@
         id: types::Clockid,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;types::Timestamp, types::Error&gt; {
         <span class="kw">let </span>res = <span class="kw">match </span>id {
-            types::Clockid::Realtime =&gt; wasi::wall_clock::Host::resolution(<span class="self">self</span>)
+            types::Clockid::Realtime =&gt; wall_clock::Host::resolution(<span class="self">self</span>)
                 .<span class="kw">await
                 </span>.context(<span class="string">&quot;failed to call `wall_clock::resolution`&quot;</span>)
                 .map_err(types::Error::trap)<span class="question-mark">?
                 </span>.try_into()<span class="question-mark">?</span>,
-            types::Clockid::Monotonic =&gt; wasi::monotonic_clock::Host::resolution(<span class="self">self</span>)
+            types::Clockid::Monotonic =&gt; monotonic_clock::Host::resolution(<span class="self">self</span>)
                 .<span class="kw">await
                 </span>.context(<span class="string">&quot;failed to call `monotonic_clock::resolution`&quot;</span>)
                 .map_err(types::Error::trap)<span class="question-mark">?</span>,
@@ -2663,12 +2620,12 @@
         _precision: types::Timestamp,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;types::Timestamp, types::Error&gt; {
         <span class="kw">let </span>now = <span class="kw">match </span>id {
-            types::Clockid::Realtime =&gt; wasi::wall_clock::Host::now(<span class="self">self</span>)
+            types::Clockid::Realtime =&gt; wall_clock::Host::now(<span class="self">self</span>)
                 .<span class="kw">await
                 </span>.context(<span class="string">&quot;failed to call `wall_clock::now`&quot;</span>)
                 .map_err(types::Error::trap)<span class="question-mark">?
                 </span>.try_into()<span class="question-mark">?</span>,
-            types::Clockid::Monotonic =&gt; wasi::monotonic_clock::Host::now(<span class="self">self</span>)
+            types::Clockid::Monotonic =&gt; monotonic_clock::Host::now(<span class="self">self</span>)
                 .<span class="kw">await
                 </span>.context(<span class="string">&quot;failed to call `monotonic_clock::now`&quot;</span>)
                 .map_err(types::Error::trap)<span class="question-mark">?</span>,
@@ -2802,19 +2759,19 @@
             .map_err(types::Error::trap)<span class="question-mark">?</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>fs_flags = types::Fdflags::empty();
         <span class="kw">let </span><span class="kw-2">mut </span>fs_rights_base = types::Rights::all();
-        <span class="kw">if </span>!flags.contains(wasi::filesystem::DescriptorFlags::READ) {
+        <span class="kw">if </span>!flags.contains(filesystem::DescriptorFlags::READ) {
             fs_rights_base &amp;= !types::Rights::FD_READ;
         }
-        <span class="kw">if </span>!flags.contains(wasi::filesystem::DescriptorFlags::WRITE) {
+        <span class="kw">if </span>!flags.contains(filesystem::DescriptorFlags::WRITE) {
             fs_rights_base &amp;= !types::Rights::FD_WRITE;
         }
-        <span class="kw">if </span>flags.contains(wasi::filesystem::DescriptorFlags::DATA_INTEGRITY_SYNC) {
+        <span class="kw">if </span>flags.contains(filesystem::DescriptorFlags::DATA_INTEGRITY_SYNC) {
             fs_flags |= types::Fdflags::DSYNC;
         }
-        <span class="kw">if </span>flags.contains(wasi::filesystem::DescriptorFlags::REQUESTED_WRITE_SYNC) {
+        <span class="kw">if </span>flags.contains(filesystem::DescriptorFlags::REQUESTED_WRITE_SYNC) {
             fs_flags |= types::Fdflags::RSYNC;
         }
-        <span class="kw">if </span>flags.contains(wasi::filesystem::DescriptorFlags::FILE_INTEGRITY_SYNC) {
+        <span class="kw">if </span>flags.contains(filesystem::DescriptorFlags::FILE_INTEGRITY_SYNC) {
             fs_flags |= types::Fdflags::SYNC;
         }
         <span class="kw">if </span>append {
@@ -2886,7 +2843,7 @@
                 })
             }
             Descriptor::PreopenDirectory((fd, <span class="kw">_</span>)) | Descriptor::File(File { fd, .. }) =&gt; {
-                <span class="kw">let </span>wasi::filesystem::DescriptorStat {
+                <span class="kw">let </span>filesystem::DescriptorStat {
                     device: dev,
                     inode: ino,
                     type_,
@@ -2993,7 +2950,7 @@
                 <span class="kw">let </span>(read, end) = <span class="kw">if </span>blocking {
                     <span class="self">self</span>.blocking_read(stream, max)
                 } <span class="kw">else </span>{
-                    wasi::streams::Host::read(<span class="self">self</span>, stream, max)
+                    streams::Host::read(<span class="self">self</span>, stream, max)
                 }
                 .<span class="kw">await
                 </span>.map_err(|<span class="kw">_</span>| types::Errno::Io)<span class="question-mark">?</span>;
@@ -3008,13 +2965,10 @@
                 <span class="kw">let </span><span class="prelude-val">Some</span>(buf) = first_non_empty_iovec(iovs)<span class="question-mark">? </span><span class="kw">else </span>{
                     <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="number">0</span>)
                 };
-                <span class="kw">let </span>(read, end) = wasi::streams::Host::read(
-                    <span class="self">self</span>,
-                    stream,
-                    buf.len().try_into().unwrap_or(u64::MAX),
-                )
-                .<span class="kw">await
-                </span>.map_err(|<span class="kw">_</span>| types::Errno::Io)<span class="question-mark">?</span>;
+                <span class="kw">let </span>(read, end) =
+                    streams::Host::read(<span class="self">self</span>, stream, buf.len().try_into().unwrap_or(u64::MAX))
+                        .<span class="kw">await
+                        </span>.map_err(|<span class="kw">_</span>| types::Errno::Io)<span class="question-mark">?</span>;
                 (buf, read, end)
             }
             <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(types::Errno::Badf.into()),
@@ -3056,7 +3010,7 @@
                 <span class="kw">let </span>(read, end) = <span class="kw">if </span>blocking {
                     <span class="self">self</span>.blocking_read(stream, max)
                 } <span class="kw">else </span>{
-                    wasi::streams::Host::read(<span class="self">self</span>, stream, max)
+                    streams::Host::read(<span class="self">self</span>, stream, max)
                 }
                 .<span class="kw">await
                 </span>.map_err(|<span class="kw">_</span>| types::Errno::Io)<span class="question-mark">?</span>;
@@ -3119,7 +3073,7 @@
                 <span class="kw">let </span>n = <span class="kw">if </span>blocking {
                     <span class="self">self</span>.blocking_write(stream, buf)
                 } <span class="kw">else </span>{
-                    wasi::streams::Host::write(<span class="self">self</span>, stream, buf)
+                    streams::Host::write(<span class="self">self</span>, stream, buf)
                 }
                 .<span class="kw">await
                 </span>.map_err(|<span class="kw">_</span>| types::Errno::Io)<span class="question-mark">?</span>;
@@ -3133,7 +3087,7 @@
                 <span class="kw">let </span><span class="prelude-val">Some</span>(buf) = first_non_empty_ciovec(ciovs)<span class="question-mark">? </span><span class="kw">else </span>{
                     <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="number">0</span>)
                 };
-                wasi::streams::Host::write(<span class="self">self</span>, stream, buf)
+                streams::Host::write(<span class="self">self</span>, stream, buf)
                     .<span class="kw">await
                     </span>.map_err(|<span class="kw">_</span>| types::Errno::Io)<span class="question-mark">?
             </span>}
@@ -3167,7 +3121,7 @@
                 <span class="kw">if </span>blocking {
                     <span class="self">self</span>.blocking_write(stream, buf)
                 } <span class="kw">else </span>{
-                    wasi::streams::Host::write(<span class="self">self</span>, stream, buf)
+                    streams::Host::write(<span class="self">self</span>, stream, buf)
                 }
                 .<span class="kw">await
                 </span>.map_err(|<span class="kw">_</span>| types::Errno::Io)<span class="question-mark">?
@@ -3243,12 +3197,11 @@
                 .checked_add_signed(offset)
                 .ok_or(types::Errno::Inval)<span class="question-mark">?</span>,
             types::Whence::End =&gt; {
-                <span class="kw">let </span>wasi::filesystem::DescriptorStat { size, .. } =
-                    <span class="self">self</span>.stat(fd).<span class="kw">await</span>.map_err(|e| {
-                        e.try_into()
-                            .context(<span class="string">&quot;failed to call `stat`&quot;</span>)
-                            .unwrap_or_else(types::Error::trap)
-                    })<span class="question-mark">?</span>;
+                <span class="kw">let </span>filesystem::DescriptorStat { size, .. } = <span class="self">self</span>.stat(fd).<span class="kw">await</span>.map_err(|e| {
+                    e.try_into()
+                        .context(<span class="string">&quot;failed to call `stat`&quot;</span>)
+                        .unwrap_or_else(types::Error::trap)
+                })<span class="question-mark">?</span>;
                 size.checked_add_signed(offset).ok_or(types::Errno::Inval)<span class="question-mark">?
             </span>}
             <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(types::Errno::Inval.into()),
@@ -3295,7 +3248,7 @@
                 .context(<span class="string">&quot;failed to call `read-directory`&quot;</span>)
                 .unwrap_or_else(types::Error::trap)
         })<span class="question-mark">?</span>;
-        <span class="kw">let </span>wasi::filesystem::DescriptorStat {
+        <span class="kw">let </span>filesystem::DescriptorStat {
             inode: fd_inode, ..
         } = <span class="self">self</span>.stat(fd).<span class="kw">await</span>.map_err(|e| {
             e.try_into()
@@ -3334,12 +3287,11 @@
             </span>.into_iter()
             .zip(<span class="number">3u64</span>..)
             .map(|(entry, d_next)| {
-                <span class="kw">let </span>wasi::filesystem::DirectoryEntry { inode, type_, name } =
-                    entry.map_err(|e| {
-                        e.try_into()
-                            .context(<span class="string">&quot;failed to inspect `read-directory` entry&quot;</span>)
-                            .unwrap_or_else(types::Error::trap)
-                    })<span class="question-mark">?</span>;
+                <span class="kw">let </span>filesystem::DirectoryEntry { inode, type_, name } = entry.map_err(|e| {
+                    e.try_into()
+                        .context(<span class="string">&quot;failed to inspect `read-directory` entry&quot;</span>)
+                        .unwrap_or_else(types::Error::trap)
+                })<span class="question-mark">?</span>;
                 <span class="kw">let </span>d_type = type_.try_into().map_err(types::Error::trap)<span class="question-mark">?</span>;
                 <span class="kw">let </span>d_namlen: u32 = name.len().try_into().map_err(|<span class="kw">_</span>| types::Errno::Overflow)<span class="question-mark">?</span>;
                 <span class="prelude-val">Ok</span>((
@@ -3418,7 +3370,7 @@
     ) -&gt; <span class="prelude-ty">Result</span>&lt;types::Filestat, types::Error&gt; {
         <span class="kw">let </span>dirfd = <span class="self">self</span>.get_dir_fd(dirfd).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let </span>path = read_string(path)<span class="question-mark">?</span>;
-        <span class="kw">let </span>wasi::filesystem::DescriptorStat {
+        <span class="kw">let </span>filesystem::DescriptorStat {
             device: dev,
             inode: ino,
             type_,
@@ -3521,21 +3473,21 @@
     ) -&gt; <span class="prelude-ty">Result</span>&lt;types::Fd, types::Error&gt; {
         <span class="kw">let </span>path = read_string(path)<span class="question-mark">?</span>;
 
-        <span class="kw">let </span><span class="kw-2">mut </span>flags = wasi::filesystem::DescriptorFlags::empty();
+        <span class="kw">let </span><span class="kw-2">mut </span>flags = filesystem::DescriptorFlags::empty();
         <span class="kw">if </span>fs_rights_base.contains(types::Rights::FD_READ) {
-            flags |= wasi::filesystem::DescriptorFlags::READ;
+            flags |= filesystem::DescriptorFlags::READ;
         }
         <span class="kw">if </span>fs_rights_base.contains(types::Rights::FD_WRITE) {
-            flags |= wasi::filesystem::DescriptorFlags::WRITE;
+            flags |= filesystem::DescriptorFlags::WRITE;
         }
         <span class="kw">if </span>fdflags.contains(types::Fdflags::SYNC) {
-            flags |= wasi::filesystem::DescriptorFlags::FILE_INTEGRITY_SYNC;
+            flags |= filesystem::DescriptorFlags::FILE_INTEGRITY_SYNC;
         }
         <span class="kw">if </span>fdflags.contains(types::Fdflags::DSYNC) {
-            flags |= wasi::filesystem::DescriptorFlags::DATA_INTEGRITY_SYNC;
+            flags |= filesystem::DescriptorFlags::DATA_INTEGRITY_SYNC;
         }
         <span class="kw">if </span>fdflags.contains(types::Fdflags::RSYNC) {
-            flags |= wasi::filesystem::DescriptorFlags::REQUESTED_WRITE_SYNC;
+            flags |= filesystem::DescriptorFlags::REQUESTED_WRITE_SYNC;
         }
 
         <span class="kw">let </span>desc = <span class="self">self</span>.transact().<span class="kw">await</span><span class="question-mark">?</span>.get_descriptor(dirfd)<span class="question-mark">?</span>.clone();
@@ -3555,7 +3507,7 @@
                 path,
                 oflags.into(),
                 flags,
-                wasi::filesystem::Modes::READABLE | wasi::filesystem::Modes::WRITABLE,
+                filesystem::Modes::READABLE | filesystem::Modes::WRITABLE,
             )
             .<span class="kw">await
             </span>.map_err(|e| {

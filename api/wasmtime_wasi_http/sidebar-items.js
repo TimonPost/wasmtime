@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["add_to_component_linker","add_to_linker"],"mod":["component_impl","console","default_outgoing_http","http","http_impl","poll","random","streams","streams_impl","struct","types","types_impl"],"struct":["Proxy"]};
+window.SIDEBAR_ITEMS = {};

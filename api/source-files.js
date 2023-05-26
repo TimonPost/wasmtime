@@ -59,7 +59,6 @@ var sourcesIndex = JSON.parse('{\
 "isatty":["",[],["isatty.rs"]],\
 "islec":["",[],["main.rs"]],\
 "nofollow_errors":["",[],["nofollow_errors.rs"]],\
-"outbound_request":["",[],["outbound_request.rs"]],\
 "overwrite_preopen":["",[],["overwrite_preopen.rs"]],\
 "panic":["",[],["panic.rs"]],\
 "path_exists":["",[],["path_exists.rs"]],\
@@ -97,7 +96,6 @@ var sourcesIndex = JSON.parse('{\
 "wasi_cap_std_sync":["",[["sched",[],["unix.rs"]]],["clocks.rs","dir.rs","file.rs","lib.rs","net.rs","sched.rs","stdio.rs"]],\
 "wasi_common":["",[["sched",[],["subscription.rs"]],["snapshots",[["preview_1",[],["error.rs"]]],["mod.rs","preview_0.rs","preview_1.rs"]]],["clocks.rs","ctx.rs","dir.rs","error.rs","file.rs","lib.rs","pipe.rs","random.rs","sched.rs","string_array.rs","table.rs"]],\
 "wasi_crypto":["",[["asymmetric_common",[],["keypair.rs","managed_keypair.rs","mod.rs","publickey.rs","secretkey.rs"]],["key_exchange",[["dh",[],["mod.rs","x25519.rs"]],["kem",[],["kyber.rs","mod.rs"]]],["keypair.rs","mod.rs","publickey.rs","secretkey.rs"]],["signatures",[],["ecdsa.rs","eddsa.rs","keypair.rs","mod.rs","publickey.rs","rsa.rs","secretkey.rs","signature.rs"]],["symmetric",[],["aes_gcm.rs","chacha_poly.rs","hkdf.rs","hmac_sha2.rs","key.rs","managed_key.rs","mod.rs","sha2.rs","state.rs","tag.rs","xoodyak.rs"]]],["array_output.rs","error.rs","handles.rs","lib.rs","options.rs","rand.rs","secrets_manager.rs","version.rs"]],\
-"wasi_http_tests":["",[],["lib.rs"]],\
 "wasi_preview1_component_adapter":["",[],["descriptors.rs","lib.rs","macros.rs"]],\
 "wasi_tests":["",[],["config.rs","lib.rs"]],\
 "wasi_tokio":["",[["sched",[],["unix.rs"]]],["dir.rs","file.rs","lib.rs","net.rs","sched.rs","stdio.rs"]],\
@@ -123,7 +121,7 @@ var sourcesIndex = JSON.parse('{\
 "wasmtime_types":["",[],["error.rs","lib.rs"]],\
 "wasmtime_wasi":["",[["preview2",[["clocks",[],["host.rs"]],["preview1",[],["mod.rs"]],["preview2",[],["clocks.rs","env.rs","exit.rs","filesystem.rs","io.rs","mod.rs","poll.rs","random.rs"]],["sched",[],["subscription.rs","sync.rs"]],["wasi",[],["command.rs","mod.rs"]]],["clocks.rs","ctx.rs","error.rs","filesystem.rs","mod.rs","pipe.rs","random.rs","sched.rs","stdio.rs","stream.rs","table.rs"]]],["lib.rs"]],\
 "wasmtime_wasi_crypto":["",[["wiggle_interfaces",[],["asymmetric_common.rs","common.rs","error.rs","key_exchange.rs","mod.rs","signatures.rs","symmetric.rs"]]],["lib.rs"]],\
-"wasmtime_wasi_http":["",[],["component_impl.rs","http_impl.rs","lib.rs","streams_impl.rs","struct.rs","types_impl.rs"]],\
+"wasmtime_wasi_http":["",[],["lib.rs"]],\
 "wasmtime_wasi_nn":["",[],["api.rs","ctx.rs","impl.rs","lib.rs","openvino.rs","witx.rs"]],\
 "wasmtime_wasi_threads":["",[],["lib.rs"]],\
 "wasmtime_wast":["",[],["component.rs","core.rs","lib.rs","spectest.rs","wast.rs"]],\

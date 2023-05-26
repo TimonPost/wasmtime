@@ -2381,11 +2381,21 @@
 <a href="#2381" id="2381">2381</a>
 <a href="#2382" id="2382">2382</a>
 <a href="#2383" id="2383">2383</a>
+<a href="#2384" id="2384">2384</a>
+<a href="#2385" id="2385">2385</a>
+<a href="#2386" id="2386">2386</a>
+<a href="#2387" id="2387">2387</a>
+<a href="#2388" id="2388">2388</a>
+<a href="#2389" id="2389">2389</a>
 </pre><pre class="rust"><code><span class="attr">#![allow(unused_variables)] </span><span class="comment">// TODO: remove this when more things are implemented
 
-</span><span class="kw">use </span><span class="kw">crate</span>::bindings::{
-    exit, filesystem, monotonic_clock, network, poll, random, streams, wall_clock,
-};
+</span><span class="kw">use </span><span class="kw">crate</span>::bindings::wasi::cli_base::exit;
+<span class="kw">use </span><span class="kw">crate</span>::bindings::wasi::clocks::{monotonic_clock, wall_clock};
+<span class="kw">use </span><span class="kw">crate</span>::bindings::wasi::filesystem::filesystem;
+<span class="kw">use </span><span class="kw">crate</span>::bindings::wasi::io::streams;
+<span class="kw">use </span><span class="kw">crate</span>::bindings::wasi::poll::poll;
+<span class="kw">use </span><span class="kw">crate</span>::bindings::wasi::random::random;
+<span class="kw">use </span><span class="kw">crate</span>::bindings::wasi::sockets::network;
 <span class="kw">use </span>core::cell::{Cell, RefCell, RefMut, UnsafeCell};
 <span class="kw">use </span>core::cmp::min;
 <span class="kw">use </span>core::ffi::c_void;
@@ -2409,7 +2419,8 @@
 <span class="kw">pub mod </span>bindings {
     <span class="attr">#[cfg(feature = <span class="string">&quot;command&quot;</span>)]
     </span><span class="macro">wit_bindgen::generate!</span>({
-        world: <span class="string">&quot;command&quot;</span>,
+        path: <span class="string">&quot;../wasi/wit&quot;</span>,
+        world: <span class="string">&quot;wasi:preview/command&quot;</span>,
         std_feature,
         raw_strings,
         <span class="comment">// The generated definition of command will pull in std, so we are defining it
@@ -2419,7 +2430,8 @@
 
     <span class="attr">#[cfg(feature = <span class="string">&quot;reactor&quot;</span>)]
     </span><span class="macro">wit_bindgen::generate!</span>({
-        world: <span class="string">&quot;reactor&quot;</span>,
+        path: <span class="string">&quot;../wasi/wit&quot;</span>,
+        world: <span class="string">&quot;wasi:preview/reactor&quot;</span>,
         std_feature,
         raw_strings,
         skip: [<span class="string">&quot;get-directories&quot;</span>, <span class="string">&quot;get-environment&quot;</span>],
@@ -4718,7 +4730,7 @@
 
     <span class="kw">fn </span>get_environment(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[StrTuple] {
         <span class="kw">if </span><span class="self">self</span>.env_vars.get().is_none() {
-            <span class="attr">#[link(wasm_import_module = <span class="string">&quot;environment&quot;</span>)]
+            <span class="attr">#[link(wasm_import_module = <span class="string">&quot;wasi:cli-base/environment&quot;</span>)]
             </span><span class="kw">extern </span><span class="string">&quot;C&quot; </span>{
                 <span class="attr">#[link_name = <span class="string">&quot;get-environment&quot;</span>]
                 </span><span class="kw">fn </span>get_environment_import(rval: <span class="kw-2">*mut </span>StrTupleList);
@@ -4742,7 +4754,7 @@
 
     <span class="kw">fn </span>get_args(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[WasmStr] {
         <span class="kw">if </span><span class="self">self</span>.args.get().is_none() {
-            <span class="attr">#[link(wasm_import_module = <span class="string">&quot;environment&quot;</span>)]
+            <span class="attr">#[link(wasm_import_module = <span class="string">&quot;wasi:cli-base/environment&quot;</span>)]
             </span><span class="kw">extern </span><span class="string">&quot;C&quot; </span>{
                 <span class="attr">#[link_name = <span class="string">&quot;get-arguments&quot;</span>]
                 </span><span class="kw">fn </span>get_args_import(rval: <span class="kw-2">*mut </span>WasmStrList);

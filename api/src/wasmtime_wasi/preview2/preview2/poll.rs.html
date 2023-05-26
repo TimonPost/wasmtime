@@ -82,13 +82,11 @@
 <a href="#82" id="82">82</a>
 <a href="#83" id="83">83</a>
 <a href="#84" id="84">84</a>
-<a href="#85" id="85">85</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::preview2::{
     stream::TableStreamExt,
-    wasi,
-    wasi::monotonic_clock::Instant,
-    wasi::poll::Pollable,
-    wasi::streams::{InputStream, OutputStream},
+    wasi::clocks::monotonic_clock::Instant,
+    wasi::io::streams::{InputStream, OutputStream},
+    wasi::poll::poll::{<span class="self">self</span>, Pollable},
     WasiView,
 };
 
@@ -114,7 +112,7 @@
 // this PR.
 
 </span><span class="attr">#[async_trait::async_trait]
-</span><span class="kw">impl</span>&lt;T: WasiView&gt; wasi::poll::Host <span class="kw">for </span>T {
+</span><span class="kw">impl</span>&lt;T: WasiView&gt; poll::Host <span class="kw">for </span>T {
     <span class="kw">async fn </span>drop_pollable(<span class="kw-2">&amp;mut </span><span class="self">self</span>, pollable: Pollable) -&gt; anyhow::Result&lt;()&gt; {
         <span class="self">self</span>.table_mut().delete::&lt;PollableEntry&gt;(pollable)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())

@@ -903,7 +903,7 @@
         <span class="kw">match </span>ty {
             wasmparser::HeapType::Func =&gt; WasmHeapType::Func,
             wasmparser::HeapType::Extern =&gt; WasmHeapType::Extern,
-            wasmparser::HeapType::TypedFunc(i) =&gt; <span class="self">self</span>.lookup_heap_type(TypeIndex::from_u32(i)),
+            wasmparser::HeapType::Indexed(i) =&gt; <span class="self">self</span>.lookup_heap_type(TypeIndex::from_u32(i)),
 
             wasmparser::HeapType::Any
             | wasmparser::HeapType::None

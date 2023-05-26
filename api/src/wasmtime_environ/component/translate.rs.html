@@ -1078,7 +1078,7 @@
 <span class="kw">use </span>indexmap::IndexMap;
 <span class="kw">use </span>std::collections::HashMap;
 <span class="kw">use </span>std::mem;
-<span class="kw">use </span>wasmparser::{Chunk, Encoding, Parser, Payload, Validator};
+<span class="kw">use </span>wasmparser::{Chunk, ComponentExternName, Encoding, Parser, Payload, Validator};
 
 <span class="kw">mod </span>adapt;
 <span class="kw">pub use </span><span class="self">self</span>::adapt::<span class="kw-2">*</span>;
@@ -1234,7 +1234,7 @@
 <span class="attr">#[allow(missing_docs)]
 </span><span class="kw">enum </span>LocalInitializer&lt;<span class="lifetime">&#39;data</span>&gt; {
     <span class="comment">// imports
-    </span>Import(<span class="kw-2">&amp;</span><span class="lifetime">&#39;data </span>str, TypeDef),
+    </span>Import(ComponentExternName&lt;<span class="lifetime">&#39;data</span>&gt;, TypeDef),
 
     <span class="comment">// canonical function sections
     </span>Lower(ComponentFuncIndex, LocalCanonicalOptions),
@@ -1692,7 +1692,7 @@
                 <span class="kw">for </span>export <span class="kw">in </span>s {
                     <span class="kw">let </span>export = export<span class="question-mark">?</span>;
                     <span class="kw">let </span>item = <span class="self">self</span>.kind_to_item(export.kind, export.index);
-                    <span class="kw">let </span>prev = <span class="self">self</span>.result.exports.insert(export.name, item);
+                    <span class="kw">let </span>prev = <span class="self">self</span>.result.exports.insert(export.name.as_str(), item);
                     <span class="macro">assert!</span>(prev.is_none());
                     <span class="self">self</span>.result
                         .initializers
@@ -1901,9 +1901,9 @@
                 ComponentItem::Type(ty) =&gt; <span class="prelude-val">Some</span>(ComponentItemType::Type(ty)),
                 ComponentItem::Module(<span class="kw">_</span>) =&gt; <span class="prelude-val">None</span>,
             };
-            map.insert(export.name, idx);
+            map.insert(export.name.as_str(), idx);
             <span class="kw">if let </span><span class="prelude-val">Some</span>(ty) = ty {
-                types.insert(export.name, ty);
+                types.insert(export.name.as_str(), ty);
             }
         }
 
@@ -1970,15 +1970,15 @@
             <span class="comment">// An imported component instance is being aliased, so the type of
             // the aliased item is directly available from the instance type.
             </span>ComponentInstanceType::Index(ty) =&gt; {
-                <span class="kw">let </span>(_url, ty) = <span class="kw-2">&amp;</span><span class="self">self</span>.types[ty].exports[name];
-                <span class="self">self</span>.push_typedef(<span class="kw-2">*</span>ty);
+                <span class="kw">let </span>ty = <span class="self">self</span>.types[ty].exports[name];
+                <span class="self">self</span>.push_typedef(ty);
             }
 
             <span class="comment">// An imported component was instantiated so the type of the aliased
             // export is available through the type of the export on the
             // original component.
             </span>ComponentInstanceType::InstantiatedIndex(ty) =&gt; {
-                <span class="kw">let </span>(<span class="kw">_</span>, ty) = <span class="self">self</span>.types[ty].exports[name];
+                <span class="kw">let </span>ty = <span class="self">self</span>.types[ty].exports[name];
                 <span class="self">self</span>.push_typedef(ty);
             }
 

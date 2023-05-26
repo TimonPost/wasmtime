@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["ALLOWED_IMPORT_MODULES"],"fn":["main"]};
+window.SIDEBAR_ITEMS = {"fn":["main"]};

@@ -394,7 +394,16 @@
                         <span class="kw">if </span>inline.is_some() {
                             <span class="kw">return </span><span class="prelude-val">Err</span>(Error::new(s.span(), <span class="string">&quot;cannot specify a second source&quot;</span>));
                         }
-                        inline = <span class="prelude-val">Some</span>(<span class="macro">format!</span>(<span class="string">&quot;default world interfaces {{ {} }}&quot;</span>, s.value()));
+                        inline = <span class="prelude-val">Some</span>(<span class="macro">format!</span>(
+                            <span class="string">&quot;
+                                package wasmtime:component-macro-synthesized
+
+                                world interfaces {{
+                                    {}
+                                }}
+                            &quot;</span>,
+                            s.value()
+                        ));
 
                         <span class="kw">if </span>world.is_some() {
                             <span class="kw">return </span><span class="prelude-val">Err</span>(Error::new(
@@ -402,7 +411,7 @@
                                 <span class="string">&quot;cannot specify a world with `interfaces`&quot;</span>,
                             ));
                         }
-                        world = <span class="prelude-val">Some</span>(<span class="string">&quot;macro-input.interfaces&quot;</span>.to_string());
+                        world = <span class="prelude-val">Some</span>(<span class="string">&quot;interfaces&quot;</span>.to_string());
 
                         opts.only_interfaces = <span class="bool-val">true</span>;
                     }
@@ -446,7 +455,7 @@
         } <span class="kw">else </span>{
             <span class="kw">let </span>pkg = UnresolvedPackage::parse_file(path)<span class="question-mark">?</span>;
             files.extend(pkg.source_files().map(|s| s.to_owned()));
-            resolve.push(pkg, <span class="kw-2">&amp;</span>Default::default())
+            resolve.push(pkg)
         }
     };
 
@@ -457,16 +466,7 @@
     </span>};
 
     <span class="kw">let </span>inline_pkg = <span class="kw">if let </span><span class="prelude-val">Some</span>(inline) = inline {
-        <span class="kw">let </span>deps = resolve
-            .packages
-            .iter()
-            .map(|(id, p)| (p.name.clone(), id))
-            .collect();
-
-        <span class="prelude-val">Some</span>(resolve.push(
-            UnresolvedPackage::parse(<span class="string">&quot;macro-input&quot;</span>.as_ref(), <span class="kw-2">&amp;</span>inline)<span class="question-mark">?</span>,
-            <span class="kw-2">&amp;</span>deps,
-        )<span class="question-mark">?</span>)
+        <span class="prelude-val">Some</span>(resolve.push(UnresolvedPackage::parse(<span class="string">&quot;macro-input&quot;</span>.as_ref(), <span class="kw-2">&amp;</span>inline)<span class="question-mark">?</span>)<span class="question-mark">?</span>)
     } <span class="kw">else </span>{
         <span class="prelude-val">None
     </span>};

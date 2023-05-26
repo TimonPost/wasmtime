@@ -37,12 +37,16 @@
 <a href="#37" id="37">37</a>
 <a href="#38" id="38">38</a>
 <a href="#39" id="39">39</a>
-</pre><pre class="rust"><code><span class="kw">use </span>cap_rand::{distributions::Standard, Rng};
-
-<span class="kw">use </span><span class="kw">crate</span>::preview2::{wasi, WasiView};
+<a href="#40" id="40">40</a>
+<a href="#41" id="41">41</a>
+</pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::preview2::wasi::random::insecure;
+<span class="kw">use </span><span class="kw">crate</span>::preview2::wasi::random::insecure_seed;
+<span class="kw">use </span><span class="kw">crate</span>::preview2::wasi::random::random;
+<span class="kw">use </span><span class="kw">crate</span>::preview2::WasiView;
+<span class="kw">use </span>cap_rand::{distributions::Standard, Rng};
 
 <span class="attr">#[async_trait::async_trait]
-</span><span class="kw">impl</span>&lt;T: WasiView&gt; wasi::random::Host <span class="kw">for </span>T {
+</span><span class="kw">impl</span>&lt;T: WasiView&gt; random::Host <span class="kw">for </span>T {
     <span class="kw">async fn </span>get_random_bytes(<span class="kw-2">&amp;mut </span><span class="self">self</span>, len: u64) -&gt; anyhow::Result&lt;Vec&lt;u8&gt;&gt; {
         <span class="prelude-val">Ok</span>((<span class="kw-2">&amp;mut </span><span class="self">self</span>.ctx_mut().random)
             .sample_iter(Standard)
@@ -56,7 +60,7 @@
 }
 
 <span class="attr">#[async_trait::async_trait]
-</span><span class="kw">impl</span>&lt;T: WasiView&gt; wasi::insecure_random::Host <span class="kw">for </span>T {
+</span><span class="kw">impl</span>&lt;T: WasiView&gt; insecure::Host <span class="kw">for </span>T {
     <span class="kw">async fn </span>get_insecure_random_bytes(<span class="kw-2">&amp;mut </span><span class="self">self</span>, len: u64) -&gt; anyhow::Result&lt;Vec&lt;u8&gt;&gt; {
         <span class="prelude-val">Ok</span>((<span class="kw-2">&amp;mut </span><span class="self">self</span>.ctx_mut().insecure_random)
             .sample_iter(Standard)
@@ -70,7 +74,7 @@
 }
 
 <span class="attr">#[async_trait::async_trait]
-</span><span class="kw">impl</span>&lt;T: WasiView&gt; wasi::insecure_random_seed::Host <span class="kw">for </span>T {
+</span><span class="kw">impl</span>&lt;T: WasiView&gt; insecure_seed::Host <span class="kw">for </span>T {
     <span class="kw">async fn </span>insecure_seed(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; anyhow::Result&lt;(u64, u64)&gt; {
         <span class="kw">let </span>seed: u128 = <span class="self">self</span>.ctx_mut().insecure_random_seed;
         <span class="prelude-val">Ok</span>((seed <span class="kw">as </span>u64, (seed &gt;&gt; <span class="number">64</span>) <span class="kw">as </span>u64))
