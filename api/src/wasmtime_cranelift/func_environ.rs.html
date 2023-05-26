@@ -2160,6 +2160,10 @@
 <a href="#2160" id="2160">2160</a>
 <a href="#2161" id="2161">2161</a>
 <a href="#2162" id="2162">2162</a>
+<a href="#2163" id="2163">2163</a>
+<a href="#2164" id="2164">2164</a>
+<a href="#2165" id="2165">2165</a>
+<a href="#2166" id="2166">2166</a>
 </pre><pre class="rust"><code><span class="kw">use </span>cranelift_codegen::cursor::FuncCursor;
 <span class="kw">use </span>cranelift_codegen::ir;
 <span class="kw">use </span>cranelift_codegen::ir::condcodes::<span class="kw-2">*</span>;
@@ -4320,6 +4324,10 @@
 
     <span class="kw">fn </span>is_x86(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
         <span class="self">self</span>.isa.triple().architecture == target_lexicon::Architecture::X86_64
+    }
+
+    <span class="kw">fn </span>use_x86_blendv_for_relaxed_laneselect(<span class="kw-2">&amp;</span><span class="self">self</span>, ty: Type) -&gt; bool {
+        <span class="self">self</span>.isa.has_x86_blendv_lowering(ty)
     }
 }
 </code></pre></div>

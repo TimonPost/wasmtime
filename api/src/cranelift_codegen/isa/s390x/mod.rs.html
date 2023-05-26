@@ -207,6 +207,10 @@
 <a href="#207" id="207">207</a>
 <a href="#208" id="208">208</a>
 <a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
+<a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
 </pre><pre class="rust"><code><span class="doccomment">//! IBM Z 64-bit Instruction Set Architecture.
 
 </span><span class="kw">use </span><span class="kw">crate</span>::dominator_tree::DominatorTree;
@@ -390,6 +394,10 @@
 
     <span class="kw">fn </span>has_native_fma(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
         <span class="bool-val">true
+    </span>}
+
+    <span class="kw">fn </span>has_x86_blendv_lowering(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: Type) -&gt; bool {
+        <span class="bool-val">false
     </span>}
 }
 

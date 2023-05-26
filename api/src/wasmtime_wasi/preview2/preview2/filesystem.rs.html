@@ -1008,6 +1008,15 @@
 <a href="#1008" id="1008">1008</a>
 <a href="#1009" id="1009">1009</a>
 <a href="#1010" id="1010">1010</a>
+<a href="#1011" id="1011">1011</a>
+<a href="#1012" id="1012">1012</a>
+<a href="#1013" id="1013">1013</a>
+<a href="#1014" id="1014">1014</a>
+<a href="#1015" id="1015">1015</a>
+<a href="#1016" id="1016">1016</a>
+<a href="#1017" id="1017">1017</a>
+<a href="#1018" id="1018">1018</a>
+<a href="#1019" id="1019">1019</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::preview2::filesystem::{Dir, File, TableFsExt};
 <span class="kw">use </span><span class="kw">crate</span>::preview2::stream::TableStreamExt;
 <span class="kw">use </span><span class="kw">crate</span>::preview2::{wasi, DirPerms, FilePerms, Table, TableError, WasiView};
@@ -1963,7 +1972,7 @@
     path_flags.contains(wasi::filesystem::PathFlags::SYMLINK_FOLLOW)
 }
 
-<span class="kw">struct </span>ReaddirIterator(
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>ReaddirIterator(
     std::sync::Mutex&lt;
         Box&lt;
             <span class="kw">dyn </span>Iterator&lt;Item = <span class="prelude-ty">Result</span>&lt;wasi::filesystem::DirectoryEntry, wasi::filesystem::Error&gt;&gt;
@@ -1986,9 +1995,18 @@
     }
 }
 
-<span class="kw">trait </span>TableReaddirExt {
+<span class="kw">impl </span>IntoIterator <span class="kw">for </span>ReaddirIterator {
+    <span class="kw">type </span>Item = <span class="prelude-ty">Result</span>&lt;wasi::filesystem::DirectoryEntry, wasi::filesystem::Error&gt;;
+    <span class="kw">type </span>IntoIter = Box&lt;<span class="kw">dyn </span>Iterator&lt;Item = <span class="self">Self</span>::Item&gt;&gt;;
+
+    <span class="kw">fn </span>into_iter(<span class="self">self</span>) -&gt; <span class="self">Self</span>::IntoIter {
+        <span class="self">self</span>.<span class="number">0</span>.into_inner().unwrap()
+    }
+}
+
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">trait </span>TableReaddirExt {
     <span class="kw">fn </span>push_readdir(<span class="kw-2">&amp;mut </span><span class="self">self</span>, readdir: ReaddirIterator) -&gt; <span class="prelude-ty">Result</span>&lt;u32, TableError&gt;;
-    <span class="kw">fn </span>delete_readdir(<span class="kw-2">&amp;mut </span><span class="self">self</span>, fd: u32) -&gt; <span class="prelude-ty">Result</span>&lt;(), TableError&gt;;
+    <span class="kw">fn </span>delete_readdir(<span class="kw-2">&amp;mut </span><span class="self">self</span>, fd: u32) -&gt; <span class="prelude-ty">Result</span>&lt;ReaddirIterator, TableError&gt;;
     <span class="kw">fn </span>get_readdir(<span class="kw-2">&amp;</span><span class="self">self</span>, fd: u32) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;</span>ReaddirIterator, TableError&gt;;
 }
 
@@ -1996,12 +2014,12 @@
     <span class="kw">fn </span>push_readdir(<span class="kw-2">&amp;mut </span><span class="self">self</span>, readdir: ReaddirIterator) -&gt; <span class="prelude-ty">Result</span>&lt;u32, TableError&gt; {
         <span class="self">self</span>.push(Box::new(readdir))
     }
-    <span class="kw">fn </span>delete_readdir(<span class="kw-2">&amp;mut </span><span class="self">self</span>, fd: u32) -&gt; <span class="prelude-ty">Result</span>&lt;(), TableError&gt; {
-        <span class="self">self</span>.delete::&lt;ReaddirIterator&gt;(fd)
+    <span class="kw">fn </span>delete_readdir(<span class="kw-2">&amp;mut </span><span class="self">self</span>, fd: u32) -&gt; <span class="prelude-ty">Result</span>&lt;ReaddirIterator, TableError&gt; {
+        <span class="self">self</span>.delete(fd)
     }
 
     <span class="kw">fn </span>get_readdir(<span class="kw-2">&amp;</span><span class="self">self</span>, fd: u32) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;</span>ReaddirIterator, TableError&gt; {
-        <span class="self">self</span>.get::&lt;ReaddirIterator&gt;(fd)
+        <span class="self">self</span>.get(fd)
     }
 }
 <span class="attr">#[cfg(test)]

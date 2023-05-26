@@ -232,6 +232,10 @@
 <a href="#232" id="232">232</a>
 <a href="#233" id="233">233</a>
 <a href="#234" id="234">234</a>
+<a href="#235" id="235">235</a>
+<a href="#236" id="236">236</a>
+<a href="#237" id="237">237</a>
+<a href="#238" id="238">238</a>
 </pre><pre class="rust"><code><span class="doccomment">//! ARM 64-bit Instruction Set Architecture.
 
 </span><span class="kw">use </span><span class="kw">crate</span>::dominator_tree::DominatorTree;
@@ -440,6 +444,10 @@
 
     <span class="kw">fn </span>has_native_fma(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
         <span class="bool-val">true
+    </span>}
+
+    <span class="kw">fn </span>has_x86_blendv_lowering(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: Type) -&gt; bool {
+        <span class="bool-val">false
     </span>}
 }
 

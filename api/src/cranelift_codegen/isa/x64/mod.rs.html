@@ -242,13 +242,21 @@
 <a href="#242" id="242">242</a>
 <a href="#243" id="243">243</a>
 <a href="#244" id="244">244</a>
+<a href="#245" id="245">245</a>
+<a href="#246" id="246">246</a>
+<a href="#247" id="247">247</a>
+<a href="#248" id="248">248</a>
+<a href="#249" id="249">249</a>
+<a href="#250" id="250">250</a>
+<a href="#251" id="251">251</a>
+<a href="#252" id="252">252</a>
 </pre><pre class="rust"><code><span class="doccomment">//! X86_64-bit Instruction Set Architecture.
 
 </span><span class="kw">pub use </span><span class="self">self</span>::inst::{args, CallInfo, EmitInfo, EmitState, Inst};
 
 <span class="kw">use super</span>::{OwnedTargetIsa, TargetIsa};
 <span class="kw">use </span><span class="kw">crate</span>::dominator_tree::DominatorTree;
-<span class="kw">use </span><span class="kw">crate</span>::ir::{Function, Type};
+<span class="kw">use </span><span class="kw">crate</span>::ir::{types, Function, Type};
 <span class="attr">#[cfg(feature = <span class="string">&quot;unwind&quot;</span>)]
 </span><span class="kw">use </span><span class="kw">crate</span>::isa::unwind::systemv;
 <span class="kw">use </span><span class="kw">crate</span>::isa::x64::{inst::regs::create_reg_env_systemv, settings <span class="kw">as </span>x64_settings};
@@ -421,6 +429,14 @@
 
     <span class="kw">fn </span>has_native_fma(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
         <span class="self">self</span>.x64_flags.use_fma()
+    }
+
+    <span class="kw">fn </span>has_x86_blendv_lowering(<span class="kw-2">&amp;</span><span class="self">self</span>, ty: Type) -&gt; bool {
+        <span class="comment">// The `blendvpd`, `blendvps`, and `pblendvb` instructions are all only
+        // available from SSE 4.1 and onwards. Otherwise the i16x8 type has no
+        // equivalent instruction which only looks at the top bit for a select
+        // operation, so that always returns `false`
+        </span><span class="self">self</span>.x64_flags.use_sse41() &amp;&amp; ty != types::I16X8
     }
 }
 

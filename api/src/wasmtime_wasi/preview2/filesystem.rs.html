@@ -293,12 +293,12 @@
 }
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">trait </span>TableFsExt {
     <span class="kw">fn </span>push_file(<span class="kw-2">&amp;mut </span><span class="self">self</span>, file: File) -&gt; <span class="prelude-ty">Result</span>&lt;u32, TableError&gt;;
-    <span class="kw">fn </span>delete_file(<span class="kw-2">&amp;mut </span><span class="self">self</span>, fd: u32) -&gt; <span class="prelude-ty">Result</span>&lt;(), TableError&gt;;
+    <span class="kw">fn </span>delete_file(<span class="kw-2">&amp;mut </span><span class="self">self</span>, fd: u32) -&gt; <span class="prelude-ty">Result</span>&lt;File, TableError&gt;;
     <span class="kw">fn </span>is_file(<span class="kw-2">&amp;</span><span class="self">self</span>, fd: u32) -&gt; bool;
     <span class="kw">fn </span>get_file(<span class="kw-2">&amp;</span><span class="self">self</span>, fd: u32) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;</span>File, TableError&gt;;
 
     <span class="kw">fn </span>push_dir(<span class="kw-2">&amp;mut </span><span class="self">self</span>, dir: Dir) -&gt; <span class="prelude-ty">Result</span>&lt;u32, TableError&gt;;
-    <span class="kw">fn </span>delete_dir(<span class="kw-2">&amp;mut </span><span class="self">self</span>, fd: u32) -&gt; <span class="prelude-ty">Result</span>&lt;(), TableError&gt;;
+    <span class="kw">fn </span>delete_dir(<span class="kw-2">&amp;mut </span><span class="self">self</span>, fd: u32) -&gt; <span class="prelude-ty">Result</span>&lt;Dir, TableError&gt;;
     <span class="kw">fn </span>is_dir(<span class="kw-2">&amp;</span><span class="self">self</span>, fd: u32) -&gt; bool;
     <span class="kw">fn </span>get_dir(<span class="kw-2">&amp;</span><span class="self">self</span>, fd: u32) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;</span>Dir, TableError&gt;;
 }
@@ -307,27 +307,27 @@
     <span class="kw">fn </span>push_file(<span class="kw-2">&amp;mut </span><span class="self">self</span>, file: File) -&gt; <span class="prelude-ty">Result</span>&lt;u32, TableError&gt; {
         <span class="self">self</span>.push(Box::new(file))
     }
-    <span class="kw">fn </span>delete_file(<span class="kw-2">&amp;mut </span><span class="self">self</span>, fd: u32) -&gt; <span class="prelude-ty">Result</span>&lt;(), TableError&gt; {
-        <span class="self">self</span>.delete::&lt;File&gt;(fd)
+    <span class="kw">fn </span>delete_file(<span class="kw-2">&amp;mut </span><span class="self">self</span>, fd: u32) -&gt; <span class="prelude-ty">Result</span>&lt;File, TableError&gt; {
+        <span class="self">self</span>.delete(fd)
     }
     <span class="kw">fn </span>is_file(<span class="kw-2">&amp;</span><span class="self">self</span>, fd: u32) -&gt; bool {
         <span class="self">self</span>.is::&lt;File&gt;(fd)
     }
     <span class="kw">fn </span>get_file(<span class="kw-2">&amp;</span><span class="self">self</span>, fd: u32) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;</span>File, TableError&gt; {
-        <span class="self">self</span>.get::&lt;File&gt;(fd)
+        <span class="self">self</span>.get(fd)
     }
 
     <span class="kw">fn </span>push_dir(<span class="kw-2">&amp;mut </span><span class="self">self</span>, dir: Dir) -&gt; <span class="prelude-ty">Result</span>&lt;u32, TableError&gt; {
         <span class="self">self</span>.push(Box::new(dir))
     }
-    <span class="kw">fn </span>delete_dir(<span class="kw-2">&amp;mut </span><span class="self">self</span>, fd: u32) -&gt; <span class="prelude-ty">Result</span>&lt;(), TableError&gt; {
-        <span class="self">self</span>.delete::&lt;Dir&gt;(fd)
+    <span class="kw">fn </span>delete_dir(<span class="kw-2">&amp;mut </span><span class="self">self</span>, fd: u32) -&gt; <span class="prelude-ty">Result</span>&lt;Dir, TableError&gt; {
+        <span class="self">self</span>.delete(fd)
     }
     <span class="kw">fn </span>is_dir(<span class="kw-2">&amp;</span><span class="self">self</span>, fd: u32) -&gt; bool {
         <span class="self">self</span>.is::&lt;Dir&gt;(fd)
     }
     <span class="kw">fn </span>get_dir(<span class="kw-2">&amp;</span><span class="self">self</span>, fd: u32) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;</span>Dir, TableError&gt; {
-        <span class="self">self</span>.get::&lt;Dir&gt;(fd)
+        <span class="self">self</span>.get(fd)
     }
 }
 

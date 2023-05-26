@@ -418,6 +418,10 @@
 <a href="#418" id="418">418</a>
 <a href="#419" id="419">419</a>
 <a href="#420" id="420">420</a>
+<a href="#421" id="421">421</a>
+<a href="#422" id="422">422</a>
+<a href="#423" id="423">423</a>
+<a href="#424" id="424">424</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Instruction Set Architectures.
 //!
 //! The `isa` module provides a `TargetIsa` trait which provides the behavior specialization needed
@@ -467,7 +471,7 @@
 <span class="kw">pub use </span><span class="kw">crate</span>::isa::call_conv::CallConv;
 
 <span class="kw">use </span><span class="kw">crate</span>::flowgraph;
-<span class="kw">use </span><span class="kw">crate</span>::ir::{<span class="self">self</span>, Function};
+<span class="kw">use </span><span class="kw">crate</span>::ir::{<span class="self">self</span>, Function, Type};
 <span class="attr">#[cfg(feature = <span class="string">&quot;unwind&quot;</span>)]
 </span><span class="kw">use </span><span class="kw">crate</span>::isa::unwind::systemv::RegisterMappingError;
 <span class="kw">use </span><span class="kw">crate</span>::machinst::{CompiledCode, CompiledCodeStencil, TextSectionBuilder, UnwindInfoKind};
@@ -760,6 +764,10 @@
     /// Currently this only returns false on x86 when some native features are
     /// not detected.
     </span><span class="kw">fn </span>has_native_fma(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool;
+
+    <span class="doccomment">/// Returns whether the CLIF `x86_blendv` instruction is implemented for
+    /// this ISA for the specified type.
+    </span><span class="kw">fn </span>has_x86_blendv_lowering(<span class="kw-2">&amp;</span><span class="self">self</span>, ty: Type) -&gt; bool;
 }
 
 <span class="doccomment">/// Function alignment specifications as required by an ISA, returned by

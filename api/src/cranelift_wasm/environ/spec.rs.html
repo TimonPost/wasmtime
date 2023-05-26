@@ -805,6 +805,13 @@
 <a href="#805" id="805">805</a>
 <a href="#806" id="806">806</a>
 <a href="#807" id="807">807</a>
+<a href="#808" id="808">808</a>
+<a href="#809" id="809">809</a>
+<a href="#810" id="810">810</a>
+<a href="#811" id="811">811</a>
+<a href="#812" id="812">812</a>
+<a href="#813" id="813">813</a>
+<a href="#814" id="814">814</a>
 </pre><pre class="rust"><code><span class="doccomment">//! All the runtime support necessary for the wasm to cranelift translation is formalized by the
 //! traits `FunctionEnvironment` and `ModuleEnvironment`.
 //!
@@ -822,7 +829,7 @@
 <span class="kw">use </span>core::convert::From;
 <span class="kw">use </span>cranelift_codegen::cursor::FuncCursor;
 <span class="kw">use </span>cranelift_codegen::ir::immediates::Offset32;
-<span class="kw">use </span>cranelift_codegen::ir::{<span class="self">self</span>, InstBuilder};
+<span class="kw">use </span>cranelift_codegen::ir::{<span class="self">self</span>, InstBuilder, Type};
 <span class="kw">use </span>cranelift_codegen::isa::TargetFrontendConfig;
 <span class="kw">use </span>cranelift_entity::PrimaryMap;
 <span class="kw">use </span>cranelift_frontend::FunctionBuilder;
@@ -1347,6 +1354,13 @@
     <span class="doccomment">/// Returns whether this is an x86 target, which may alter lowerings of
     /// relaxed simd instructions.
     </span><span class="kw">fn </span>is_x86(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="bool-val">false
+    </span>}
+
+    <span class="doccomment">/// Returns whether the CLIF `x86_blendv` instruction should be used for the
+    /// relaxed simd `*.relaxed_laneselect` instruction for the specified type.
+    </span><span class="kw">fn </span>use_x86_blendv_for_relaxed_laneselect(<span class="kw-2">&amp;</span><span class="self">self</span>, ty: Type) -&gt; bool {
+        <span class="kw">let _ </span>= ty;
         <span class="bool-val">false
     </span>}
 }

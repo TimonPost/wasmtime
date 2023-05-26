@@ -211,12 +211,14 @@
 <a href="#211" id="211">211</a>
 <a href="#212" id="212">212</a>
 <a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
 </pre><pre class="rust"><code><span class="doccomment">//! risc-v 64-bit Instruction Set Architecture.
 
 </span><span class="kw">use </span><span class="kw">crate</span>::dominator_tree::DominatorTree;
 <span class="kw">use </span><span class="kw">crate</span>::ir;
-<span class="kw">use </span><span class="kw">crate</span>::ir::Function;
-
+<span class="kw">use </span><span class="kw">crate</span>::ir::{Function, Type};
 <span class="kw">use </span><span class="kw">crate</span>::isa::riscv64::settings <span class="kw">as </span>riscv_settings;
 <span class="kw">use </span><span class="kw">crate</span>::isa::{Builder <span class="kw">as </span>IsaBuilder, FunctionAlignment, TargetIsa};
 <span class="kw">use </span><span class="kw">crate</span>::machinst::{
@@ -395,6 +397,10 @@
 
     <span class="kw">fn </span>has_native_fma(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
         <span class="bool-val">true
+    </span>}
+
+    <span class="kw">fn </span>has_x86_blendv_lowering(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: Type) -&gt; bool {
+        <span class="bool-val">false
     </span>}
 }
 

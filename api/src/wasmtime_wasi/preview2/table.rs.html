@@ -99,6 +99,12 @@
 <a href="#99" id="99">99</a>
 <a href="#100" id="100">100</a>
 <a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
+<a href="#106" id="106">106</a>
+<a href="#107" id="107">107</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::any::Any;
 <span class="kw">use </span>std::collections::HashMap;
 
@@ -189,15 +195,21 @@
     }
 
     <span class="doccomment">/// Remove a resource at a given index from the table.
-    </span><span class="kw">pub fn </span>delete&lt;T: Any + Sized&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, key: u32) -&gt; <span class="prelude-ty">Result</span>&lt;(), TableError&gt; {
-        <span class="kw">if </span>!<span class="self">self</span>.contains_key(key) {
-            <span class="prelude-val">Err</span>(TableError::NotPresent)<span class="question-mark">?
-        </span>}
-        <span class="kw">if </span>!<span class="self">self</span>.is::&lt;T&gt;(key) {
-            <span class="prelude-val">Err</span>(TableError::WrongType)<span class="question-mark">?
-        </span>}
-        <span class="kw">let _ </span>= <span class="self">self</span>.map.remove(<span class="kw-2">&amp;</span>key);
-        <span class="prelude-val">Ok</span>(())
+    </span><span class="kw">pub fn </span>delete&lt;T: Any + Sized&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, key: u32) -&gt; <span class="prelude-ty">Result</span>&lt;T, TableError&gt; {
+        <span class="comment">// Optimistically attempt to remove the value stored under key
+        </span><span class="kw">match </span><span class="self">self
+            </span>.map
+            .remove(<span class="kw-2">&amp;</span>key)
+            .ok_or(TableError::NotPresent)<span class="question-mark">?
+            </span>.downcast::&lt;T&gt;()
+        {
+            <span class="prelude-val">Ok</span>(v) =&gt; <span class="prelude-val">Ok</span>(<span class="kw-2">*</span>v),
+            <span class="prelude-val">Err</span>(v) =&gt; {
+                <span class="comment">// Insert the value back, since the downcast failed
+                </span><span class="self">self</span>.map.insert(key, v);
+                <span class="prelude-val">Err</span>(TableError::WrongType)
+            }
+        }
     }
 }
 </code></pre></div>
