@@ -120,9 +120,15 @@
 <a href="#120" id="120">120</a>
 <a href="#121" id="121">121</a>
 <a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::clocks::WasiClocks;
 <span class="kw">use </span><span class="kw">crate</span>::dir::{DirEntry, WasiDir};
-<span class="kw">use </span><span class="kw">crate</span>::file::{FileEntry, WasiFile};
+<span class="kw">use </span><span class="kw">crate</span>::file::{FileAccessMode, FileEntry, WasiFile};
 <span class="kw">use </span><span class="kw">crate</span>::sched::WasiSched;
 <span class="kw">use </span><span class="kw">crate</span>::string_array::StringArray;
 <span class="kw">use </span><span class="kw">crate</span>::table::Table;
@@ -173,12 +179,18 @@
         s
     }
 
-    <span class="kw">pub fn </span>insert_file(<span class="kw-2">&amp;</span><span class="self">self</span>, fd: u32, file: Box&lt;<span class="kw">dyn </span>WasiFile&gt;) {
-        <span class="self">self</span>.table().insert_at(fd, Arc::new(FileEntry::new(file)));
+    <span class="kw">pub fn </span>insert_file(<span class="kw-2">&amp;</span><span class="self">self</span>, fd: u32, file: Box&lt;<span class="kw">dyn </span>WasiFile&gt;, access_mode: FileAccessMode) {
+        <span class="self">self</span>.table()
+            .insert_at(fd, Arc::new(FileEntry::new(file, access_mode)));
     }
 
-    <span class="kw">pub fn </span>push_file(<span class="kw-2">&amp;</span><span class="self">self</span>, file: Box&lt;<span class="kw">dyn </span>WasiFile&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;u32, Error&gt; {
-        <span class="self">self</span>.table().push(Arc::new(FileEntry::new(file)))
+    <span class="kw">pub fn </span>push_file(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        file: Box&lt;<span class="kw">dyn </span>WasiFile&gt;,
+        access_mode: FileAccessMode,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;u32, Error&gt; {
+        <span class="self">self</span>.table()
+            .push(Arc::new(FileEntry::new(file, access_mode)))
     }
 
     <span class="kw">pub fn </span>insert_dir(<span class="kw-2">&amp;</span><span class="self">self</span>, fd: u32, dir: Box&lt;<span class="kw">dyn </span>WasiDir&gt;, path: PathBuf) {
@@ -214,15 +226,15 @@
     }
 
     <span class="kw">pub fn </span>set_stdin(<span class="kw-2">&amp;</span><span class="self">self</span>, f: Box&lt;<span class="kw">dyn </span>WasiFile&gt;) {
-        <span class="self">self</span>.insert_file(<span class="number">0</span>, f);
+        <span class="self">self</span>.insert_file(<span class="number">0</span>, f, FileAccessMode::READ);
     }
 
     <span class="kw">pub fn </span>set_stdout(<span class="kw-2">&amp;</span><span class="self">self</span>, f: Box&lt;<span class="kw">dyn </span>WasiFile&gt;) {
-        <span class="self">self</span>.insert_file(<span class="number">1</span>, f);
+        <span class="self">self</span>.insert_file(<span class="number">1</span>, f, FileAccessMode::WRITE);
     }
 
     <span class="kw">pub fn </span>set_stderr(<span class="kw-2">&amp;</span><span class="self">self</span>, f: Box&lt;<span class="kw">dyn </span>WasiFile&gt;) {
-        <span class="self">self</span>.insert_file(<span class="number">2</span>, f);
+        <span class="self">self</span>.insert_file(<span class="number">2</span>, f, FileAccessMode::WRITE);
     }
 
     <span class="kw">pub fn </span>push_preopened_dir(

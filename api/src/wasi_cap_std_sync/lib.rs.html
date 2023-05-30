@@ -138,6 +138,7 @@
 <a href="#138" id="138">138</a>
 <a href="#139" id="139">139</a>
 <a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
 </pre><pre class="rust"><code><span class="doccomment">//! The `wasi-cap-std-sync` crate provides impl of `WasiFile` and `WasiDir` in
 //! terms of `cap_std::fs::{File, Dir}`. These types provide sandboxed access
 //! to the local filesystem on both Unix and Windows.
@@ -189,7 +190,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::net::Socket;
 <span class="kw">use </span>cap_rand::{Rng, RngCore, SeedableRng};
 <span class="kw">use </span>std::path::Path;
-<span class="kw">use </span>wasi_common::{table::Table, Error, WasiCtx, WasiFile};
+<span class="kw">use </span>wasi_common::{file::FileAccessMode, table::Table, Error, WasiCtx, WasiFile};
 
 <span class="kw">pub struct </span>WasiCtxBuilder(WasiCtx);
 
@@ -266,7 +267,8 @@
     <span class="kw">pub fn </span>preopened_socket(<span class="self">self</span>, fd: u32, socket: <span class="kw">impl </span>Into&lt;Socket&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Error&gt; {
         <span class="kw">let </span>socket: Socket = socket.into();
         <span class="kw">let </span>file: Box&lt;<span class="kw">dyn </span>WasiFile&gt; = socket.into();
-        <span class="self">self</span>.<span class="number">0</span>.insert_file(fd, file);
+        <span class="self">self</span>.<span class="number">0
+            </span>.insert_file(fd, file, FileAccessMode::READ | FileAccessMode::WRITE);
         <span class="prelude-val">Ok</span>(<span class="self">self</span>)
     }
     <span class="kw">pub fn </span>build(<span class="self">self</span>) -&gt; WasiCtx {

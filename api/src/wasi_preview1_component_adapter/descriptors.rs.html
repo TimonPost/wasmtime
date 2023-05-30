@@ -492,7 +492,7 @@
                 <span class="comment">// For files, we may have adjusted the position for seeking, so
                 // create a new stream.
                 </span>StreamType::File(file) =&gt; {
-                    <span class="kw">let </span>input = filesystem::read_via_stream(file.fd, file.position.get());
+                    <span class="kw">let </span>input = filesystem::read_via_stream(file.fd, file.position.get())<span class="question-mark">?</span>;
                     <span class="self">self</span>.input.set(<span class="prelude-val">Some</span>(input));
                     <span class="prelude-val">Ok</span>(input)
                 }
@@ -516,10 +516,10 @@
                 // create a new stream.
                 </span>StreamType::File(file) =&gt; {
                     <span class="kw">let </span>output = <span class="kw">if </span>file.append {
-                        filesystem::append_via_stream(file.fd)
-                    } <span class="kw">else </span>{
-                        filesystem::write_via_stream(file.fd, file.position.get())
-                    };
+                        filesystem::append_via_stream(file.fd)<span class="question-mark">?
+                    </span>} <span class="kw">else </span>{
+                        filesystem::write_via_stream(file.fd, file.position.get())<span class="question-mark">?
+                    </span>};
                     <span class="self">self</span>.output.set(<span class="prelude-val">Some</span>(output));
                     <span class="prelude-val">Ok</span>(output)
                 }

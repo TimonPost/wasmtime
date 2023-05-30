@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["Advice","FileType"],"struct":["FdFlags","FdStat","Filestat","OFlags","RiFlags","RoFlags","SdFlags","SiFlags"],"trait":["WasiFile"]};
+window.SIDEBAR_ITEMS = {"enum":["Advice","FileType"],"struct":["FdFlags","FdStat","FileAccessMode","Filestat","OFlags","RiFlags","RoFlags","SdFlags","SiFlags"],"trait":["WasiFile"]};

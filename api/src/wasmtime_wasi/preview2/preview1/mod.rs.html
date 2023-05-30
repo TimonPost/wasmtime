@@ -2941,11 +2941,11 @@
                 };
 
                 <span class="kw">let </span>pos = position.load(Ordering::Relaxed);
-                <span class="kw">let </span>stream = <span class="self">self
-                    </span>.read_via_stream(fd, pos)
-                    .<span class="kw">await
-                    </span>.context(<span class="string">&quot;failed to call `read-via-stream`&quot;</span>)
-                    .map_err(types::Error::trap)<span class="question-mark">?</span>;
+                <span class="kw">let </span>stream = <span class="self">self</span>.read_via_stream(fd, pos).<span class="kw">await</span>.map_err(|e| {
+                    e.try_into()
+                        .context(<span class="string">&quot;failed to call `read-via-stream`&quot;</span>)
+                        .unwrap_or_else(types::Error::trap)
+                })<span class="question-mark">?</span>;
                 <span class="kw">let </span>max = buf.len().try_into().unwrap_or(u64::MAX);
                 <span class="kw">let </span>(read, end) = <span class="kw">if </span>blocking {
                     <span class="self">self</span>.blocking_read(stream, max)
@@ -3001,11 +3001,11 @@
                     <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="number">0</span>)
                 };
 
-                <span class="kw">let </span>stream = <span class="self">self
-                    </span>.read_via_stream(fd, offset)
-                    .<span class="kw">await
-                    </span>.context(<span class="string">&quot;failed to call `read-via-stream`&quot;</span>)
-                    .map_err(types::Error::trap)<span class="question-mark">?</span>;
+                <span class="kw">let </span>stream = <span class="self">self</span>.read_via_stream(fd, offset).<span class="kw">await</span>.map_err(|e| {
+                    e.try_into()
+                        .context(<span class="string">&quot;failed to call `read-via-stream`&quot;</span>)
+                        .unwrap_or_else(types::Error::trap)
+                })<span class="question-mark">?</span>;
                 <span class="kw">let </span>max = buf.len().try_into().unwrap_or(u64::MAX);
                 <span class="kw">let </span>(read, end) = <span class="kw">if </span>blocking {
                     <span class="self">self</span>.blocking_read(stream, max)
@@ -3055,19 +3055,19 @@
                     <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="number">0</span>)
                 };
                 <span class="kw">let </span>(stream, pos) = <span class="kw">if </span>append {
-                    <span class="kw">let </span>stream = <span class="self">self
-                        </span>.append_via_stream(fd)
-                        .<span class="kw">await
-                        </span>.context(<span class="string">&quot;failed to call `append-via-stream`&quot;</span>)
-                        .map_err(types::Error::trap)<span class="question-mark">?</span>;
+                    <span class="kw">let </span>stream = <span class="self">self</span>.append_via_stream(fd).<span class="kw">await</span>.map_err(|e| {
+                        e.try_into()
+                            .context(<span class="string">&quot;failed to call `append-via-stream`&quot;</span>)
+                            .unwrap_or_else(types::Error::trap)
+                    })<span class="question-mark">?</span>;
                     (stream, <span class="number">0</span>)
                 } <span class="kw">else </span>{
                     <span class="kw">let </span>position = position.load(Ordering::Relaxed);
-                    <span class="kw">let </span>stream = <span class="self">self
-                        </span>.write_via_stream(fd, position)
-                        .<span class="kw">await
-                        </span>.context(<span class="string">&quot;failed to call `write-via-stream`&quot;</span>)
-                        .map_err(types::Error::trap)<span class="question-mark">?</span>;
+                    <span class="kw">let </span>stream = <span class="self">self</span>.write_via_stream(fd, position).<span class="kw">await</span>.map_err(|e| {
+                        e.try_into()
+                            .context(<span class="string">&quot;failed to call `write-via-stream`&quot;</span>)
+                            .unwrap_or_else(types::Error::trap)
+                    })<span class="question-mark">?</span>;
                     (stream, position)
                 };
                 <span class="kw">let </span>n = <span class="kw">if </span>blocking {
@@ -3113,11 +3113,11 @@
                 <span class="kw">let </span><span class="prelude-val">Some</span>(buf) = first_non_empty_ciovec(ciovs)<span class="question-mark">? </span><span class="kw">else </span>{
                     <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="number">0</span>)
                 };
-                <span class="kw">let </span>stream = <span class="self">self
-                    </span>.write_via_stream(fd, offset)
-                    .<span class="kw">await
-                    </span>.context(<span class="string">&quot;failed to call `write-via-stream`&quot;</span>)
-                    .map_err(types::Error::trap)<span class="question-mark">?</span>;
+                <span class="kw">let </span>stream = <span class="self">self</span>.write_via_stream(fd, offset).<span class="kw">await</span>.map_err(|e| {
+                    e.try_into()
+                        .context(<span class="string">&quot;failed to call `write-via-stream`&quot;</span>)
+                        .unwrap_or_else(types::Error::trap)
+                })<span class="question-mark">?</span>;
                 <span class="kw">if </span>blocking {
                     <span class="self">self</span>.blocking_write(stream, buf)
                 } <span class="kw">else </span>{

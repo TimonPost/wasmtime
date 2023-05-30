@@ -68,6 +68,8 @@ var sourcesIndex = JSON.parse('{\
 "path_open_dirfd_not_dir":["",[],["path_open_dirfd_not_dir.rs"]],\
 "path_open_missing":["",[],["path_open_missing.rs"]],\
 "path_open_nonblock":["",[],["path_open_nonblock.rs"]],\
+"path_open_preopen":["",[],["path_open_preopen.rs"]],\
+"path_open_read_write":["",[],["path_open_read_write.rs"]],\
 "path_rename":["",[],["path_rename.rs"]],\
 "path_rename_dir_trailing_slashes":["",[],["path_rename_dir_trailing_slashes.rs"]],\
 "path_rename_file_trailing_slashes":["",[],["path_rename_file_trailing_slashes.rs"]],\
