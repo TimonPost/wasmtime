@@ -397,12 +397,12 @@
         <span class="self">self</span>.asm.add(rhs.into(), lhs.into(), dst.into(), size);
     }
 
-    <span class="kw">fn </span>sub(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _dst: RegImm, _lhs: RegImm, _rhs: RegImm, _size: OperandSize) {
-        <span class="macro">todo!</span>()
+    <span class="kw">fn </span>sub(<span class="kw-2">&amp;mut </span><span class="self">self</span>, dst: RegImm, lhs: RegImm, rhs: RegImm, size: OperandSize) {
+        <span class="self">self</span>.asm.sub(rhs.into(), lhs.into(), dst.into(), size);
     }
 
-    <span class="kw">fn </span>mul(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _dst: RegImm, _lhs: RegImm, _rhs: RegImm, _size: OperandSize) {
-        <span class="macro">todo!</span>()
+    <span class="kw">fn </span>mul(<span class="kw-2">&amp;mut </span><span class="self">self</span>, dst: RegImm, lhs: RegImm, rhs: RegImm, size: OperandSize) {
+        <span class="self">self</span>.asm.mul(rhs.into(), lhs.into(), dst.into(), size);
     }
 
     <span class="kw">fn </span>div(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _context: <span class="kw-2">&amp;mut </span>CodeGenContext, _kind: DivKind, _size: OperandSize) {
