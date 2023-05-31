@@ -4050,6 +4050,34 @@
 <a href="#4050" id="4050">4050</a>
 <a href="#4051" id="4051">4051</a>
 <a href="#4052" id="4052">4052</a>
+<a href="#4053" id="4053">4053</a>
+<a href="#4054" id="4054">4054</a>
+<a href="#4055" id="4055">4055</a>
+<a href="#4056" id="4056">4056</a>
+<a href="#4057" id="4057">4057</a>
+<a href="#4058" id="4058">4058</a>
+<a href="#4059" id="4059">4059</a>
+<a href="#4060" id="4060">4060</a>
+<a href="#4061" id="4061">4061</a>
+<a href="#4062" id="4062">4062</a>
+<a href="#4063" id="4063">4063</a>
+<a href="#4064" id="4064">4064</a>
+<a href="#4065" id="4065">4065</a>
+<a href="#4066" id="4066">4066</a>
+<a href="#4067" id="4067">4067</a>
+<a href="#4068" id="4068">4068</a>
+<a href="#4069" id="4069">4069</a>
+<a href="#4070" id="4070">4070</a>
+<a href="#4071" id="4071">4071</a>
+<a href="#4072" id="4072">4072</a>
+<a href="#4073" id="4073">4073</a>
+<a href="#4074" id="4074">4074</a>
+<a href="#4075" id="4075">4075</a>
+<a href="#4076" id="4076">4076</a>
+<a href="#4077" id="4077">4077</a>
+<a href="#4078" id="4078">4078</a>
+<a href="#4079" id="4079">4079</a>
+<a href="#4080" id="4080">4080</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::binemit::{Addend, Reloc};
 <span class="kw">use </span><span class="kw">crate</span>::ir::immediates::{Ieee32, Ieee64};
 <span class="kw">use </span><span class="kw">crate</span>::ir::TrapCode;
@@ -6012,6 +6040,33 @@
                 .encode(sink);
         }
 
+        Inst::XmmUnaryRmRImmEvex { op, src, dst, imm } =&gt; {
+            <span class="kw">let </span>dst = allocs.next(dst.to_reg().to_reg());
+            <span class="kw">let </span>src = <span class="kw">match </span>src.clone().to_reg_mem().with_allocs(allocs) {
+                RegMem::Reg { reg } =&gt; {
+                    RegisterOrAmode::Register(reg.to_real_reg().unwrap().hw_enc().into())
+                }
+                RegMem::Mem { addr } =&gt; RegisterOrAmode::Amode(addr.finalize(state, sink)),
+            };
+
+            <span class="kw">let </span>(opcode, opcode_ext, w) = <span class="kw">match </span>op {
+                Avx512Opcode::VpsraqImm =&gt; (<span class="number">0x72</span>, <span class="number">4</span>, <span class="bool-val">true</span>),
+                <span class="kw">_ </span>=&gt; <span class="macro">unimplemented!</span>(<span class="string">&quot;Opcode {:?} not implemented&quot;</span>, op),
+            };
+            EvexInstruction::new()
+                .length(EvexVectorLength::V128)
+                .prefix(LegacyPrefixes::_66)
+                .map(OpcodeMap::_0F)
+                .w(w)
+                .opcode(opcode)
+                .reg(opcode_ext)
+                .vvvvv(dst.to_real_reg().unwrap().hw_enc())
+                .tuple_type(op.tuple_type())
+                .rm(src)
+                .imm(<span class="kw-2">*</span>imm)
+                .encode(sink);
+        }
+
         Inst::XmmRmR {
             op,
             src1,
@@ -6833,15 +6888,16 @@
                 <span class="macro">debug_assert_eq!</span>(src1, dst);
             }
 
-            <span class="kw">let </span>(w, opcode) = <span class="kw">match </span>op {
-                Avx512Opcode::Vpermi2b =&gt; (<span class="bool-val">false</span>, <span class="number">0x75</span>),
-                Avx512Opcode::Vpmullq =&gt; (<span class="bool-val">true</span>, <span class="number">0x40</span>),
+            <span class="kw">let </span>(w, opcode, map) = <span class="kw">match </span>op {
+                Avx512Opcode::Vpermi2b =&gt; (<span class="bool-val">false</span>, <span class="number">0x75</span>, OpcodeMap::_0F38),
+                Avx512Opcode::Vpmullq =&gt; (<span class="bool-val">true</span>, <span class="number">0x40</span>, OpcodeMap::_0F38),
+                Avx512Opcode::Vpsraq =&gt; (<span class="bool-val">true</span>, <span class="number">0xE2</span>, OpcodeMap::_0F),
                 <span class="kw">_ </span>=&gt; <span class="macro">unimplemented!</span>(<span class="string">&quot;Opcode {:?} not implemented&quot;</span>, op),
             };
             EvexInstruction::new()
                 .length(EvexVectorLength::V128)
                 .prefix(LegacyPrefixes::_66)
-                .map(OpcodeMap::_0F38)
+                .map(map)
                 .w(w)
                 .opcode(opcode)
                 .tuple_type(op.tuple_type())

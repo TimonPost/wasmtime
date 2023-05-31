@@ -1400,14 +1400,14 @@
     }
 
     <span class="attr">#[inline]
-    </span><span class="kw">fn </span>shift_mask(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ty: Type) -&gt; u32 {
+    </span><span class="kw">fn </span>shift_mask(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ty: Type) -&gt; u8 {
         <span class="macro">debug_assert!</span>(ty.lane_bits().is_power_of_two());
 
-        ty.lane_bits() - <span class="number">1
-    </span>}
+        (ty.lane_bits() - <span class="number">1</span>) <span class="kw">as </span>u8
+    }
 
-    <span class="kw">fn </span>shift_amount_masked(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ty: Type, val: Imm64) -&gt; u32 {
-        (val.bits() <span class="kw">as </span>u32) &amp; <span class="self">self</span>.shift_mask(ty)
+    <span class="kw">fn </span>shift_amount_masked(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ty: Type, val: Imm64) -&gt; u8 {
+        (val.bits() <span class="kw">as </span>u8) &amp; <span class="self">self</span>.shift_mask(ty)
     }
 
     <span class="attr">#[inline]

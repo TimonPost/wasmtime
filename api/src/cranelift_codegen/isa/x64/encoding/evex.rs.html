@@ -736,6 +736,17 @@
 <a href="#736" id="736">736</a>
 <a href="#737" id="737">737</a>
 <a href="#738" id="738">738</a>
+<a href="#739" id="739">739</a>
+<a href="#740" id="740">740</a>
+<a href="#741" id="741">741</a>
+<a href="#742" id="742">742</a>
+<a href="#743" id="743">743</a>
+<a href="#744" id="744">744</a>
+<a href="#745" id="745">745</a>
+<a href="#746" id="746">746</a>
+<a href="#747" id="747">747</a>
+<a href="#748" id="748">748</a>
+<a href="#749" id="749">749</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Encodes EVEX instructions. These instructions are those added by the AVX-512 extensions. The
 //! EVEX encoding requires a 4-byte prefix:
 //!
@@ -768,6 +779,7 @@
     reg: Register,
     rm: RegisterOrAmode,
     tuple_type: <span class="prelude-ty">Option</span>&lt;Avx512TupleType&gt;,
+    imm: <span class="prelude-ty">Option</span>&lt;u8&gt;,
 }
 
 <span class="doccomment">/// Because some of the bit flags in the EVEX prefix are reversed and users of `EvexInstruction` may
@@ -788,6 +800,7 @@
             reg: Register::default(),
             rm: RegisterOrAmode::Register(Register::default()),
             tuple_type: <span class="prelude-val">None</span>,
+            imm: <span class="prelude-val">None</span>,
         }
     }
 }
@@ -922,6 +935,13 @@
         <span class="self">self
     </span>}
 
+    <span class="doccomment">/// Set the imm byte.
+    </span><span class="attr">#[inline(always)]
+    </span><span class="kw">pub fn </span>imm(<span class="kw-2">mut </span><span class="self">self</span>, imm: u8) -&gt; <span class="self">Self </span>{
+        <span class="self">self</span>.imm = <span class="prelude-val">Some</span>(imm);
+        <span class="self">self
+    </span>}
+
     <span class="doccomment">/// Emit the EVEX-encoded instruction to the code sink:
     ///
     /// - the 4-byte EVEX prefix;
@@ -946,11 +966,12 @@
             RegisterOrAmode::Amode(amode) =&gt; {
                 <span class="kw">let </span>scaling = <span class="self">self</span>.scaling_for_8bit_disp();
 
-                <span class="comment">// NB: when `EvexInstruction` supports a trailing 8-bit
-                // immediate this&#39;ll conditionally be 0 or 1
-                </span><span class="kw">let </span>bytes_at_end = <span class="number">0</span>;
+                <span class="kw">let </span>bytes_at_end = <span class="kw">if </span><span class="self">self</span>.imm.is_some() { <span class="number">1 </span>} <span class="kw">else </span>{ <span class="number">0 </span>};
                 rex::emit_modrm_sib_disp(sink, <span class="self">self</span>.reg.<span class="number">0 </span>&amp; <span class="number">7</span>, amode, bytes_at_end, <span class="prelude-val">Some</span>(scaling));
             }
+        }
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(imm) = <span class="self">self</span>.imm {
+            sink.put1(imm);
         }
     }
 
@@ -1033,6 +1054,7 @@
                 }
             }
             <span class="prelude-val">Some</span>(FullMem) =&gt; vector_size_scaling(),
+            <span class="prelude-val">Some</span>(Mem128) =&gt; <span class="number">16</span>,
             <span class="prelude-val">None </span>=&gt; <span class="macro">panic!</span>(<span class="string">&quot;tuple type was not set&quot;</span>),
         }
     }

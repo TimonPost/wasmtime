@@ -2631,6 +2631,17 @@
 <a href="#2631" id="2631">2631</a>
 <a href="#2632" id="2632">2632</a>
 <a href="#2633" id="2633">2633</a>
+<a href="#2634" id="2634">2634</a>
+<a href="#2635" id="2635">2635</a>
+<a href="#2636" id="2636">2636</a>
+<a href="#2637" id="2637">2637</a>
+<a href="#2638" id="2638">2638</a>
+<a href="#2639" id="2639">2639</a>
+<a href="#2640" id="2640">2640</a>
+<a href="#2641" id="2641">2641</a>
+<a href="#2642" id="2642">2642</a>
+<a href="#2643" id="2643">2643</a>
+<a href="#2644" id="2644">2644</a>
 </pre><pre class="rust"><code><span class="doccomment">//! This module defines x86_64-specific machine instruction types.
 
 </span><span class="kw">use </span><span class="kw">crate</span>::binemit::{Addend, CodeOffset, Reloc, StackMap};
@@ -2783,7 +2794,8 @@
 
             Inst::XmmUnaryRmREvex { op, .. }
             | Inst::XmmRmREvex { op, .. }
-            | Inst::XmmRmREvex3 { op, .. } =&gt; op.available_from(),
+            | Inst::XmmRmREvex3 { op, .. }
+            | Inst::XmmUnaryRmRImmEvex { op, .. } =&gt; op.available_from(),
 
             Inst::XmmRmiRVex { op, .. }
             | Inst::XmmRmRVex3 { op, .. }
@@ -3553,6 +3565,15 @@
                 <span class="kw">let </span>src = src.pretty_print(<span class="number">8</span>, allocs);
                 <span class="kw">let </span>op = ljustify(op.to_string());
                 <span class="macro">format!</span>(<span class="string">&quot;{op} {src}, {dst}&quot;</span>)
+            }
+
+            Inst::XmmUnaryRmRImmEvex {
+                op, src, dst, imm, ..
+            } =&gt; {
+                <span class="kw">let </span>dst = pretty_print_reg(dst.to_reg().to_reg(), <span class="number">8</span>, allocs);
+                <span class="kw">let </span>src = src.pretty_print(<span class="number">8</span>, allocs);
+                <span class="kw">let </span>op = ljustify(op.to_string());
+                <span class="macro">format!</span>(<span class="string">&quot;{op} ${imm}, {src}, {dst}&quot;</span>)
             }
 
             Inst::XmmMovRM { op, src, dst, .. } =&gt; {
@@ -4499,6 +4520,7 @@
             src.get_operands(collector);
         }
         Inst::XmmUnaryRmREvex { src, dst, .. }
+        | Inst::XmmUnaryRmRImmEvex { src, dst, .. }
         | Inst::XmmUnaryRmRUnaligned { src, dst, .. }
         | Inst::XmmUnaryRmRVex { src, dst, .. }
         | Inst::XmmUnaryRmRImmVex { src, dst, .. } =&gt; {
