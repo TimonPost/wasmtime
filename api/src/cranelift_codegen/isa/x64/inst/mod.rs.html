@@ -2623,6 +2623,14 @@
 <a href="#2623" id="2623">2623</a>
 <a href="#2624" id="2624">2624</a>
 <a href="#2625" id="2625">2625</a>
+<a href="#2626" id="2626">2626</a>
+<a href="#2627" id="2627">2627</a>
+<a href="#2628" id="2628">2628</a>
+<a href="#2629" id="2629">2629</a>
+<a href="#2630" id="2630">2630</a>
+<a href="#2631" id="2631">2631</a>
+<a href="#2632" id="2632">2632</a>
+<a href="#2633" id="2633">2633</a>
 </pre><pre class="rust"><code><span class="doccomment">//! This module defines x86_64-specific machine instruction types.
 
 </span><span class="kw">use </span><span class="kw">crate</span>::binemit::{Addend, CodeOffset, Reloc, StackMap};
@@ -2756,6 +2764,7 @@
 
             Inst::AluRmRVex { op, .. } =&gt; op.available_from(),
             Inst::UnaryRmR { op, .. } =&gt; op.available_from(),
+            Inst::UnaryRmRVex { op, .. } =&gt; op.available_from(),
 
             <span class="comment">// These use dynamic SSE opcodes.
             </span>Inst::GprToXmm { op, .. }
@@ -3353,6 +3362,13 @@
                 <span class="macro">format!</span>(<span class="string">&quot;{op} {src2}, {src1}, {dst}&quot;</span>)
             }
             Inst::UnaryRmR { src, dst, op, size } =&gt; {
+                <span class="kw">let </span>dst = pretty_print_reg(dst.to_reg().to_reg(), size.to_bytes(), allocs);
+                <span class="kw">let </span>src = src.pretty_print(size.to_bytes(), allocs);
+                <span class="kw">let </span>op = ljustify2(op.to_string(), suffix_bwlq(<span class="kw-2">*</span>size));
+                <span class="macro">format!</span>(<span class="string">&quot;{op} {src}, {dst}&quot;</span>)
+            }
+
+            Inst::UnaryRmRVex { src, dst, op, size } =&gt; {
                 <span class="kw">let </span>dst = pretty_print_reg(dst.to_reg().to_reg(), size.to_bytes(), allocs);
                 <span class="kw">let </span>src = src.pretty_print(size.to_bytes(), allocs);
                 <span class="kw">let </span>op = ljustify2(op.to_string(), suffix_bwlq(<span class="kw-2">*</span>size));
@@ -4474,7 +4490,7 @@
                 }
             }
         }
-        Inst::UnaryRmR { src, dst, .. } =&gt; {
+        Inst::UnaryRmR { src, dst, .. } | Inst::UnaryRmRVex { src, dst, .. } =&gt; {
             collector.reg_def(dst.to_writable_reg());
             src.get_operands(collector);
         }
