@@ -223,6 +223,14 @@
 <a href="#223" id="223">223</a>
 <a href="#224" id="224">224</a>
 <a href="#225" id="225">225</a>
+<a href="#226" id="226">226</a>
+<a href="#227" id="227">227</a>
+<a href="#228" id="228">228</a>
+<a href="#229" id="229">229</a>
+<a href="#230" id="230">230</a>
+<a href="#231" id="231">231</a>
+<a href="#232" id="232">232</a>
+<a href="#233" id="233">233</a>
 </pre><pre class="rust"><code><span class="doccomment">//! `SubTest` trait.
 
 </span><span class="kw">use </span><span class="kw">crate</span>::runone::FileUpdate;
@@ -385,7 +393,12 @@
         .comments
         .iter()
         .filter(|c| !c.text.starts_with(<span class="string">&quot;;;&quot;</span>))
-        .map(|c| c.text.strip_prefix(<span class="string">&quot;; &quot;</span>).unwrap_or(c.text))
+        .map(|c| {
+            c.text
+                .strip_prefix(<span class="string">&quot;; &quot;</span>)
+                .or_else(|| c.text.strip_prefix(<span class="string">&quot;;&quot;</span>))
+                .unwrap_or(c.text)
+        })
         .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
 
     <span class="comment">// If the expectation matches what we got, then there&#39;s nothing to do.
@@ -424,8 +437,11 @@
 
             <span class="comment">// Splice in the test output
             </span><span class="kw">for </span>output <span class="kw">in </span>output {
-                new_test.push_str(<span class="string">&quot;; &quot;</span>);
-                new_test.push_str(output);
+                new_test.push(<span class="string">&#39;;&#39;</span>);
+                <span class="kw">if </span>!output.is_empty() {
+                    new_test.push(<span class="string">&#39; &#39;</span>);
+                    new_test.push_str(output);
+                }
                 new_test.push_str(<span class="string">&quot;\n&quot;</span>);
             }
 
