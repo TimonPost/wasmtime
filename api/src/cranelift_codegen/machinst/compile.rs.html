@@ -129,7 +129,7 @@
         <span class="macro">log::debug!</span>(<span class="string">&quot;Number of CLIF blocks to lower: {}&quot;</span>, f.dfg.num_blocks());
 
         <span class="kw">let </span>_tt = timing::vcode_lower();
-        lower.lower(b)<span class="question-mark">?
+        lower.lower(b, ctrl_plane)<span class="question-mark">?
     </span>};
 
     <span class="macro">log::debug!</span>(

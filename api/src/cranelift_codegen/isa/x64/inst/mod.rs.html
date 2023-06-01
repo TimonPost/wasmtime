@@ -2650,6 +2650,21 @@
 <a href="#2650" id="2650">2650</a>
 <a href="#2651" id="2651">2651</a>
 <a href="#2652" id="2652">2652</a>
+<a href="#2653" id="2653">2653</a>
+<a href="#2654" id="2654">2654</a>
+<a href="#2655" id="2655">2655</a>
+<a href="#2656" id="2656">2656</a>
+<a href="#2657" id="2657">2657</a>
+<a href="#2658" id="2658">2658</a>
+<a href="#2659" id="2659">2659</a>
+<a href="#2660" id="2660">2660</a>
+<a href="#2661" id="2661">2661</a>
+<a href="#2662" id="2662">2662</a>
+<a href="#2663" id="2663">2663</a>
+<a href="#2664" id="2664">2664</a>
+<a href="#2665" id="2665">2665</a>
+<a href="#2666" id="2666">2666</a>
+<a href="#2667" id="2667">2667</a>
 </pre><pre class="rust"><code><span class="doccomment">//! This module defines x86_64-specific machine instruction types.
 
 </span><span class="kw">use </span><span class="kw">crate</span>::binemit::{Addend, CodeOffset, Reloc, StackMap};
@@ -5096,6 +5111,21 @@
 
     <span class="kw">fn </span>gen_jump(label: MachLabel) -&gt; Inst {
         Inst::jmp_known(label)
+    }
+
+    <span class="kw">fn </span>gen_imm_u64(value: u64, dst: Writable&lt;Reg&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>&gt; {
+        <span class="prelude-val">Some</span>(Inst::imm(OperandSize::Size64, value, dst))
+    }
+
+    <span class="kw">fn </span>gen_imm_f64(value: f64, tmp: Writable&lt;Reg&gt;, dst: Writable&lt;Reg&gt;) -&gt; SmallVec&lt;[<span class="self">Self</span>; <span class="number">2</span>]&gt; {
+        <span class="kw">let </span>imm_to_gpr = Inst::imm(OperandSize::Size64, value.to_bits(), tmp);
+        <span class="kw">let </span>gpr_to_xmm = <span class="self">Self</span>::gpr_to_xmm(
+            SseOpcode::Movd,
+            tmp.to_reg().into(),
+            OperandSize::Size64,
+            dst,
+        );
+        <span class="macro">smallvec!</span>[imm_to_gpr, gpr_to_xmm]
     }
 
     <span class="kw">fn </span>gen_dummy_use(reg: Reg) -&gt; <span class="self">Self </span>{
