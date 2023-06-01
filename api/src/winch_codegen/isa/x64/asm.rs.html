@@ -578,6 +578,9 @@
 <a href="#578" id="578">578</a>
 <a href="#579" id="579">579</a>
 <a href="#580" id="580">580</a>
+<a href="#581" id="581">581</a>
+<a href="#582" id="582">582</a>
+<a href="#583" id="583">583</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Assembler library implementation for x64.
 
 </span><span class="kw">use crate</span>::{
@@ -721,7 +724,10 @@
 
     <span class="doccomment">/// Return instruction.
     </span><span class="kw">pub fn </span>ret(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-        <span class="self">self</span>.emit(Inst::Ret { rets: <span class="macro">vec!</span>[] });
+        <span class="self">self</span>.emit(Inst::Ret {
+            rets: <span class="macro">vec!</span>[],
+            stack_bytes_to_pop: <span class="number">0</span>,
+        });
     }
 
     <span class="doccomment">/// Move instruction variants.

@@ -2272,6 +2272,9 @@
 <a href="#2272" id="2272">2272</a>
 <a href="#2273" id="2273">2273</a>
 <a href="#2274" id="2274">2274</a>
+<a href="#2275" id="2275">2275</a>
+<a href="#2276" id="2276">2276</a>
+<a href="#2277" id="2277">2277</a>
 </pre><pre class="rust"><code><span class="doccomment">//! In-memory representation of compiled machine code, with labels and fixups to
 //! refer to those labels. Handles constant-pool island insertion and also
 //! veneer insertion for out-of-range jumps.
@@ -4418,7 +4421,10 @@
         inst.emit(<span class="kw-2">&amp;</span>[], <span class="kw-2">&amp;mut </span>buf, <span class="kw-2">&amp;</span>info, <span class="kw-2">&amp;mut </span>state);
 
         buf.bind_label(label(<span class="number">7</span>), state.ctrl_plane_mut());
-        <span class="kw">let </span>inst = Inst::Ret { rets: <span class="macro">vec!</span>[] };
+        <span class="kw">let </span>inst = Inst::Ret {
+            rets: <span class="macro">vec!</span>[],
+            stack_bytes_to_pop: <span class="number">0</span>,
+        };
         inst.emit(<span class="kw-2">&amp;</span>[], <span class="kw-2">&amp;mut </span>buf, <span class="kw-2">&amp;</span>info, <span class="kw-2">&amp;mut </span>state);
 
         <span class="kw">let </span>buf = buf.finish(<span class="kw-2">&amp;</span>constants, state.ctrl_plane_mut());

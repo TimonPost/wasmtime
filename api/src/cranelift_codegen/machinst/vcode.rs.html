@@ -2555,7 +2555,7 @@
                         // (and don&#39;t emit the return; the actual
                         // epilogue will contain it).
                         </span><span class="kw">if </span><span class="self">self</span>.insts[iix.index()].is_term() == MachTerminator::Ret {
-                            <span class="kw">for </span>inst <span class="kw">in </span><span class="self">self</span>.abi.gen_epilogue() {
+                            <span class="kw">for </span>inst <span class="kw">in </span><span class="self">self</span>.abi.gen_epilogue(<span class="kw-2">&amp;</span><span class="self">self</span>.sigs) {
                                 do_emit(<span class="kw-2">&amp;</span>inst, <span class="kw-2">&amp;</span>[], <span class="kw-2">&amp;mut </span>disasm, <span class="kw-2">&amp;mut </span>buffer, <span class="kw-2">&amp;mut </span>state);
                             }
                         } <span class="kw">else </span>{

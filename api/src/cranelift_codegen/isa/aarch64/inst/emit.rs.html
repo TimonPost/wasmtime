@@ -3656,6 +3656,32 @@
 <a href="#3656" id="3656">3656</a>
 <a href="#3657" id="3657">3657</a>
 <a href="#3658" id="3658">3658</a>
+<a href="#3659" id="3659">3659</a>
+<a href="#3660" id="3660">3660</a>
+<a href="#3661" id="3661">3661</a>
+<a href="#3662" id="3662">3662</a>
+<a href="#3663" id="3663">3663</a>
+<a href="#3664" id="3664">3664</a>
+<a href="#3665" id="3665">3665</a>
+<a href="#3666" id="3666">3666</a>
+<a href="#3667" id="3667">3667</a>
+<a href="#3668" id="3668">3668</a>
+<a href="#3669" id="3669">3669</a>
+<a href="#3670" id="3670">3670</a>
+<a href="#3671" id="3671">3671</a>
+<a href="#3672" id="3672">3672</a>
+<a href="#3673" id="3673">3673</a>
+<a href="#3674" id="3674">3674</a>
+<a href="#3675" id="3675">3675</a>
+<a href="#3676" id="3676">3676</a>
+<a href="#3677" id="3677">3677</a>
+<a href="#3678" id="3678">3678</a>
+<a href="#3679" id="3679">3679</a>
+<a href="#3680" id="3680">3680</a>
+<a href="#3681" id="3681">3681</a>
+<a href="#3682" id="3682">3682</a>
+<a href="#3683" id="3683">3683</a>
+<a href="#3684" id="3684">3684</a>
 </pre><pre class="rust"><code><span class="doccomment">//! AArch64 ISA: binary code emission.
 
 </span><span class="kw">use </span>cranelift_control::ControlPlane;
@@ -6772,10 +6798,32 @@
                 <span class="comment">// Nothing: this is a pseudoinstruction that serves
                 // only to constrain registers at a certain point.
             </span>}
-            <span class="kw-2">&amp;</span>Inst::Ret { .. } =&gt; {
+            <span class="kw-2">&amp;</span>Inst::Ret {
+                stack_bytes_to_pop, ..
+            } =&gt; {
+                <span class="kw">if </span>stack_bytes_to_pop != <span class="number">0 </span>{
+                    <span class="comment">// The requirement that `stack_bytes_to_pop` fit in an
+                    // `Imm12` isn&#39;t fundamental, but lifting it is left for
+                    // future PRs.
+                    </span><span class="kw">let </span>imm12 = Imm12::maybe_from_u64(u64::from(stack_bytes_to_pop))
+                        .expect(<span class="string">&quot;stack bytes to pop must fit in Imm12&quot;</span>);
+                    Inst::AluRRImm12 {
+                        alu_op: ALUOp::Add,
+                        size: OperandSize::Size64,
+                        rd: writable_stack_reg(),
+                        rn: stack_reg(),
+                        imm12,
+                    }
+                    .emit(<span class="kw-2">&amp;</span>[], sink, emit_info, state);
+                }
                 sink.put4(<span class="number">0xd65f03c0</span>);
             }
-            <span class="kw-2">&amp;</span>Inst::AuthenticatedRet { key, is_hint, .. } =&gt; {
+            <span class="kw-2">&amp;</span>Inst::AuthenticatedRet {
+                key,
+                is_hint,
+                stack_bytes_to_pop,
+                ..
+            } =&gt; {
                 <span class="kw">let </span>key = <span class="kw">match </span>key {
                     APIKey::A =&gt; <span class="number">0b0</span>,
                     APIKey::B =&gt; <span class="number">0b1</span>,
@@ -6783,7 +6831,11 @@
 
                 <span class="kw">if </span>is_hint {
                     sink.put4(<span class="number">0xd50323bf </span>| key &lt;&lt; <span class="number">6</span>); <span class="comment">// autiasp / autibsp
-                    </span>Inst::Ret { rets: <span class="macro">vec!</span>[] }.emit(<span class="kw-2">&amp;</span>[], sink, emit_info, state);
+                    </span>Inst::Ret {
+                        rets: <span class="macro">vec!</span>[],
+                        stack_bytes_to_pop,
+                    }
+                    .emit(<span class="kw-2">&amp;</span>[], sink, emit_info, state);
                 } <span class="kw">else </span>{
                     sink.put4(<span class="number">0xd65f0bff </span>| key &lt;&lt; <span class="number">10</span>); <span class="comment">// retaa / retab
                 </span>}

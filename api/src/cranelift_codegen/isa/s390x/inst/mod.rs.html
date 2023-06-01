@@ -3407,6 +3407,23 @@
 <a href="#3407" id="3407">3407</a>
 <a href="#3408" id="3408">3408</a>
 <a href="#3409" id="3409">3409</a>
+<a href="#3410" id="3410">3410</a>
+<a href="#3411" id="3411">3411</a>
+<a href="#3412" id="3412">3412</a>
+<a href="#3413" id="3413">3413</a>
+<a href="#3414" id="3414">3414</a>
+<a href="#3415" id="3415">3415</a>
+<a href="#3416" id="3416">3416</a>
+<a href="#3417" id="3417">3417</a>
+<a href="#3418" id="3418">3418</a>
+<a href="#3419" id="3419">3419</a>
+<a href="#3420" id="3420">3420</a>
+<a href="#3421" id="3421">3421</a>
+<a href="#3422" id="3422">3422</a>
+<a href="#3423" id="3423">3423</a>
+<a href="#3424" id="3424">3424</a>
+<a href="#3425" id="3425">3425</a>
+<a href="#3426" id="3426">3426</a>
 </pre><pre class="rust"><code><span class="doccomment">//! This module defines s390x-specific machine instruction types.
 
 </span><span class="kw">use </span><span class="kw">crate</span>::binemit::{Addend, CodeOffset, Reloc};
@@ -3419,6 +3436,7 @@
 <span class="kw">use </span>alloc::vec::Vec;
 <span class="kw">use </span>regalloc2::{PRegSet, VReg};
 <span class="kw">use </span>smallvec::SmallVec;
+<span class="kw">use </span>std::fmt::Write;
 <span class="kw">use </span>std::string::{String, ToString};
 <span class="kw">pub mod </span>regs;
 <span class="kw">pub use </span><span class="self">self</span>::regs::<span class="kw-2">*</span>;
@@ -3473,7 +3491,15 @@
 </span><span class="kw">fn </span>inst_size_test() {
     <span class="comment">// This test will help with unintentionally growing the size
     // of the Inst enum.
-    </span><span class="macro">assert_eq!</span>(<span class="number">32</span>, std::mem::size_of::&lt;Inst&gt;());
+    //
+    // TODO(#5879): see if we can make `VecRetPair` a box slice to get back to
+    // 32 here.
+    </span><span class="kw">let </span>expected_size = <span class="kw">if </span><span class="macro">cfg!</span>(target_arch = <span class="string">&quot;aarch64&quot;</span>) || <span class="macro">cfg!</span>(target_arch = <span class="string">&quot;riscv64&quot;</span>) {
+        <span class="number">48
+    </span>} <span class="kw">else </span>{
+        <span class="number">40
+    </span>};
+    <span class="macro">assert_eq!</span>(expected_size, std::mem::size_of::&lt;Inst&gt;());
 }
 
 <span class="doccomment">/// A register pair. Enum so it can be destructured in ISLE.
@@ -6561,18 +6587,26 @@
             <span class="kw-2">&amp;</span>Inst::Args { <span class="kw-2">ref </span>args } =&gt; {
                 <span class="kw">let </span><span class="kw-2">mut </span>s = <span class="string">&quot;args&quot;</span>.to_string();
                 <span class="kw">for </span>arg <span class="kw">in </span>args {
-                    <span class="kw">use </span>std::fmt::Write;
                     <span class="kw">let </span>preg = pretty_print_reg(arg.preg, <span class="kw-2">&amp;mut </span>empty_allocs);
                     <span class="kw">let </span>def = pretty_print_reg(arg.vreg.to_reg(), allocs);
                     <span class="macro">write!</span>(<span class="kw-2">&amp;mut </span>s, <span class="string">&quot; {}={}&quot;</span>, def, preg).unwrap();
                 }
                 s
             }
-            <span class="kw-2">&amp;</span>Inst::Ret { link, <span class="kw-2">ref </span>rets } =&gt; {
+            <span class="kw-2">&amp;</span>Inst::Ret {
+                link,
+                <span class="kw-2">ref </span>rets,
+                stack_bytes_to_pop,
+            } =&gt; {
                 <span class="macro">debug_assert_eq!</span>(link, gpr(<span class="number">14</span>));
-                <span class="kw">let </span><span class="kw-2">mut </span>s = <span class="macro">format!</span>(<span class="string">&quot;br {}&quot;</span>, show_reg(link));
+                <span class="kw">let </span>link = show_reg(link);
+                <span class="kw">let </span><span class="kw-2">mut </span>s = <span class="kw">if </span>stack_bytes_to_pop == <span class="number">0 </span>{
+                    <span class="macro">format!</span>(<span class="string">&quot;br {link}&quot;</span>)
+                } <span class="kw">else </span>{
+                    <span class="kw">let </span>stack_reg = show_reg(stack_reg());
+                    <span class="macro">format!</span>(<span class="string">&quot;aghi {stack_reg}, {stack_bytes_to_pop} ; br {link}&quot;</span>)
+                };
                 <span class="kw">for </span>ret <span class="kw">in </span>rets {
-                    <span class="kw">use </span>std::fmt::Write;
                     <span class="kw">let </span>preg = pretty_print_reg(ret.preg, <span class="kw-2">&amp;mut </span>empty_allocs);
                     <span class="kw">let </span>vreg = pretty_print_reg(ret.vreg, allocs);
                     <span class="macro">write!</span>(<span class="kw-2">&amp;mut </span>s, <span class="string">&quot; {}={}&quot;</span>, vreg, preg).unwrap();

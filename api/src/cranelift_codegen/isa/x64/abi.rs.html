@@ -982,6 +982,7 @@
 <a href="#982" id="982">982</a>
 <a href="#983" id="983">983</a>
 <a href="#984" id="984">984</a>
+<a href="#985" id="985">985</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Implementation of the standard x64 ABI.
 
 </span><span class="kw">use </span><span class="kw">crate</span>::ir::{<span class="self">self</span>, types, LibCall, MemFlags, Opcode, Signature, TrapCode, Type};
@@ -1285,8 +1286,9 @@
         _setup_frame: bool,
         _isa_flags: <span class="kw-2">&amp;</span>x64_settings::Flags,
         rets: Vec&lt;RetPair&gt;,
+        stack_bytes_to_pop: u32,
     ) -&gt; <span class="self">Self</span>::I {
-        Inst::ret(rets)
+        Inst::ret(rets, stack_bytes_to_pop)
     }
 
     <span class="kw">fn </span>gen_add_imm(into_reg: Writable&lt;Reg&gt;, from_reg: Reg, imm: u32) -&gt; SmallInstVec&lt;<span class="self">Self</span>::I&gt; {

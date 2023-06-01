@@ -2422,6 +2422,36 @@
 <a href="#2422" id="2422">2422</a>
 <a href="#2423" id="2423">2423</a>
 <a href="#2424" id="2424">2424</a>
+<a href="#2425" id="2425">2425</a>
+<a href="#2426" id="2426">2426</a>
+<a href="#2427" id="2427">2427</a>
+<a href="#2428" id="2428">2428</a>
+<a href="#2429" id="2429">2429</a>
+<a href="#2430" id="2430">2430</a>
+<a href="#2431" id="2431">2431</a>
+<a href="#2432" id="2432">2432</a>
+<a href="#2433" id="2433">2433</a>
+<a href="#2434" id="2434">2434</a>
+<a href="#2435" id="2435">2435</a>
+<a href="#2436" id="2436">2436</a>
+<a href="#2437" id="2437">2437</a>
+<a href="#2438" id="2438">2438</a>
+<a href="#2439" id="2439">2439</a>
+<a href="#2440" id="2440">2440</a>
+<a href="#2441" id="2441">2441</a>
+<a href="#2442" id="2442">2442</a>
+<a href="#2443" id="2443">2443</a>
+<a href="#2444" id="2444">2444</a>
+<a href="#2445" id="2445">2445</a>
+<a href="#2446" id="2446">2446</a>
+<a href="#2447" id="2447">2447</a>
+<a href="#2448" id="2448">2448</a>
+<a href="#2449" id="2449">2449</a>
+<a href="#2450" id="2450">2450</a>
+<a href="#2451" id="2451">2451</a>
+<a href="#2452" id="2452">2452</a>
+<a href="#2453" id="2453">2453</a>
+<a href="#2454" id="2454">2454</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Implementation of a vanilla ABI, shared between several machines. The
 //! implementation here assumes that arguments will be passed in registers
 //! first, then additional args on the stack; that the stack grows downward,
@@ -2855,7 +2885,18 @@
     </span><span class="kw">fn </span>gen_args(isa_flags: <span class="kw-2">&amp;</span><span class="self">Self</span>::F, args: Vec&lt;ArgPair&gt;) -&gt; <span class="self">Self</span>::I;
 
     <span class="doccomment">/// Generate a return instruction.
-    </span><span class="kw">fn </span>gen_ret(setup_frame: bool, isa_flags: <span class="kw-2">&amp;</span><span class="self">Self</span>::F, rets: Vec&lt;RetPair&gt;) -&gt; <span class="self">Self</span>::I;
+    ///
+    /// Optionally given non-zero number of additional stack bytes to pop after
+    /// popping the return address from the stack, if any, and just before the
+    /// actual return. This is used by the &quot;tail&quot; calling convention to clean up
+    /// stack arguments in the callee because we cannot rely on the caller to do
+    /// it.
+    </span><span class="kw">fn </span>gen_ret(
+        setup_frame: bool,
+        isa_flags: <span class="kw-2">&amp;</span><span class="self">Self</span>::F,
+        rets: Vec&lt;RetPair&gt;,
+        stack_bytes_to_pop: u32,
+    ) -&gt; <span class="self">Self</span>::I;
 
     <span class="doccomment">/// Generate an add-with-immediate. Note that even if this uses a scratch
     /// register, it must satisfy two requirements:
@@ -4094,8 +4135,22 @@
     }
 
     <span class="doccomment">/// Generate a return instruction.
-    </span><span class="kw">pub fn </span>gen_ret(<span class="kw-2">&amp;</span><span class="self">self</span>, rets: Vec&lt;RetPair&gt;) -&gt; M::I {
-        M::gen_ret(<span class="self">self</span>.setup_frame, <span class="kw-2">&amp;</span><span class="self">self</span>.isa_flags, rets)
+    </span><span class="kw">pub fn </span>gen_ret(<span class="kw-2">&amp;</span><span class="self">self</span>, sigs: <span class="kw-2">&amp;</span>SigSet, rets: Vec&lt;RetPair&gt;) -&gt; M::I {
+        M::gen_ret(
+            <span class="self">self</span>.setup_frame,
+            <span class="kw-2">&amp;</span><span class="self">self</span>.isa_flags,
+            rets,
+            <span class="self">self</span>.stack_bytes_to_pop(sigs),
+        )
+    }
+
+    <span class="kw">fn </span>stack_bytes_to_pop(<span class="kw-2">&amp;</span><span class="self">self</span>, sigs: <span class="kw-2">&amp;</span>SigSet) -&gt; u32 {
+        <span class="kw">let </span>sig = <span class="kw-2">&amp;</span>sigs[<span class="self">self</span>.sig];
+        <span class="kw">if </span>sig.call_conv == isa::CallConv::Tail {
+            sig.sized_stack_arg_space
+        } <span class="kw">else </span>{
+            <span class="number">0
+        </span>}
     }
 
     <span class="doccomment">/// Produce an instruction that computes a sized stackslot address.
@@ -4317,7 +4372,7 @@
     /// Note that this must generate the actual return instruction (rather than
     /// emitting this in the lowering logic), because the epilogue code comes
     /// before the return and the two are likely closely related.
-    </span><span class="kw">pub fn </span>gen_epilogue(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; SmallInstVec&lt;M::I&gt; {
+    </span><span class="kw">pub fn </span>gen_epilogue(<span class="kw-2">&amp;</span><span class="self">self</span>, sigs: <span class="kw-2">&amp;</span>SigSet) -&gt; SmallInstVec&lt;M::I&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>insts = <span class="macro">smallvec!</span>[];
 
         <span class="comment">// Restore clobbered registers.
@@ -4343,7 +4398,12 @@
         <span class="comment">// This `ret` doesn&#39;t need any return registers attached
         // because we are post-regalloc and don&#39;t need to
         // represent the implicit uses anymore.
-        </span>insts.push(M::gen_ret(<span class="self">self</span>.setup_frame, <span class="kw-2">&amp;</span><span class="self">self</span>.isa_flags, <span class="macro">vec!</span>[]));
+        </span>insts.push(M::gen_ret(
+            <span class="self">self</span>.setup_frame,
+            <span class="kw-2">&amp;</span><span class="self">self</span>.isa_flags,
+            <span class="macro">vec!</span>[],
+            <span class="self">self</span>.stack_bytes_to_pop(sigs),
+        ));
 
         <span class="macro">trace!</span>(<span class="string">&quot;Epilogue: {:?}&quot;</span>, insts);
         insts
@@ -4553,10 +4613,10 @@
     </span><span class="kw">pub fn </span>emit_stack_pre_adjust(<span class="kw-2">&amp;</span><span class="self">self</span>, ctx: <span class="kw-2">&amp;mut </span>Lower&lt;M::I&gt;) {
         <span class="kw">let </span>off =
             ctx.sigs()[<span class="self">self</span>.sig].sized_stack_arg_space + ctx.sigs()[<span class="self">self</span>.sig].sized_stack_ret_space;
-        adjust_stack_and_nominal_sp::&lt;M&gt;(ctx, off <span class="kw">as </span>i32, <span class="comment">/* is_sub = */ </span><span class="bool-val">true</span>)
+        adjust_stack_and_nominal_sp::&lt;M&gt;(ctx, off <span class="kw">as </span>i32, <span class="comment">/* is_sub = */ </span><span class="bool-val">true</span>);
     }
 
-    <span class="doccomment">/// Emit code to post-adjust the satck, after call return and return-value copies.
+    <span class="doccomment">/// Emit code to post-adjust the stack, after call return and return-value copies.
     </span><span class="kw">pub fn </span>emit_stack_post_adjust(<span class="kw-2">&amp;</span><span class="self">self</span>, ctx: <span class="kw-2">&amp;mut </span>Lower&lt;M::I&gt;) {
         <span class="kw">let </span>off =
             ctx.sigs()[<span class="self">self</span>.sig].sized_stack_arg_space + ctx.sigs()[<span class="self">self</span>.sig].sized_stack_ret_space;

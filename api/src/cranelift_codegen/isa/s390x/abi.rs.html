@@ -949,6 +949,12 @@
 <a href="#949" id="949">949</a>
 <a href="#950" id="950">950</a>
 <a href="#951" id="951">951</a>
+<a href="#952" id="952">952</a>
+<a href="#953" id="953">953</a>
+<a href="#954" id="954">954</a>
+<a href="#955" id="955">955</a>
+<a href="#956" id="956">956</a>
+<a href="#957" id="957">957</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Implementation of a standard S390x ABI.
 //!
 //! This machine uses the &quot;vanilla&quot; ABI implementation from abi.rs,
@@ -1407,10 +1413,16 @@
         Inst::Args { args }
     }
 
-    <span class="kw">fn </span>gen_ret(_setup_frame: bool, _isa_flags: <span class="kw-2">&amp;</span>s390x_settings::Flags, rets: Vec&lt;RetPair&gt;) -&gt; Inst {
+    <span class="kw">fn </span>gen_ret(
+        _setup_frame: bool,
+        _isa_flags: <span class="kw-2">&amp;</span>s390x_settings::Flags,
+        rets: Vec&lt;RetPair&gt;,
+        stack_bytes_to_pop: u32,
+    ) -&gt; Inst {
         Inst::Ret {
             link: gpr(<span class="number">14</span>),
             rets,
+            stack_bytes_to_pop,
         }
     }
 

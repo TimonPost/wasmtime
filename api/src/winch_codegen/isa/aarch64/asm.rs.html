@@ -295,6 +295,9 @@
 <a href="#295" id="295">295</a>
 <a href="#296" id="296">296</a>
 <a href="#297" id="297">297</a>
+<a href="#298" id="298">298</a>
+<a href="#299" id="299">299</a>
+<a href="#300" id="300">300</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Assembler library implementation for Aarch64.
 
 </span><span class="kw">use super</span>::{address::Address, regs};
@@ -555,7 +558,10 @@
 
     <span class="doccomment">/// Return instruction.
     </span><span class="kw">pub fn </span>ret(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-        <span class="self">self</span>.emit(Inst::Ret { rets: <span class="macro">vec!</span>[] });
+        <span class="self">self</span>.emit(Inst::Ret {
+            rets: <span class="macro">vec!</span>[],
+            stack_bytes_to_pop: <span class="number">0</span>,
+        });
     }
 
     <span class="comment">// Helpers for ALU operations.

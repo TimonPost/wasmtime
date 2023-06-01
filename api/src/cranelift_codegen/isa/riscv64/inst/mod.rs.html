@@ -1958,6 +1958,9 @@
 <a href="#1958" id="1958">1958</a>
 <a href="#1959" id="1959">1959</a>
 <a href="#1960" id="1960">1960</a>
+<a href="#1961" id="1961">1961</a>
+<a href="#1962" id="1962">1962</a>
+<a href="#1963" id="1963">1963</a>
 </pre><pre class="rust"><code><span class="doccomment">//! This module defines riscv64-specific machine instruction types.
 
 </span><span class="comment">// Some variants are not constructed, but we still want them as options in the future.
@@ -1980,6 +1983,7 @@
 <span class="kw">use </span>regalloc2::{PRegSet, RegClass, VReg};
 <span class="kw">use </span>smallvec::{smallvec, SmallVec};
 <span class="kw">use </span>std::boxed::Box;
+<span class="kw">use </span>std::fmt::Write;
 <span class="kw">use </span>std::string::{String, ToString};
 
 <span class="kw">pub mod </span>regs;
@@ -2357,7 +2361,7 @@
                 collector.reg_fixed_def(arg.vreg, arg.preg);
             }
         }
-        <span class="kw-2">&amp;</span>Inst::Ret { <span class="kw-2">ref </span>rets } =&gt; {
+        <span class="kw-2">&amp;</span>Inst::Ret { <span class="kw-2">ref </span>rets, .. } =&gt; {
             <span class="kw">for </span>ret <span class="kw">in </span>rets {
                 collector.reg_fixed_use(ret.vreg, ret.preg);
             }
@@ -3248,8 +3252,6 @@
                 <span class="macro">format!</span>(<span class="string">&quot;{} {},{}&quot;</span>, <span class="string">&quot;lui&quot;</span>, format_reg(rd.to_reg(), allocs), imm.bits)
             }
             <span class="kw-2">&amp;</span>Inst::LoadConst32 { rd, imm } =&gt; {
-                <span class="kw">use </span>std::fmt::Write;
-
                 <span class="kw">let </span>rd = format_reg(rd.to_reg(), allocs);
                 <span class="kw">let </span><span class="kw-2">mut </span>buf = String::new();
                 <span class="macro">write!</span>(<span class="kw-2">&amp;mut </span>buf, <span class="string">&quot;auipc {},0; &quot;</span>, rd).unwrap();
@@ -3259,8 +3261,6 @@
                 buf
             }
             <span class="kw-2">&amp;</span>Inst::LoadConst64 { rd, imm } =&gt; {
-                <span class="kw">use </span>std::fmt::Write;
-
                 <span class="kw">let </span>rd = format_reg(rd.to_reg(), allocs);
                 <span class="kw">let </span><span class="kw-2">mut </span>buf = String::new();
                 <span class="macro">write!</span>(<span class="kw-2">&amp;mut </span>buf, <span class="string">&quot;auipc {},0; &quot;</span>, rd).unwrap();
@@ -3419,21 +3419,27 @@
                 <span class="kw">let </span><span class="kw-2">mut </span>s = <span class="string">&quot;args&quot;</span>.to_string();
                 <span class="kw">let </span><span class="kw-2">mut </span>empty_allocs = AllocationConsumer::default();
                 <span class="kw">for </span>arg <span class="kw">in </span>args {
-                    <span class="kw">use </span>std::fmt::Write;
                     <span class="kw">let </span>preg = format_reg(arg.preg, <span class="kw-2">&amp;mut </span>empty_allocs);
                     <span class="kw">let </span>def = format_reg(arg.vreg.to_reg(), allocs);
                     <span class="macro">write!</span>(<span class="kw-2">&amp;mut </span>s, <span class="string">&quot; {}={}&quot;</span>, def, preg).unwrap();
                 }
                 s
             }
-            <span class="kw-2">&amp;</span>Inst::Ret { <span class="kw-2">ref </span>rets } =&gt; {
-                <span class="kw">let </span><span class="kw-2">mut </span>s = <span class="string">&quot;ret&quot;</span>.to_string();
+            <span class="kw-2">&amp;</span>Inst::Ret {
+                <span class="kw-2">ref </span>rets,
+                stack_bytes_to_pop,
+            } =&gt; {
+                <span class="kw">let </span><span class="kw-2">mut </span>s = <span class="kw">if </span>stack_bytes_to_pop == <span class="number">0 </span>{
+                    <span class="string">&quot;ret&quot;</span>.to_string()
+                } <span class="kw">else </span>{
+                    <span class="macro">format!</span>(<span class="string">&quot;add sp, sp, #{stack_bytes_to_pop} ; ret&quot;</span>)
+                };
+
                 <span class="kw">let </span><span class="kw-2">mut </span>empty_allocs = AllocationConsumer::default();
                 <span class="kw">for </span>ret <span class="kw">in </span>rets {
-                    <span class="kw">use </span>std::fmt::Write;
                     <span class="kw">let </span>preg = format_reg(ret.preg, <span class="kw-2">&amp;mut </span>empty_allocs);
                     <span class="kw">let </span>vreg = format_reg(ret.vreg, allocs);
-                    <span class="macro">write!</span>(<span class="kw-2">&amp;mut </span>s, <span class="string">&quot; {}={}&quot;</span>, vreg, preg).unwrap();
+                    <span class="macro">write!</span>(<span class="kw-2">&amp;mut </span>s, <span class="string">&quot; {vreg}={preg}&quot;</span>).unwrap();
                 }
                 s
             }

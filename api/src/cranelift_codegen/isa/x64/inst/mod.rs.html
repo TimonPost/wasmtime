@@ -2642,6 +2642,14 @@
 <a href="#2642" id="2642">2642</a>
 <a href="#2643" id="2643">2643</a>
 <a href="#2644" id="2644">2644</a>
+<a href="#2645" id="2645">2645</a>
+<a href="#2646" id="2646">2646</a>
+<a href="#2647" id="2647">2647</a>
+<a href="#2648" id="2648">2648</a>
+<a href="#2649" id="2649">2649</a>
+<a href="#2650" id="2650">2650</a>
+<a href="#2651" id="2651">2651</a>
+<a href="#2652" id="2652">2652</a>
 </pre><pre class="rust"><code><span class="doccomment">//! This module defines x86_64-specific machine instruction types.
 
 </span><span class="kw">use </span><span class="kw">crate</span>::binemit::{Addend, CodeOffset, Reloc, StackMap};
@@ -2657,7 +2665,7 @@
 <span class="kw">use </span>cranelift_control::ControlPlane;
 <span class="kw">use </span>regalloc2::{Allocation, PRegSet, VReg};
 <span class="kw">use </span>smallvec::{smallvec, SmallVec};
-<span class="kw">use </span>std::fmt;
+<span class="kw">use </span>std::fmt::{<span class="self">self</span>, Write};
 <span class="kw">use </span>std::string::{String, ToString};
 
 <span class="kw">pub mod </span>args;
@@ -3190,8 +3198,11 @@
         }
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>ret(rets: Vec&lt;RetPair&gt;) -&gt; Inst {
-        Inst::Ret { rets }
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>ret(rets: Vec&lt;RetPair&gt;, stack_bytes_to_pop: u32) -&gt; Inst {
+        Inst::Ret {
+            rets,
+            stack_bytes_to_pop,
+        }
     }
 
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>jmp_known(dst: MachLabel) -&gt; Inst {
@@ -4204,7 +4215,6 @@
             Inst::Args { args } =&gt; {
                 <span class="kw">let </span><span class="kw-2">mut </span>s = <span class="string">&quot;args&quot;</span>.to_string();
                 <span class="kw">for </span>arg <span class="kw">in </span>args {
-                    <span class="kw">use </span>std::fmt::Write;
                     <span class="kw">let </span>preg = regs::show_reg(arg.preg);
                     <span class="kw">let </span>def = pretty_print_reg(arg.vreg.to_reg(), <span class="number">8</span>, allocs);
                     <span class="macro">write!</span>(<span class="kw-2">&amp;mut </span>s, <span class="string">&quot; {def}={preg}&quot;</span>).unwrap();
@@ -4212,10 +4222,15 @@
                 s
             }
 
-            Inst::Ret { rets } =&gt; {
+            Inst::Ret {
+                rets,
+                stack_bytes_to_pop,
+            } =&gt; {
                 <span class="kw">let </span><span class="kw-2">mut </span>s = <span class="string">&quot;ret&quot;</span>.to_string();
+                <span class="kw">if </span><span class="kw-2">*</span>stack_bytes_to_pop != <span class="number">0 </span>{
+                    <span class="macro">write!</span>(<span class="kw-2">&amp;mut </span>s, <span class="string">&quot; {stack_bytes_to_pop}&quot;</span>).unwrap();
+                }
                 <span class="kw">for </span>ret <span class="kw">in </span>rets {
-                    <span class="kw">use </span>std::fmt::Write;
                     <span class="kw">let </span>preg = regs::show_reg(ret.preg);
                     <span class="kw">let </span>vreg = pretty_print_reg(ret.vreg, <span class="number">8</span>, allocs);
                     <span class="macro">write!</span>(<span class="kw-2">&amp;mut </span>s, <span class="string">&quot; {vreg}={preg}&quot;</span>).unwrap();
@@ -4349,8 +4364,6 @@
                 dst,
                 tmp,
             } =&gt; {
-                <span class="kw">use </span>std::fmt::Write;
-
                 <span class="kw">let </span>dst = pretty_print_reg(dst.to_reg().to_reg(), <span class="number">8</span>, allocs);
                 <span class="kw">let </span>tmp = allocs.next(tmp.to_reg().to_reg());
 
@@ -4884,7 +4897,10 @@
             }
         }
 
-        Inst::Ret { rets } =&gt; {
+        Inst::Ret {
+            rets,
+            stack_bytes_to_pop: <span class="kw">_</span>,
+        } =&gt; {
             <span class="comment">// The return value(s) are live-out; we represent this
             // with register uses on the return instruction.
             </span><span class="kw">for </span>ret <span class="kw">in </span>rets.iter() {

@@ -1283,6 +1283,15 @@
 <a href="#1283" id="1283">1283</a>
 <a href="#1284" id="1284">1284</a>
 <a href="#1285" id="1285">1285</a>
+<a href="#1286" id="1286">1286</a>
+<a href="#1287" id="1287">1287</a>
+<a href="#1288" id="1288">1288</a>
+<a href="#1289" id="1289">1289</a>
+<a href="#1290" id="1290">1290</a>
+<a href="#1291" id="1291">1291</a>
+<a href="#1292" id="1292">1292</a>
+<a href="#1293" id="1293">1293</a>
+<a href="#1294" id="1294">1294</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Implementation of a standard AArch64 ABI.
 
 </span><span class="kw">use </span><span class="kw">crate</span>::ir;
@@ -1685,7 +1694,12 @@
         Inst::Args { args }
     }
 
-    <span class="kw">fn </span>gen_ret(setup_frame: bool, isa_flags: <span class="kw-2">&amp;</span>aarch64_settings::Flags, rets: Vec&lt;RetPair&gt;) -&gt; Inst {
+    <span class="kw">fn </span>gen_ret(
+        setup_frame: bool,
+        isa_flags: <span class="kw-2">&amp;</span>aarch64_settings::Flags,
+        rets: Vec&lt;RetPair&gt;,
+        stack_bytes_to_pop: u32,
+    ) -&gt; Inst {
         <span class="kw">if </span>isa_flags.sign_return_address() &amp;&amp; (setup_frame || isa_flags.sign_return_address_all()) {
             <span class="kw">let </span>key = <span class="kw">if </span>isa_flags.sign_return_address_with_bkey() {
                 APIKey::B
@@ -1697,9 +1711,13 @@
                 key,
                 is_hint: !isa_flags.has_pauth(),
                 rets,
+                stack_bytes_to_pop,
             }
         } <span class="kw">else </span>{
-            Inst::Ret { rets }
+            Inst::Ret {
+                rets,
+                stack_bytes_to_pop,
+            }
         }
     }
 

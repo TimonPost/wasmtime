@@ -2020,7 +2020,7 @@
             }
         }
 
-        <span class="kw">let </span>inst = <span class="self">self</span>.abi().gen_ret(out_rets);
+        <span class="kw">let </span>inst = <span class="self">self</span>.abi().gen_ret(<span class="kw-2">&amp;</span><span class="self">self</span>.sigs(), out_rets);
         <span class="self">self</span>.emit(inst);
     }
 

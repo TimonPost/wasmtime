@@ -2943,6 +2943,27 @@
 <a href="#2943" id="2943">2943</a>
 <a href="#2944" id="2944">2944</a>
 <a href="#2945" id="2945">2945</a>
+<a href="#2946" id="2946">2946</a>
+<a href="#2947" id="2947">2947</a>
+<a href="#2948" id="2948">2948</a>
+<a href="#2949" id="2949">2949</a>
+<a href="#2950" id="2950">2950</a>
+<a href="#2951" id="2951">2951</a>
+<a href="#2952" id="2952">2952</a>
+<a href="#2953" id="2953">2953</a>
+<a href="#2954" id="2954">2954</a>
+<a href="#2955" id="2955">2955</a>
+<a href="#2956" id="2956">2956</a>
+<a href="#2957" id="2957">2957</a>
+<a href="#2958" id="2958">2958</a>
+<a href="#2959" id="2959">2959</a>
+<a href="#2960" id="2960">2960</a>
+<a href="#2961" id="2961">2961</a>
+<a href="#2962" id="2962">2962</a>
+<a href="#2963" id="2963">2963</a>
+<a href="#2964" id="2964">2964</a>
+<a href="#2965" id="2965">2965</a>
+<a href="#2966" id="2966">2966</a>
 </pre><pre class="rust"><code><span class="doccomment">//! This module defines aarch64-specific machine instruction types.
 
 </span><span class="kw">use </span><span class="kw">crate</span>::binemit::{Addend, CodeOffset, Reloc};
@@ -2957,6 +2978,7 @@
 <span class="kw">use </span>alloc::vec::Vec;
 <span class="kw">use </span>regalloc2::{PRegSet, VReg};
 <span class="kw">use </span>smallvec::{smallvec, SmallVec};
+<span class="kw">use </span>std::fmt::Write;
 <span class="kw">use </span>std::string::{String, ToString};
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>regs;
@@ -3778,7 +3800,7 @@
                 collector.reg_fixed_def(arg.vreg, arg.preg);
             }
         }
-        <span class="kw-2">&amp;</span>Inst::Ret { <span class="kw-2">ref </span>rets } | <span class="kw-2">&amp;</span>Inst::AuthenticatedRet { <span class="kw-2">ref </span>rets, .. } =&gt; {
+        <span class="kw-2">&amp;</span>Inst::Ret { <span class="kw-2">ref </span>rets, .. } | <span class="kw-2">&amp;</span>Inst::AuthenticatedRet { <span class="kw-2">ref </span>rets, .. } =&gt; {
             <span class="kw">for </span>ret <span class="kw">in </span>rets {
                 collector.reg_fixed_use(ret.vreg, ret.preg);
             }
@@ -5455,34 +5477,54 @@
             <span class="kw-2">&amp;</span>Inst::Args { <span class="kw-2">ref </span>args } =&gt; {
                 <span class="kw">let </span><span class="kw-2">mut </span>s = <span class="string">&quot;args&quot;</span>.to_string();
                 <span class="kw">for </span>arg <span class="kw">in </span>args {
-                    <span class="kw">use </span>std::fmt::Write;
                     <span class="kw">let </span>preg = pretty_print_reg(arg.preg, <span class="kw-2">&amp;mut </span>empty_allocs);
                     <span class="kw">let </span>def = pretty_print_reg(arg.vreg.to_reg(), allocs);
                     <span class="macro">write!</span>(<span class="kw-2">&amp;mut </span>s, <span class="string">&quot; {}={}&quot;</span>, def, preg).unwrap();
                 }
                 s
             }
-            <span class="kw-2">&amp;</span>Inst::Ret { <span class="kw-2">ref </span>rets } =&gt; {
-                <span class="kw">let </span><span class="kw-2">mut </span>s = <span class="string">&quot;ret&quot;</span>.to_string();
+            <span class="kw-2">&amp;</span>Inst::Ret {
+                <span class="kw-2">ref </span>rets,
+                stack_bytes_to_pop,
+            } =&gt; {
+                <span class="kw">let </span><span class="kw-2">mut </span>s = <span class="kw">if </span>stack_bytes_to_pop == <span class="number">0 </span>{
+                    <span class="string">&quot;ret&quot;</span>.to_string()
+                } <span class="kw">else </span>{
+                    <span class="macro">format!</span>(<span class="string">&quot;add sp, sp, #{} ; ret&quot;</span>, stack_bytes_to_pop)
+                };
                 <span class="kw">for </span>ret <span class="kw">in </span>rets {
-                    <span class="kw">use </span>std::fmt::Write;
                     <span class="kw">let </span>preg = pretty_print_reg(ret.preg, <span class="kw-2">&amp;mut </span>empty_allocs);
                     <span class="kw">let </span>vreg = pretty_print_reg(ret.vreg, allocs);
-                    <span class="macro">write!</span>(<span class="kw-2">&amp;mut </span>s, <span class="string">&quot; {}={}&quot;</span>, vreg, preg).unwrap();
+                    <span class="macro">write!</span>(<span class="kw-2">&amp;mut </span>s, <span class="string">&quot; {vreg}={preg}&quot;</span>).unwrap();
                 }
                 s
             }
-            <span class="kw-2">&amp;</span>Inst::AuthenticatedRet { key, is_hint, .. } =&gt; {
+            <span class="kw-2">&amp;</span>Inst::AuthenticatedRet {
+                key,
+                is_hint,
+                stack_bytes_to_pop,
+                <span class="kw-2">ref </span>rets,
+            } =&gt; {
                 <span class="kw">let </span>key = <span class="kw">match </span>key {
                     APIKey::A =&gt; <span class="string">&quot;a&quot;</span>,
                     APIKey::B =&gt; <span class="string">&quot;b&quot;</span>,
                 };
-
-                <span class="kw">if </span>is_hint {
-                    <span class="string">&quot;auti&quot;</span>.to_string() + key + <span class="string">&quot;sp ; ret&quot;
-                </span>} <span class="kw">else </span>{
-                    <span class="string">&quot;reta&quot;</span>.to_string() + key
+                <span class="kw">let </span><span class="kw-2">mut </span>s = <span class="kw">match </span>(is_hint, stack_bytes_to_pop) {
+                    (<span class="bool-val">false</span>, <span class="number">0</span>) =&gt; <span class="macro">format!</span>(<span class="string">&quot;reta{key}&quot;</span>),
+                    (<span class="bool-val">false</span>, n) =&gt; {
+                        <span class="macro">format!</span>(<span class="string">&quot;add sp, sp, #{n} ; reta{key}&quot;</span>)
+                    }
+                    (<span class="bool-val">true</span>, <span class="number">0</span>) =&gt; <span class="macro">format!</span>(<span class="string">&quot;auti{key}sp ; ret&quot;</span>),
+                    (<span class="bool-val">true</span>, n) =&gt; {
+                        <span class="macro">format!</span>(<span class="string">&quot;add sp, sp, #{n} ; auti{key} ; ret&quot;</span>)
+                    }
+                };
+                <span class="kw">for </span>ret <span class="kw">in </span>rets {
+                    <span class="kw">let </span>preg = pretty_print_reg(ret.preg, <span class="kw-2">&amp;mut </span>empty_allocs);
+                    <span class="kw">let </span>vreg = pretty_print_reg(ret.vreg, allocs);
+                    <span class="macro">write!</span>(<span class="kw-2">&amp;mut </span>s, <span class="string">&quot; {vreg}={preg}&quot;</span>).unwrap();
                 }
+                s
             }
             <span class="kw-2">&amp;</span>Inst::Jump { <span class="kw-2">ref </span>dest } =&gt; {
                 <span class="kw">let </span>dest = dest.pretty_print(<span class="number">0</span>, allocs);
