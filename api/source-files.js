@@ -123,7 +123,7 @@ var sourcesIndex = JSON.parse('{\
 "wasmtime_types":["",[],["error.rs","lib.rs"]],\
 "wasmtime_wasi":["",[["preview2",[["clocks",[],["host.rs"]],["preview1",[],["mod.rs"]],["preview2",[],["clocks.rs","env.rs","exit.rs","filesystem.rs","io.rs","mod.rs","poll.rs","random.rs"]],["sched",[],["subscription.rs","sync.rs"]],["wasi",[],["command.rs","mod.rs"]]],["clocks.rs","ctx.rs","error.rs","filesystem.rs","mod.rs","pipe.rs","random.rs","sched.rs","stdio.rs","stream.rs","table.rs"]]],["lib.rs"]],\
 "wasmtime_wasi_crypto":["",[["wiggle_interfaces",[],["asymmetric_common.rs","common.rs","error.rs","key_exchange.rs","mod.rs","signatures.rs","symmetric.rs"]]],["lib.rs"]],\
-"wasmtime_wasi_http":["",[],["lib.rs"]],\
+"wasmtime_wasi_http":["",[],["component_impl.rs","http_impl.rs","lib.rs","streams_impl.rs","struct.rs","types_impl.rs"]],\
 "wasmtime_wasi_nn":["",[],["api.rs","ctx.rs","impl.rs","lib.rs","openvino.rs","witx.rs"]],\
 "wasmtime_wasi_threads":["",[],["lib.rs"]],\
 "wasmtime_wast":["",[],["component.rs","core.rs","lib.rs","spectest.rs","wast.rs"]],\
