@@ -2452,6 +2452,7 @@
 <a href="#2452" id="2452">2452</a>
 <a href="#2453" id="2453">2453</a>
 <a href="#2454" id="2454">2454</a>
+<a href="#2455" id="2455">2455</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Implementation of a vanilla ABI, shared between several machines. The
 //! implementation here assumes that arguments will be passed in registers
 //! first, then additional args on the stack; that the stack grows downward,
@@ -4592,15 +4593,14 @@
     }
 }
 
-<span class="kw">fn </span>adjust_stack_and_nominal_sp&lt;M: ABIMachineSpec&gt;(ctx: <span class="kw-2">&amp;mut </span>Lower&lt;M::I&gt;, off: i32, is_sub: bool) {
-    <span class="kw">if </span>off == <span class="number">0 </span>{
+<span class="kw">fn </span>adjust_stack_and_nominal_sp&lt;M: ABIMachineSpec&gt;(ctx: <span class="kw-2">&amp;mut </span>Lower&lt;M::I&gt;, amount: i32) {
+    <span class="kw">if </span>amount == <span class="number">0 </span>{
         <span class="kw">return</span>;
     }
-    <span class="kw">let </span>amt = <span class="kw">if </span>is_sub { -off } <span class="kw">else </span>{ off };
-    <span class="kw">for </span>inst <span class="kw">in </span>M::gen_sp_reg_adjust(amt) {
+    <span class="kw">for </span>inst <span class="kw">in </span>M::gen_sp_reg_adjust(amount) {
         ctx.emit(inst);
     }
-    ctx.emit(M::gen_nominal_sp_adj(-amt));
+    ctx.emit(M::gen_nominal_sp_adj(-amount));
 }
 
 <span class="kw">impl</span>&lt;M: ABIMachineSpec&gt; CallSite&lt;M&gt; {
@@ -4611,16 +4611,18 @@
 
     <span class="doccomment">/// Emit code to pre-adjust the stack, prior to argument copies and call.
     </span><span class="kw">pub fn </span>emit_stack_pre_adjust(<span class="kw-2">&amp;</span><span class="self">self</span>, ctx: <span class="kw-2">&amp;mut </span>Lower&lt;M::I&gt;) {
-        <span class="kw">let </span>off =
-            ctx.sigs()[<span class="self">self</span>.sig].sized_stack_arg_space + ctx.sigs()[<span class="self">self</span>.sig].sized_stack_ret_space;
-        adjust_stack_and_nominal_sp::&lt;M&gt;(ctx, off <span class="kw">as </span>i32, <span class="comment">/* is_sub = */ </span><span class="bool-val">true</span>);
+        <span class="kw">let </span>sig = <span class="kw-2">&amp;</span>ctx.sigs()[<span class="self">self</span>.sig];
+        <span class="kw">let </span>stack_space = sig.sized_stack_arg_space + sig.sized_stack_ret_space;
+        <span class="kw">let </span>stack_space = i32::try_from(stack_space).unwrap();
+        adjust_stack_and_nominal_sp::&lt;M&gt;(ctx, -stack_space);
     }
 
     <span class="doccomment">/// Emit code to post-adjust the stack, after call return and return-value copies.
     </span><span class="kw">pub fn </span>emit_stack_post_adjust(<span class="kw-2">&amp;</span><span class="self">self</span>, ctx: <span class="kw-2">&amp;mut </span>Lower&lt;M::I&gt;) {
-        <span class="kw">let </span>off =
-            ctx.sigs()[<span class="self">self</span>.sig].sized_stack_arg_space + ctx.sigs()[<span class="self">self</span>.sig].sized_stack_ret_space;
-        adjust_stack_and_nominal_sp::&lt;M&gt;(ctx, off <span class="kw">as </span>i32, <span class="comment">/* is_sub = */ </span><span class="bool-val">false</span>)
+        <span class="kw">let </span>sig = <span class="kw-2">&amp;</span>ctx.sigs()[<span class="self">self</span>.sig];
+        <span class="kw">let </span>stack_space = sig.sized_stack_arg_space + sig.sized_stack_ret_space;
+        <span class="kw">let </span>stack_space = i32::try_from(stack_space).unwrap();
+        adjust_stack_and_nominal_sp::&lt;M&gt;(ctx, stack_space)
     }
 
     <span class="doccomment">/// Emit a copy of a large argument into its associated stack buffer, if any.
