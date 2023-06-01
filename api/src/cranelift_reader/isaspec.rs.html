@@ -129,6 +129,11 @@
 <a href="#129" id="129">129</a>
 <a href="#130" id="130">130</a>
 <a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Parsed representation of `set` and `isa` commands.
 //!
 //! A test case file can contain `set` commands that set ISA-independent settings, and it can
@@ -218,6 +223,8 @@
 }
 
 <span class="doccomment">/// Parse an iterator of command line options and apply them to `config`.
+///
+/// Note that parsing terminates after the first error is encountered.
 </span><span class="kw">pub fn </span>parse_options&lt;<span class="lifetime">&#39;a</span>, I&gt;(
     iter: I,
     config: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Configurable,
@@ -226,39 +233,42 @@
 <span class="kw">where
     </span>I: Iterator&lt;Item = <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str&gt;,
 {
-    <span class="kw">for </span>opt <span class="kw">in </span>iter.map(TestOption::new) {
-        <span class="kw">match </span>opt {
-            TestOption::Flag(name) =&gt; <span class="kw">match </span>config.enable(name) {
-                <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; {}
-                <span class="prelude-val">Err</span>(SetError::BadName(name)) =&gt; {
-                    <span class="kw">return </span><span class="prelude-val">Err</span>(ParseOptionError::UnknownFlag { loc, name })
-                }
-                <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="kw">return </span><span class="macro">option_err!</span>(loc, <span class="string">&quot;not a boolean flag: &#39;{}&#39;&quot;</span>, opt),
-            },
-            TestOption::Value(name, value) =&gt; <span class="kw">match </span>config.set(name, value) {
-                <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; {}
-                <span class="prelude-val">Err</span>(SetError::BadName(name)) =&gt; {
-                    <span class="kw">return </span><span class="prelude-val">Err</span>(ParseOptionError::UnknownValue {
-                        loc,
-                        name,
-                        value: value.to_string(),
-                    })
-                }
-                <span class="prelude-val">Err</span>(SetError::BadType) =&gt; {
-                    <span class="kw">return </span><span class="macro">option_err!</span>(loc, <span class="string">&quot;invalid setting type: &#39;{}&#39;&quot;</span>, opt)
-                }
-                <span class="prelude-val">Err</span>(SetError::BadValue(expected)) =&gt; {
-                    <span class="kw">return </span><span class="macro">option_err!</span>(
-                        loc,
-                        <span class="string">&quot;invalid setting value for &#39;{}&#39;, expected {}&quot;</span>,
-                        opt,
-                        expected
-                    );
-                }
-            },
-        }
+    <span class="kw">for </span>opt <span class="kw">in </span>iter {
+        parse_option(opt, config, loc)<span class="question-mark">?</span>;
     }
     <span class="prelude-val">Ok</span>(())
+}
+
+<span class="doccomment">/// Parse an single command line options and apply it to `config`.
+</span><span class="kw">pub fn </span>parse_option(
+    opt: <span class="kw-2">&amp;</span>str,
+    config: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Configurable,
+    loc: Location,
+) -&gt; <span class="prelude-ty">Result</span>&lt;(), ParseOptionError&gt; {
+    <span class="kw">match </span>TestOption::new(opt) {
+        TestOption::Flag(name) =&gt; <span class="kw">match </span>config.enable(name) {
+            <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(()),
+            <span class="prelude-val">Err</span>(SetError::BadName(name)) =&gt; <span class="prelude-val">Err</span>(ParseOptionError::UnknownFlag { loc, name }),
+            <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="macro">option_err!</span>(loc, <span class="string">&quot;not a boolean flag: &#39;{}&#39;&quot;</span>, opt),
+        },
+        TestOption::Value(name, value) =&gt; <span class="kw">match </span>config.set(name, value) {
+            <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(()),
+            <span class="prelude-val">Err</span>(SetError::BadName(name)) =&gt; <span class="prelude-val">Err</span>(ParseOptionError::UnknownValue {
+                loc,
+                name,
+                value: value.to_string(),
+            }),
+            <span class="prelude-val">Err</span>(SetError::BadType) =&gt; <span class="macro">option_err!</span>(loc, <span class="string">&quot;invalid setting type: &#39;{}&#39;&quot;</span>, opt),
+            <span class="prelude-val">Err</span>(SetError::BadValue(expected)) =&gt; {
+                <span class="macro">option_err!</span>(
+                    loc,
+                    <span class="string">&quot;invalid setting value for &#39;{}&#39;, expected {}&quot;</span>,
+                    opt,
+                    expected
+                )
+            }
+        },
+    }
 }
 </code></pre></div>
 </section></main></body></html>

@@ -125,8 +125,6 @@
 <a href="#125" id="125">125</a>
 <a href="#126" id="126">126</a>
 <a href="#127" id="127">127</a>
-<a href="#128" id="128">128</a>
-<a href="#129" id="129">129</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Cranelift file reader library.
 //!
 //! The `cranelift_reader` library supports reading .clif files. This functionality is needed for
@@ -155,7 +153,7 @@
 )]
 
 </span><span class="kw">pub use </span><span class="kw">crate</span>::error::{Location, ParseError, ParseResult};
-<span class="kw">pub use </span><span class="kw">crate</span>::isaspec::{parse_options, IsaSpec, ParseOptionError};
+<span class="kw">pub use </span><span class="kw">crate</span>::isaspec::{parse_option, parse_options, IsaSpec, ParseOptionError};
 <span class="kw">pub use </span><span class="kw">crate</span>::parser::{parse_functions, parse_run_command, parse_test, ParseOptions};
 <span class="kw">pub use </span><span class="kw">crate</span>::run_command::{Comparison, Invocation, RunCommand};
 <span class="kw">pub use </span><span class="kw">crate</span>::sourcemap::SourceMap;
@@ -201,19 +199,17 @@
     <span class="comment">// Collect unknown system-wide settings, so we can try to parse them as target specific
     // settings, if a target is defined.
     </span><span class="kw">let </span><span class="kw-2">mut </span>unknown_settings = Vec::new();
-    <span class="kw">match </span>parse_options(
-        flag_set.iter().map(|x| x.as_str()),
-        <span class="kw-2">&amp;mut </span>flag_builder,
-        Location { line_number: <span class="number">0 </span>},
-    ) {
-        <span class="prelude-val">Err</span>(ParseOptionError::UnknownFlag { name, .. }) =&gt; {
-            unknown_settings.push(name);
+    <span class="kw">for </span>flag <span class="kw">in </span>flag_set {
+        <span class="kw">match </span>parse_option(flag, <span class="kw-2">&amp;mut </span>flag_builder, Location { line_number: <span class="number">0 </span>}) {
+            <span class="prelude-val">Err</span>(ParseOptionError::UnknownFlag { name, .. }) =&gt; {
+                unknown_settings.push(name);
+            }
+            <span class="prelude-val">Err</span>(ParseOptionError::UnknownValue { name, value, .. }) =&gt; {
+                unknown_settings.push(<span class="macro">format!</span>(<span class="string">&quot;{}={}&quot;</span>, name, value));
+            }
+            <span class="prelude-val">Err</span>(ParseOptionError::Generic(err)) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(err.into()),
+            <span class="prelude-val">Ok</span>(()) =&gt; {}
         }
-        <span class="prelude-val">Err</span>(ParseOptionError::UnknownValue { name, value, .. }) =&gt; {
-            unknown_settings.push(<span class="macro">format!</span>(<span class="string">&quot;{}={}&quot;</span>, name, value));
-        }
-        <span class="prelude-val">Err</span>(ParseOptionError::Generic(err)) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(err.into()),
-        <span class="prelude-val">Ok</span>(()) =&gt; {}
     }
 
     <span class="kw">let </span><span class="kw-2">mut </span>words = flag_triple.trim().split_whitespace();

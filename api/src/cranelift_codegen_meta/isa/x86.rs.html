@@ -442,7 +442,6 @@
 <a href="#442" id="442">442</a>
 <a href="#443" id="443">443</a>
 <a href="#444" id="444">444</a>
-<a href="#445" id="445">445</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::cdsl::isa::TargetIsa;
 <span class="kw">use </span><span class="kw">crate</span>::cdsl::settings::{PredicateNode, SettingGroup, SettingGroupBuilder};
 
@@ -476,8 +475,7 @@
         <span class="string">&quot;has_sse41&quot;</span>,
         <span class="string">&quot;Has support for SSE4.1.&quot;</span>,
         <span class="string">&quot;SSE4.1: CPUID.01H:ECX.SSE4_1[bit 19]&quot;</span>,
-        <span class="comment">// Needed for default `enable_simd` setting.
-        </span><span class="bool-val">true</span>,
+        <span class="bool-val">false</span>,
     );
     <span class="kw">let </span>has_sse42 = settings.add_bool(
         <span class="string">&quot;has_sse42&quot;</span>,

@@ -249,7 +249,7 @@
             // to have test case failures unrelated to codegen setting input
             // that fail on one architecture to fail on other architectures as
             // well.
-            </span><span class="kw">let </span>new_flags = [<span class="string">&quot;has_sse3&quot;</span>, <span class="string">&quot;has_ssse3&quot;</span>, <span class="string">&quot;has_sse41&quot;</span>]
+            </span><span class="kw">let </span>new_flags = [<span class="string">&quot;has_sse3&quot;</span>, <span class="string">&quot;has_ssse3&quot;</span>]
                 .into_iter()
                 .map(|name| <span class="prelude-val">Ok</span>((name, u.arbitrary()<span class="question-mark">?</span>)))
                 .collect::&lt;arbitrary::Result&lt;HashMap&lt;<span class="kw">_</span>, bool&gt;&gt;&gt;()<span class="question-mark">?</span>;
@@ -338,8 +338,8 @@
                     // `maybe_disable_more_features`.
                     </span>std:<span class="string">&quot;sse3&quot; </span>=&gt; clif:<span class="string">&quot;has_sse3&quot; </span>ratio: <span class="number">1 </span><span class="kw">in </span><span class="number">1</span>,
                     std:<span class="string">&quot;ssse3&quot; </span>=&gt; clif:<span class="string">&quot;has_ssse3&quot; </span>ratio: <span class="number">1 </span><span class="kw">in </span><span class="number">1</span>,
-                    std:<span class="string">&quot;sse4.1&quot; </span>=&gt; clif:<span class="string">&quot;has_sse41&quot; </span>ratio: <span class="number">1 </span><span class="kw">in </span><span class="number">1</span>,
 
+                    std:<span class="string">&quot;sse4.1&quot; </span>=&gt; clif:<span class="string">&quot;has_sse41&quot;</span>,
                     std:<span class="string">&quot;sse4.2&quot; </span>=&gt; clif:<span class="string">&quot;has_sse42&quot;</span>,
                     std:<span class="string">&quot;popcnt&quot; </span>=&gt; clif:<span class="string">&quot;has_popcnt&quot;</span>,
                     std:<span class="string">&quot;avx&quot; </span>=&gt; clif:<span class="string">&quot;has_avx&quot;</span>,

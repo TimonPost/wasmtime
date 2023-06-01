@@ -249,7 +249,6 @@
 <a href="#249" id="249">249</a>
 <a href="#250" id="250">250</a>
 <a href="#251" id="251">251</a>
-<a href="#252" id="252">252</a>
 </pre><pre class="rust"><code><span class="doccomment">//! X86_64-bit Instruction Set Architecture.
 
 </span><span class="kw">pub use </span><span class="self">self</span>::inst::{args, CallInfo, EmitInfo, EmitState, Inst};
@@ -467,11 +466,11 @@
     <span class="kw">let </span>isa_flags = x64_settings::Flags::new(<span class="kw-2">&amp;</span>shared_flags, builder);
 
     <span class="comment">// Check for compatibility between flags and ISA level
-    // requested. In particular, SIMD support requires SSE4.2.
+    // requested. In particular, SIMD support requires SSSE3.
     </span><span class="kw">if </span>!<span class="macro">cfg!</span>(miri) &amp;&amp; shared_flags.enable_simd() {
-        <span class="kw">if </span>!isa_flags.has_sse3() || !isa_flags.has_ssse3() || !isa_flags.has_sse41() {
+        <span class="kw">if </span>!isa_flags.has_sse3() || !isa_flags.has_ssse3() {
             <span class="kw">return </span><span class="prelude-val">Err</span>(CodegenError::Unsupported(
-                <span class="string">&quot;SIMD support requires SSE3, SSSE3, and SSE4.1 on x86_64.&quot;</span>.into(),
+                <span class="string">&quot;SIMD support requires SSE3 and SSSE3 on x86_64.&quot;</span>.into(),
             ));
         }
     }
@@ -495,7 +494,6 @@
         <span class="kw">let </span><span class="kw-2">mut </span>isa_builder = <span class="kw">crate</span>::isa::lookup_by_name(<span class="string">&quot;x86_64&quot;</span>).unwrap();
         isa_builder.set(<span class="string">&quot;has_sse3&quot;</span>, <span class="string">&quot;false&quot;</span>).unwrap();
         isa_builder.set(<span class="string">&quot;has_ssse3&quot;</span>, <span class="string">&quot;false&quot;</span>).unwrap();
-        isa_builder.set(<span class="string">&quot;has_sse41&quot;</span>, <span class="string">&quot;false&quot;</span>).unwrap();
         <span class="macro">assert!</span>(<span class="macro">matches!</span>(
             isa_builder.finish(shared_flags),
             <span class="prelude-val">Err</span>(CodegenError::Unsupported(<span class="kw">_</span>)),

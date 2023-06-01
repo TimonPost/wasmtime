@@ -157,16 +157,22 @@
 <a href="#157" id="157">157</a>
 <a href="#158" id="158">158</a>
 <a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
+<a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Implement [`wasi-threads`].
 //!
 //! [`wasi-threads`]: https://github.com/WebAssembly/wasi-threads
 
-</span><span class="kw">use </span>anyhow::{anyhow, bail, <span class="prelude-ty">Result</span>};
+</span><span class="kw">use </span>anyhow::{anyhow, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span>rand::Rng;
 <span class="kw">use </span>std::panic::{catch_unwind, AssertUnwindSafe};
 <span class="kw">use </span>std::sync::Arc;
 <span class="kw">use </span>std::thread;
-<span class="kw">use </span>wasmtime::{Caller, Linker, Module, SharedMemory, Store, ValType};
+<span class="kw">use </span>wasmtime::{Caller, ExternType, InstancePre, Linker, Module, SharedMemory, Store, ValType};
 <span class="kw">use </span>wasmtime_wasi::maybe_exit_on_error;
 
 <span class="comment">// This name is a function export designated by the wasi-threads specification:
@@ -174,24 +180,35 @@
 </span><span class="kw">const </span>WASI_ENTRY_POINT: <span class="kw-2">&amp;</span>str = <span class="string">&quot;wasi_thread_start&quot;</span>;
 
 <span class="kw">pub struct </span>WasiThreadsCtx&lt;T&gt; {
-    module: Module,
-    linker: Arc&lt;Linker&lt;T&gt;&gt;,
+    instance_pre: Arc&lt;InstancePre&lt;T&gt;&gt;,
 }
 
 <span class="kw">impl</span>&lt;T: Clone + Send + <span class="lifetime">&#39;static</span>&gt; WasiThreadsCtx&lt;T&gt; {
     <span class="kw">pub fn </span>new(module: Module, linker: Arc&lt;Linker&lt;T&gt;&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
-        <span class="kw">if </span>!has_wasi_entry_point(<span class="kw-2">&amp;</span>module) {
-            <span class="macro">bail!</span>(
-                <span class="string">&quot;failed to find wasi-threads entry point function: {}&quot;</span>,
-                WASI_ENTRY_POINT
-            );
-        }
-        <span class="prelude-val">Ok</span>(<span class="self">Self </span>{ module, linker })
+        <span class="kw">let </span>instance_pre = Arc::new(linker.instantiate_pre(<span class="kw-2">&amp;</span>module)<span class="question-mark">?</span>);
+        <span class="prelude-val">Ok</span>(<span class="self">Self </span>{ instance_pre })
     }
 
     <span class="kw">pub fn </span>spawn(<span class="kw-2">&amp;</span><span class="self">self</span>, host: T, thread_start_arg: i32) -&gt; <span class="prelude-ty">Result</span>&lt;i32&gt; {
-        <span class="kw">let </span>module = <span class="self">self</span>.module.clone();
-        <span class="kw">let </span>linker = <span class="self">self</span>.linker.clone();
+        <span class="kw">let </span>instance_pre = <span class="self">self</span>.instance_pre.clone();
+
+        <span class="comment">// Check that the thread entry point is present. Why here? If we check
+        // for this too early, then we cannot accept modules that do not have an
+        // entry point but never spawn a thread. As pointed out in
+        // https://github.com/bytecodealliance/wasmtime/issues/6153, checking
+        // the entry point here allows wasi-threads to be compatible with more
+        // modules.
+        //
+        // As defined in the wasi-threads specification, returning a negative
+        // result here indicates to the guest module that the spawn failed.
+        </span><span class="kw">if </span>!has_entry_point(instance_pre.module()) {
+            <span class="macro">log::error!</span>(<span class="string">&quot;failed to find a wasi-threads entry point function; expected an export with name: {WASI_ENTRY_POINT}&quot;</span>);
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(-<span class="number">1</span>);
+        }
+        <span class="kw">if </span>!has_correct_signature(instance_pre.module()) {
+            <span class="macro">log::error!</span>(<span class="string">&quot;the exported entry point function has an incorrect signature: expected `(i32, i32) -&gt; ()`&quot;</span>);
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(-<span class="number">1</span>);
+        }
 
         <span class="comment">// Start a Rust thread running a new instance of the current module.
         </span><span class="kw">let </span>wasi_thread_id = random_thread_id();
@@ -201,26 +218,17 @@
             // were to crash, we want all threads to exit, not just this one.
             </span><span class="kw">let </span>result = catch_unwind(AssertUnwindSafe(|| {
                 <span class="comment">// Each new instance is created in its own store.
-                </span><span class="kw">let </span><span class="kw-2">mut </span>store = Store::new(<span class="kw-2">&amp;</span>module.engine(), host);
-
-                <span class="comment">// Ideally, we would have already checked much earlier (e.g.,
-                // `new`) whether the module can be instantiated. Because
-                // `Linker::instantiate_pre` requires a `Store` and that is only
-                // available now. TODO:
-                // https://github.com/bytecodealliance/wasmtime/issues/5675.
-                </span><span class="kw">let </span>instance = linker.instantiate(<span class="kw-2">&amp;mut </span>store, <span class="kw-2">&amp;</span>module).expect(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
-                    <span class="string">&quot;wasi-thread-{} exited unsuccessfully: failed to instantiate&quot;</span>,
-                    wasi_thread_id
-                ));
+                </span><span class="kw">let </span><span class="kw-2">mut </span>store = Store::new(<span class="kw-2">&amp;</span>instance_pre.module().engine(), host);
+                <span class="kw">let </span>instance = instance_pre.instantiate(<span class="kw-2">&amp;mut </span>store).unwrap();
                 <span class="kw">let </span>thread_entry_point = instance
                     .get_typed_func::&lt;(i32, i32), ()&gt;(<span class="kw-2">&amp;mut </span>store, WASI_ENTRY_POINT)
                     .unwrap();
 
                 <span class="comment">// Start the thread&#39;s entry point. Any traps or calls to
                 // `proc_exit`, by specification, should end execution for all
-                // threads. This code uses `process::exit` to do so, which is what
-                // the user expects from the CLI but probably not in a Wasmtime
-                // embedding.
+                // threads. This code uses `process::exit` to do so, which is
+                // what the user expects from the CLI but probably not in a
+                // Wasmtime embedding.
                 </span><span class="macro">log::trace!</span>(
                     <span class="string">&quot;spawned thread id = {}; calling start function `{}` with: {}&quot;</span>,
                     wasi_thread_id,
@@ -268,7 +276,7 @@
     store: <span class="kw-2">&amp;</span>wasmtime::Store&lt;T&gt;,
     module: <span class="kw-2">&amp;</span>Module,
     get_cx: <span class="kw">impl </span>Fn(<span class="kw-2">&amp;mut </span>T) -&gt; <span class="kw-2">&amp;</span>WasiThreadsCtx&lt;T&gt; + Send + Sync + Copy + <span class="lifetime">&#39;static</span>,
-) -&gt; anyhow::Result&lt;SharedMemory&gt; {
+) -&gt; anyhow::Result&lt;()&gt; {
     linker.func_wrap(
         <span class="string">&quot;wasi&quot;</span>,
         <span class="string">&quot;thread-spawn&quot;</span>,
@@ -290,31 +298,35 @@
     )<span class="question-mark">?</span>;
 
     <span class="comment">// Find the shared memory import and satisfy it with a newly-created shared
-    // memory import. This currently does not handle multiple memories (TODO).
+    // memory import.
     </span><span class="kw">for </span>import <span class="kw">in </span>module.imports() {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(m) = import.ty().memory() {
             <span class="kw">if </span>m.is_shared() {
                 <span class="kw">let </span>mem = SharedMemory::new(module.engine(), m.clone())<span class="question-mark">?</span>;
                 linker.define(store, import.module(), import.name(), mem.clone())<span class="question-mark">?</span>;
-                <span class="kw">return </span><span class="prelude-val">Ok</span>(mem);
+            } <span class="kw">else </span>{
+                <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">anyhow!</span>(
+                    <span class="string">&quot;memory was not shared; a `wasi-threads` must import \
+                     a shared memory as \&quot;memory\&quot;&quot;
+                </span>));
             }
         }
     }
-    <span class="prelude-val">Err</span>(<span class="macro">anyhow!</span>(
-        <span class="string">&quot;unable to link a shared memory import to the module; a `wasi-threads` \
-         module should import a single shared memory as \&quot;memory\&quot;&quot;
-    </span>))
+    <span class="prelude-val">Ok</span>(())
 }
 
-<span class="kw">fn </span>has_wasi_entry_point(module: <span class="kw-2">&amp;</span>Module) -&gt; bool {
-    module
-        .get_export(WASI_ENTRY_POINT)
-        .and_then(|t| t.func().cloned())
-        .and_then(|t| {
-            <span class="kw">let </span>params: Vec&lt;ValType&gt; = t.params().collect();
-            <span class="prelude-val">Some</span>(params == [ValType::I32, ValType::I32] &amp;&amp; t.results().len() == <span class="number">0</span>)
-        })
-        .unwrap_or(<span class="bool-val">false</span>)
+<span class="doccomment">/// Check if wasi-threads&#39; `wasi_thread_start` export is present.
+</span><span class="kw">fn </span>has_entry_point(module: <span class="kw-2">&amp;</span>Module) -&gt; bool {
+    module.get_export(WASI_ENTRY_POINT).is_some()
+}
+
+<span class="doccomment">/// Check if the entry function has the correct signature `(i32, i32) -&gt; ()`.
+</span><span class="kw">fn </span>has_correct_signature(module: <span class="kw-2">&amp;</span>Module) -&gt; bool {
+    <span class="kw">use </span>ValType::<span class="kw-2">*</span>;
+    <span class="kw">match </span>module.get_export(WASI_ENTRY_POINT) {
+        <span class="prelude-val">Some</span>(ExternType::Func(ty)) =&gt; ty.params().eq([I32, I32]) &amp;&amp; ty.results().len() == <span class="number">0</span>,
+        <span class="kw">_ </span>=&gt; <span class="bool-val">false</span>,
+    }
 }
 </code></pre></div>
 </section></main></body></html>
