@@ -3430,7 +3430,7 @@
             | Inst::Args { .. }
             | Inst::Ret { .. }
             | Inst::Extend { .. }
-            | Inst::AjustSp { .. }
+            | Inst::AdjustSp { .. }
             | Inst::Call { .. }
             | Inst::CallInd { .. }
             | Inst::TrapIf { .. }
@@ -3734,7 +3734,7 @@
                 stack_bytes_to_pop, ..
             } =&gt; {
                 <span class="kw">if </span>stack_bytes_to_pop != <span class="number">0 </span>{
-                    Inst::AjustSp {
+                    Inst::AdjustSp {
                         amount: i64::from(stack_bytes_to_pop),
                     }
                     .emit(<span class="kw-2">&amp;</span>[], sink, emit_info, state);
@@ -3786,7 +3786,7 @@
                     .into_iter()
                     .for_each(|i| i.emit(<span class="kw-2">&amp;</span>[], sink, emit_info, state));
             }
-            <span class="kw-2">&amp;</span>Inst::AjustSp { amount } =&gt; {
+            <span class="kw-2">&amp;</span>Inst::AdjustSp { amount } =&gt; {
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(imm) = Imm12::maybe_from_u64(amount <span class="kw">as </span>u64) {
                     Inst::AluRRImm12 {
                         alu_op: AluOPRRI::Addi,

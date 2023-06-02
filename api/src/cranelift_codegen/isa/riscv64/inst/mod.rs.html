@@ -2371,7 +2371,7 @@
             collector.reg_use(rn);
             collector.reg_def(rd);
         }
-        <span class="kw-2">&amp;</span>Inst::AjustSp { .. } =&gt; {}
+        <span class="kw-2">&amp;</span>Inst::AdjustSp { .. } =&gt; {}
         <span class="kw-2">&amp;</span>Inst::Call { <span class="kw-2">ref </span>info } =&gt; {
             <span class="kw">for </span>u <span class="kw">in </span><span class="kw-2">&amp;</span>info.uses {
                 collector.reg_fixed_use(u.vreg, u.preg);
@@ -3461,7 +3461,7 @@
                     <span class="macro">format!</span>(<span class="string">&quot;slli {rd},{rn},{shift_bits}; {op} {rd},{rd},{shift_bits}&quot;</span>)
                 };
             }
-            <span class="kw-2">&amp;</span>MInst::AjustSp { amount } =&gt; {
+            <span class="kw-2">&amp;</span>MInst::AdjustSp { amount } =&gt; {
                 <span class="macro">format!</span>(<span class="string">&quot;{} sp,{:+}&quot;</span>, <span class="string">&quot;add&quot;</span>, amount)
             }
             <span class="kw-2">&amp;</span>MInst::Call { <span class="kw-2">ref </span>info } =&gt; <span class="macro">format!</span>(<span class="string">&quot;call {}&quot;</span>, info.dest.display(<span class="prelude-val">None</span>)),
