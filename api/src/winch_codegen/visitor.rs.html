@@ -627,7 +627,7 @@
         <span class="kw">use </span>OperandSize::<span class="kw-2">*</span>;
 
         <span class="self">self</span>.context.unop(<span class="self">self</span>.masm, S32, <span class="kw-2">&amp;mut </span>|masm, reg, size| {
-            masm.cmp_with_set(reg, reg, RegImm::imm(<span class="number">0</span>), CmpKind::Eq, size);
+            masm.cmp_with_set(RegImm::imm(<span class="number">0</span>), reg, CmpKind::Eq, size);
         });
     }
 
@@ -635,7 +635,7 @@
         <span class="kw">use </span>OperandSize::<span class="kw-2">*</span>;
 
         <span class="self">self</span>.context.unop(<span class="self">self</span>.masm, S64, <span class="kw-2">&amp;mut </span>|masm, reg, size| {
-            masm.cmp_with_set(reg, reg, RegImm::imm(<span class="number">0</span>), CmpKind::Eq, size);
+            masm.cmp_with_set(RegImm::imm(<span class="number">0</span>), reg, CmpKind::Eq, size);
         });
     }
 
@@ -683,14 +683,14 @@
     <span class="kw">fn </span>cmp_i32s(<span class="kw-2">&amp;mut </span><span class="self">self</span>, kind: CmpKind) {
         <span class="self">self</span>.context
             .i32_binop(<span class="self">self</span>.masm, <span class="kw-2">&amp;mut </span>|masm, dst, src, size| {
-                masm.cmp_with_set(dst, dst, src, kind, size);
+                masm.cmp_with_set(src, dst, kind, size);
             });
     }
 
     <span class="kw">fn </span>cmp_i64s(<span class="kw-2">&amp;mut </span><span class="self">self</span>, kind: CmpKind) {
         <span class="self">self</span>.context
             .i64_binop(<span class="self">self</span>.masm, <span class="kw-2">&amp;mut </span><span class="kw">move </span>|masm, dst, src, size| {
-                masm.cmp_with_set(dst, dst, src, kind, size);
+                masm.cmp_with_set(src, dst, kind, size);
             });
     }
 }

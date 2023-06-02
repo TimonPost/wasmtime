@@ -253,13 +253,6 @@
 <a href="#253" id="253">253</a>
 <a href="#254" id="254">254</a>
 <a href="#255" id="255">255</a>
-<a href="#256" id="256">256</a>
-<a href="#257" id="257">257</a>
-<a href="#258" id="258">258</a>
-<a href="#259" id="259">259</a>
-<a href="#260" id="260">260</a>
-<a href="#261" id="261">261</a>
-<a href="#262" id="262">262</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::abi::{<span class="self">self</span>, align_to, LocalSlot};
 <span class="kw">use </span><span class="kw">crate</span>::codegen::CodeGenContext;
 <span class="kw">use </span><span class="kw">crate</span>::isa::reg::Reg;
@@ -454,16 +447,9 @@
     <span class="doccomment">/// Calculate remainder.
     </span><span class="kw">fn </span>rem(<span class="kw-2">&amp;mut </span><span class="self">self</span>, context: <span class="kw-2">&amp;mut </span>CodeGenContext, kind: RemKind, size: OperandSize);
 
-    <span class="doccomment">/// Compare two operands and put the result in dst.
+    <span class="doccomment">/// Compare src and dst and put the result in dst.
     /// This function will potentially emit a series of instructions.
-    </span><span class="kw">fn </span>cmp_with_set(
-        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        dst: RegImm,
-        lhs: RegImm,
-        rhs: RegImm,
-        kind: CmpKind,
-        size: OperandSize,
-    );
+    </span><span class="kw">fn </span>cmp_with_set(<span class="kw-2">&amp;mut </span><span class="self">self</span>, src: RegImm, dst: RegImm, kind: CmpKind, size: OperandSize);
 
     <span class="doccomment">/// Push the register to the stack, returning the offset.
     </span><span class="kw">fn </span>push(<span class="kw-2">&amp;mut </span><span class="self">self</span>, src: Reg) -&gt; u32;
