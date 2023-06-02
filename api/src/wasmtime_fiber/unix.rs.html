@@ -197,6 +197,19 @@
 <a href="#197" id="197">197</a>
 <a href="#198" id="198">198</a>
 <a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
+<a href="#208" id="208">208</a>
+<a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
+<a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
 </pre><pre class="rust"><code><span class="doccomment">//! The unix fiber implementation has some platform-specific details
 //! (naturally) but there&#39;s a few details of the stack layout which are common
 //! amongst all platforms using this file. Remember that none of this applies to
@@ -233,6 +246,7 @@
 </span><span class="kw">use </span><span class="kw">crate</span>::RunResult;
 <span class="kw">use </span>std::cell::Cell;
 <span class="kw">use </span>std::io;
+<span class="kw">use </span>std::ops::Range;
 <span class="kw">use </span>std::ptr;
 
 <span class="attr">#[derive(Debug)]
@@ -240,8 +254,10 @@
     <span class="comment">// The top of the stack; for stacks allocated by the fiber implementation itself,
     // the base address of the allocation will be `top.sub(len.unwrap())`
     </span>top: <span class="kw-2">*mut </span>u8,
-    <span class="comment">// The length of the stack; `None` when the stack was not created by this implementation.
-    </span>len: <span class="prelude-ty">Option</span>&lt;usize&gt;,
+    <span class="comment">// The length of the stack
+    </span>len: usize,
+    <span class="comment">// whether or not this stack was mmap&#39;d
+    </span>mmap: bool,
 }
 
 <span class="kw">impl </span>FiberStack {
@@ -273,25 +289,35 @@
 
             <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
                 top: mmap.cast::&lt;u8&gt;().add(mmap_len),
-                len: <span class="prelude-val">Some</span>(mmap_len),
+                len: mmap_len,
+                mmap: <span class="bool-val">true</span>,
             })
         }
     }
 
-    <span class="kw">pub unsafe fn </span>from_top_ptr(top: <span class="kw-2">*mut </span>u8) -&gt; io::Result&lt;<span class="self">Self</span>&gt; {
-        <span class="prelude-val">Ok</span>(<span class="self">Self </span>{ top, len: <span class="prelude-val">None </span>})
+    <span class="kw">pub unsafe fn </span>from_raw_parts(base: <span class="kw-2">*mut </span>u8, len: usize) -&gt; io::Result&lt;<span class="self">Self</span>&gt; {
+        <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
+            top: base.add(len),
+            len,
+            mmap: <span class="bool-val">false</span>,
+        })
     }
 
     <span class="kw">pub fn </span>top(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">*mut </span>u8&gt; {
         <span class="prelude-val">Some</span>(<span class="self">self</span>.top)
+    }
+
+    <span class="kw">pub fn </span>range(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Range&lt;usize&gt;&gt; {
+        <span class="kw">let </span>base = <span class="kw">unsafe </span>{ <span class="self">self</span>.top.sub(<span class="self">self</span>.len) <span class="kw">as </span>usize };
+        <span class="prelude-val">Some</span>(base..base + <span class="self">self</span>.len)
     }
 }
 
 <span class="kw">impl </span>Drop <span class="kw">for </span>FiberStack {
     <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
         <span class="kw">unsafe </span>{
-            <span class="kw">if let </span><span class="prelude-val">Some</span>(len) = <span class="self">self</span>.len {
-                <span class="kw">let </span>ret = rustix::mm::munmap(<span class="self">self</span>.top.sub(len) <span class="kw">as _</span>, len);
+            <span class="kw">if </span><span class="self">self</span>.mmap {
+                <span class="kw">let </span>ret = rustix::mm::munmap(<span class="self">self</span>.top.sub(<span class="self">self</span>.len) <span class="kw">as _</span>, <span class="self">self</span>.len);
                 <span class="macro">debug_assert!</span>(ret.is_ok());
             }
         }
