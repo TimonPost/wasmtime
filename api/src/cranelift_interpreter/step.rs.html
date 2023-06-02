@@ -1594,6 +1594,16 @@
 <a href="#1594" id="1594">1594</a>
 <a href="#1595" id="1595">1595</a>
 <a href="#1596" id="1596">1596</a>
+<a href="#1597" id="1597">1597</a>
+<a href="#1598" id="1598">1598</a>
+<a href="#1599" id="1599">1599</a>
+<a href="#1600" id="1600">1600</a>
+<a href="#1601" id="1601">1601</a>
+<a href="#1602" id="1602">1602</a>
+<a href="#1603" id="1603">1603</a>
+<a href="#1604" id="1604">1604</a>
+<a href="#1605" id="1605">1605</a>
+<a href="#1606" id="1606">1606</a>
 </pre><pre class="rust"><code><span class="doccomment">//! The [step] function interprets a single Cranelift instruction given its [State] and
 //! [InstructionContext].
 </span><span class="kw">use </span><span class="kw">crate</span>::address::{Address, AddressSize};
@@ -1603,7 +1613,7 @@
 <span class="kw">use </span>cranelift_codegen::data_value::DataValue;
 <span class="kw">use </span>cranelift_codegen::ir::condcodes::{FloatCC, IntCC};
 <span class="kw">use </span>cranelift_codegen::ir::{
-    types, AbiParam, AtomicRmwOp, Block, BlockCall, ExternalName, FuncRef, Function,
+    types, AbiParam, AtomicRmwOp, Block, BlockCall, Endianness, ExternalName, FuncRef, Function,
     InstructionData, MemFlags, Opcode, TrapCode, Type, Value <span class="kw">as </span>ValueRef,
 };
 <span class="kw">use </span>log::trace;
@@ -2500,11 +2510,21 @@
         Opcode::IsInvalid =&gt; <span class="macro">unimplemented!</span>(<span class="string">&quot;IsInvalid&quot;</span>),
         Opcode::Bitcast | Opcode::ScalarToVector =&gt; {
             <span class="kw">let </span>input_ty = inst_context.type_of(inst_context.args()[<span class="number">0</span>]).unwrap();
-            <span class="kw">let </span>arg0 = extractlanes(<span class="kw-2">&amp;</span>arg(<span class="number">0</span>), input_ty)<span class="question-mark">?</span>;
-            <span class="kw">let </span>lanes = <span class="kw-2">&amp;</span>arg0
-                .into_iter()
-                .map(|x| DataValue::convert(x, ValueConversionKind::Exact(ctrl_ty.lane_type())))
-                .collect::&lt;ValueResult&lt;SimdVec&lt;DataValue&gt;&gt;&gt;()<span class="question-mark">?</span>;
+            <span class="kw">let </span>lanes = <span class="kw-2">&amp;</span><span class="kw">if </span>input_ty.is_vector() {
+                <span class="macro">assert_eq!</span>(
+                    inst.memflags()
+                        .expect(<span class="string">&quot;byte order flag to be set&quot;</span>)
+                        .endianness(Endianness::Little),
+                    Endianness::Little,
+                    <span class="string">&quot;Only little endian bitcasts on vectors are supported&quot;
+                </span>);
+                extractlanes(<span class="kw-2">&amp;</span>arg(<span class="number">0</span>), ctrl_ty)<span class="question-mark">?
+            </span>} <span class="kw">else </span>{
+                extractlanes(<span class="kw-2">&amp;</span>arg(<span class="number">0</span>), input_ty)<span class="question-mark">?
+                    </span>.into_iter()
+                    .map(|x| DataValue::convert(x, ValueConversionKind::Exact(ctrl_ty.lane_type())))
+                    .collect::&lt;ValueResult&lt;SimdVec&lt;DataValue&gt;&gt;&gt;()<span class="question-mark">?
+            </span>};
             assign(<span class="kw">match </span>inst.opcode() {
                 Opcode::Bitcast =&gt; vectorizelanes(lanes, ctrl_ty)<span class="question-mark">?</span>,
                 Opcode::ScalarToVector =&gt; vectorizelanes_all(lanes, ctrl_ty)<span class="question-mark">?</span>,
