@@ -762,7 +762,7 @@
         v.clone()
     }
 
-    <span class="kw">fn </span>imm12_and(<span class="kw-2">&amp;mut </span><span class="self">self</span>, imm: Imm12, x: i32) -&gt; Imm12 {
+    <span class="kw">fn </span>imm12_and(<span class="kw-2">&amp;mut </span><span class="self">self</span>, imm: Imm12, x: u64) -&gt; Imm12 {
         Imm12::from_bits(imm.as_i16() &amp; (x <span class="kw">as </span>i16))
     }
 
