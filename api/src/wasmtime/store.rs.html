@@ -2089,6 +2089,14 @@
 <a href="#2089" id="2089">2089</a>
 <a href="#2090" id="2090">2090</a>
 <a href="#2091" id="2091">2091</a>
+<a href="#2092" id="2092">2092</a>
+<a href="#2093" id="2093">2093</a>
+<a href="#2094" id="2094">2094</a>
+<a href="#2095" id="2095">2095</a>
+<a href="#2096" id="2096">2096</a>
+<a href="#2097" id="2097">2097</a>
+<a href="#2098" id="2098">2098</a>
+<a href="#2099" id="2099">2099</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Wasmtime&#39;s &quot;store&quot; type
 //!
 //! This module, and its submodules, contain the `Store` type and various types
@@ -2295,7 +2303,8 @@
 
     limiter: <span class="prelude-ty">Option</span>&lt;ResourceLimiterInner&lt;T&gt;&gt;,
     call_hook: <span class="prelude-ty">Option</span>&lt;CallHookInner&lt;T&gt;&gt;,
-    epoch_deadline_behavior: EpochDeadline&lt;T&gt;,
+    epoch_deadline_behavior:
+        <span class="prelude-ty">Option</span>&lt;Box&lt;<span class="kw">dyn </span>FnMut(StoreContextMut&lt;T&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;UpdateDeadline&gt; + Send + Sync&gt;&gt;,
     <span class="comment">// for comments about `ManuallyDrop`, see `Store::into_data`
     </span>data: ManuallyDrop&lt;T&gt;,
 }
@@ -2319,6 +2328,18 @@
     Sync(Box&lt;<span class="kw">dyn </span>FnMut(<span class="kw-2">&amp;mut </span>T, CallHook) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; + Send + Sync&gt;),
     <span class="attr">#[cfg(feature = <span class="string">&quot;async&quot;</span>)]
     </span>Async(Box&lt;<span class="kw">dyn </span>CallHookHandler&lt;T&gt; + Send + Sync&gt;),
+}
+
+<span class="doccomment">/// What to do after returning from a callback when the engine epoch reaches
+/// the deadline for a Store during execution of a function using that store.
+</span><span class="kw">pub enum </span>UpdateDeadline {
+    <span class="doccomment">/// Extend the deadline by the specified number of ticks.
+    </span>Continue(u64),
+    <span class="doccomment">/// Extend the deadline by the specified number of ticks after yielding to
+    /// the async executor loop. This can only be used with an async [`Store`]
+    /// configured via [`Config::async_support`](crate::Config::async_support).
+    </span><span class="attr">#[cfg(feature = <span class="string">&quot;async&quot;</span>)]
+    </span>Yield(u64),
 }
 
 <span class="comment">// Forward methods on `StoreOpaque` to also being on `StoreInner&lt;T&gt;`
@@ -2513,21 +2534,6 @@
     },
 }
 
-<span class="doccomment">/// What to do when the engine epoch reaches the deadline for a Store
-/// during execution of a function using that store.
-</span><span class="attr">#[derive(Default)]
-</span><span class="kw">enum </span>EpochDeadline&lt;T&gt; {
-    <span class="doccomment">/// Return early with a trap.
-    </span><span class="attr">#[default]
-    </span>Trap,
-    <span class="doccomment">/// Call a custom deadline handler.
-    </span>Callback(Box&lt;<span class="kw">dyn </span>FnMut(StoreContextMut&lt;T&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;u64&gt; + Send + Sync&gt;),
-    <span class="doccomment">/// Extend the deadline by the specified number of ticks after
-    /// yielding to the async executor loop.
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;async&quot;</span>)]
-    </span>YieldAndExtendDeadline { delta: u64 },
-}
-
 <span class="kw">impl</span>&lt;T&gt; Store&lt;T&gt; {
     <span class="doccomment">/// Creates a new [`Store`] to be associated with the given [`Engine`] and
     /// `data` provided.
@@ -2571,7 +2577,7 @@
             },
             limiter: <span class="prelude-val">None</span>,
             call_hook: <span class="prelude-val">None</span>,
-            epoch_deadline_behavior: EpochDeadline::Trap,
+            epoch_deadline_behavior: <span class="prelude-val">None</span>,
             data: ManuallyDrop::new(data),
         });
 
@@ -3019,10 +3025,17 @@
     /// store and the epoch deadline is reached before completion, the
     /// provided callback function is invoked.
     ///
-    /// This function should return a positive `delta`, which is used to
-    /// update the new epoch, setting it to the current epoch plus
-    /// `delta` ticks. Alternatively, the callback may return an error,
-    /// which will terminate execution.
+    /// This callback should either return an [`UpdateDeadline`], or
+    /// return an error, which will terminate execution with a trap.
+    ///
+    /// The [`UpdateDeadline`] is a positive number of ticks to
+    /// add to the epoch deadline, as well as indicating what
+    /// to do after the callback returns. If the [`Store`] is
+    /// configured with async support, then the callback may return
+    /// [`UpdateDeadline::Yield`] to yield to the async executor before
+    /// updating the epoch deadline. Alternatively, the callback may
+    /// return [`UpdateDeadline::Continue`] to update the epoch deadline
+    /// immediately.
     ///
     /// This setting is intended to allow for coarse-grained
     /// interruption, but not a deterministic deadline of a fixed,
@@ -3034,7 +3047,7 @@
     /// for an introduction to epoch-based interruption.
     </span><span class="kw">pub fn </span>epoch_deadline_callback(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        callback: <span class="kw">impl </span>FnMut(StoreContextMut&lt;T&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;u64&gt; + Send + Sync + <span class="lifetime">&#39;static</span>,
+        callback: <span class="kw">impl </span>FnMut(StoreContextMut&lt;T&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;UpdateDeadline&gt; + Send + Sync + <span class="lifetime">&#39;static</span>,
     ) {
         <span class="self">self</span>.inner.epoch_deadline_callback(Box::new(callback));
     }
@@ -4036,29 +4049,31 @@ at https://bytecodealliance.org/security.
     <span class="kw">fn </span>new_epoch(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;u64, anyhow::Error&gt; {
         <span class="comment">// Temporarily take the configured behavior to avoid mutably borrowing
         // multiple times.
-        </span><span class="kw">let </span><span class="kw-2">mut </span>behavior = std::mem::take(<span class="kw-2">&amp;mut </span><span class="self">self</span>.epoch_deadline_behavior);
+        </span><span class="kw">let </span><span class="kw-2">mut </span>behavior = <span class="self">self</span>.epoch_deadline_behavior.take();
         <span class="kw">let </span>delta_result = <span class="kw">match </span><span class="kw-2">&amp;mut </span>behavior {
-            EpochDeadline::Trap =&gt; <span class="prelude-val">Err</span>(Trap::Interrupt.into()),
-            EpochDeadline::Callback(callback) =&gt; {
-                <span class="kw">let </span>delta = callback((<span class="kw-2">&amp;mut *</span><span class="self">self</span>).as_context_mut())<span class="question-mark">?</span>;
+            <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(Trap::Interrupt.into()),
+            <span class="prelude-val">Some</span>(callback) =&gt; callback((<span class="kw-2">&amp;mut *</span><span class="self">self</span>).as_context_mut()).and_then(|update| {
+                <span class="kw">let </span>delta = <span class="kw">match </span>update {
+                    UpdateDeadline::Continue(delta) =&gt; delta,
+
+                    <span class="attr">#[cfg(feature = <span class="string">&quot;async&quot;</span>)]
+                    </span>UpdateDeadline::Yield(delta) =&gt; {
+                        <span class="macro">assert!</span>(
+                            <span class="self">self</span>.async_support(),
+                            <span class="string">&quot;cannot use `UpdateDeadline::Yield` without enabling async support in the config&quot;
+                        </span>);
+                        <span class="comment">// Do the async yield. May return a trap if future was
+                        // canceled while we&#39;re yielded.
+                        </span><span class="self">self</span>.async_yield_impl()<span class="question-mark">?</span>;
+                        delta
+                    }
+                };
+
                 <span class="comment">// Set a new deadline and return the new epoch deadline so
                 // the Wasm code doesn&#39;t have to reload it.
                 </span><span class="self">self</span>.set_epoch_deadline(delta);
                 <span class="prelude-val">Ok</span>(<span class="self">self</span>.get_epoch_deadline())
-            }
-            <span class="attr">#[cfg(feature = <span class="string">&quot;async&quot;</span>)]
-            </span>EpochDeadline::YieldAndExtendDeadline { delta } =&gt; {
-                <span class="kw">let </span>delta = <span class="kw-2">*</span>delta;
-                <span class="comment">// Do the async yield. May return a trap if future was
-                // canceled while we&#39;re yielded.
-                </span><span class="self">self</span>.async_yield_impl()<span class="question-mark">?</span>;
-                <span class="comment">// Set a new deadline.
-                </span><span class="self">self</span>.set_epoch_deadline(delta);
-
-                <span class="comment">// Return the new epoch deadline so the Wasm code
-                // doesn&#39;t have to reload it.
-                </span><span class="prelude-val">Ok</span>(<span class="self">self</span>.get_epoch_deadline())
-            }
+            })
         };
 
         <span class="comment">// Put back the original behavior which was replaced by `take`.
@@ -4083,14 +4098,14 @@ at https://bytecodealliance.org/security.
     }
 
     <span class="kw">fn </span>epoch_deadline_trap(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-        <span class="self">self</span>.epoch_deadline_behavior = EpochDeadline::Trap;
+        <span class="self">self</span>.epoch_deadline_behavior = <span class="prelude-val">None</span>;
     }
 
     <span class="kw">fn </span>epoch_deadline_callback(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        callback: Box&lt;<span class="kw">dyn </span>FnMut(StoreContextMut&lt;T&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;u64&gt; + Send + Sync&gt;,
+        callback: Box&lt;<span class="kw">dyn </span>FnMut(StoreContextMut&lt;T&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;UpdateDeadline&gt; + Send + Sync&gt;,
     ) {
-        <span class="self">self</span>.epoch_deadline_behavior = EpochDeadline::Callback(callback);
+        <span class="self">self</span>.epoch_deadline_behavior = <span class="prelude-val">Some</span>(callback);
     }
 
     <span class="kw">fn </span>epoch_deadline_async_yield_and_update(<span class="kw-2">&amp;mut </span><span class="self">self</span>, delta: u64) {
@@ -4100,7 +4115,8 @@ at https://bytecodealliance.org/security.
         </span>);
         <span class="attr">#[cfg(feature = <span class="string">&quot;async&quot;</span>)]
         </span>{
-            <span class="self">self</span>.epoch_deadline_behavior = EpochDeadline::YieldAndExtendDeadline { delta };
+            <span class="self">self</span>.epoch_deadline_behavior =
+                <span class="prelude-val">Some</span>(Box::new(<span class="kw">move </span>|_store| <span class="prelude-val">Ok</span>(UpdateDeadline::Yield(delta))));
         }
         <span class="kw">let _ </span>= delta; <span class="comment">// suppress warning in non-async build
     </span>}
