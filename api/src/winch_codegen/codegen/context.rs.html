@@ -257,6 +257,17 @@
 <a href="#257" id="257">257</a>
 <a href="#258" id="258">258</a>
 <a href="#259" id="259">259</a>
+<a href="#260" id="260">260</a>
+<a href="#261" id="261">261</a>
+<a href="#262" id="262">262</a>
+<a href="#263" id="263">263</a>
+<a href="#264" id="264">264</a>
+<a href="#265" id="265">265</a>
+<a href="#266" id="266">266</a>
+<a href="#267" id="267">267</a>
+<a href="#268" id="268">268</a>
+<a href="#269" id="269">269</a>
+<a href="#270" id="270">270</a>
 </pre><pre class="rust"><code><span class="kw">use crate</span>::{
     frame::Frame,
     masm::{MacroAssembler, OperandSize, RegImm},
@@ -381,6 +392,17 @@
                 masm.load(addr, dst, size);
             }
         };
+    }
+
+    <span class="doccomment">/// Prepares arguments for emitting a unary operation.
+    </span><span class="kw">pub fn </span>unop&lt;F, M&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, masm: <span class="kw-2">&amp;mut </span>M, size: OperandSize, emit: <span class="kw-2">&amp;mut </span>F)
+    <span class="kw">where
+        </span>F: FnMut(<span class="kw-2">&amp;mut </span>M, RegImm, OperandSize),
+        M: MacroAssembler,
+    {
+        <span class="kw">let </span>reg = <span class="self">self</span>.pop_to_reg(masm, <span class="prelude-val">None</span>, size);
+        emit(masm, reg.into(), size);
+        <span class="self">self</span>.stack.push(Val::reg(reg));
     }
 
     <span class="doccomment">/// Prepares arguments for emitting an i32 binary operation.
