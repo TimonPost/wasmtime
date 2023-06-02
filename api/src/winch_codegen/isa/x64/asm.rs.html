@@ -574,13 +574,6 @@
 <a href="#574" id="574">574</a>
 <a href="#575" id="575">575</a>
 <a href="#576" id="576">576</a>
-<a href="#577" id="577">577</a>
-<a href="#578" id="578">578</a>
-<a href="#579" id="579">579</a>
-<a href="#580" id="580">580</a>
-<a href="#581" id="581">581</a>
-<a href="#582" id="582">582</a>
-<a href="#583" id="583">583</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Assembler library implementation for x64.
 
 </span><span class="kw">use crate</span>::{
@@ -749,10 +742,7 @@
                 Address::Offset { base, offset: imm } =&gt; <span class="self">self</span>.mov_mr(<span class="kw-2">*</span>base, <span class="kw-2">*</span>imm, <span class="kw-2">*</span>reg, size),
             },
 
-            <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(
-                <span class="string">&quot;Invalid operand combination for mov; src={:?}, dst={:?}&quot;</span>,
-                src, dst
-            ),
+            <span class="kw">_ </span>=&gt; <span class="self">Self</span>::handle_invalid_operand_combination(src, dst),
         }
     }
 
@@ -828,15 +818,12 @@
                     <span class="self">self</span>.sub_ir(val, <span class="kw-2">*</span>dst, size)
                 } <span class="kw">else </span>{
                     <span class="kw">let </span>scratch = regs::scratch();
-                    <span class="self">self</span>.mov_ir(<span class="kw-2">*</span>imm <span class="kw">as </span>u64, scratch, size);
+                    <span class="self">self</span>.load_constant(imm, scratch, size);
                     <span class="self">self</span>.sub_rr(scratch, <span class="kw-2">*</span>dst, size);
                 }
             }
             (Operand::Reg(src), Operand::Reg(dst)) =&gt; <span class="self">self</span>.sub_rr(<span class="kw-2">*</span>src, <span class="kw-2">*</span>dst, size),
-            <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(
-                <span class="string">&quot;Invalid operand combination for sub; src = {:?} dst = {:?}&quot;</span>,
-                src, dst
-            ),
+            <span class="kw">_ </span>=&gt; <span class="self">Self</span>::handle_invalid_operand_combination(src, dst),
         }
     }
 
@@ -872,15 +859,12 @@
                     <span class="self">self</span>.mul_ir(val, <span class="kw-2">*</span>dst, size);
                 } <span class="kw">else </span>{
                     <span class="kw">let </span>scratch = regs::scratch();
-                    <span class="self">self</span>.mov_ir(<span class="kw-2">*</span>imm <span class="kw">as </span>u64, scratch, size);
+                    <span class="self">self</span>.load_constant(imm, scratch, size);
                     <span class="self">self</span>.mul_rr(scratch, <span class="kw-2">*</span>dst, size);
                 }
             }
             (Operand::Reg(src), Operand::Reg(dst)) =&gt; <span class="self">self</span>.mul_rr(<span class="kw-2">*</span>src, <span class="kw-2">*</span>dst, size),
-            <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(
-                <span class="string">&quot;Invalid operand combination for mul; src = {:?} dst = {:?}&quot;</span>,
-                src, dst
-            ),
+            <span class="kw">_ </span>=&gt; <span class="self">Self</span>::handle_invalid_operand_combination(src, dst),
         }
     }
 
@@ -1028,15 +1012,12 @@
                     <span class="self">self</span>.add_ir(val, <span class="kw-2">*</span>dst, size)
                 } <span class="kw">else </span>{
                     <span class="kw">let </span>scratch = regs::scratch();
-                    <span class="self">self</span>.mov_ir(<span class="kw-2">*</span>imm <span class="kw">as </span>u64, scratch, size);
+                    <span class="self">self</span>.load_constant(imm, scratch, size);
                     <span class="self">self</span>.add_rr(scratch, <span class="kw-2">*</span>dst, size);
                 }
             }
             (Operand::Reg(src), Operand::Reg(dst)) =&gt; <span class="self">self</span>.add_rr(<span class="kw-2">*</span>src, <span class="kw-2">*</span>dst, size),
-            <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(
-                <span class="string">&quot;Invalid operand combination for add; src = {:?} dst = {:?}&quot;</span>,
-                src, dst
-            ),
+            <span class="kw">_ </span>=&gt; <span class="self">Self</span>::handle_invalid_operand_combination(src, dst),
         }
     }
 
@@ -1083,15 +1064,12 @@
                     <span class="self">self</span>.cmp_ir(val, <span class="kw-2">*</span>dst, size)
                 } <span class="kw">else </span>{
                     <span class="kw">let </span>scratch = regs::scratch();
-                    <span class="self">self</span>.mov_ir(<span class="kw-2">*</span>imm <span class="kw">as </span>u64, scratch, size);
+                    <span class="self">self</span>.load_constant(imm, scratch, size);
                     <span class="self">self</span>.cmp_rr(scratch, <span class="kw-2">*</span>dst, size);
                 }
             }
             (Operand::Reg(src), Operand::Reg(dst)) =&gt; <span class="self">self</span>.cmp_rr(<span class="kw-2">*</span>src, <span class="kw-2">*</span>dst, size),
-            <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(
-                <span class="string">&quot;Invalid operand combination for cmp; src = {:?} dst = {:?}&quot;</span>,
-                src, dst
-            ),
+            <span class="kw">_ </span>=&gt; <span class="self">Self</span>::handle_invalid_operand_combination(src, dst),
         }
     }
 
@@ -1162,6 +1140,14 @@
                 });
             }
         }
+    }
+
+    <span class="kw">fn </span>load_constant(<span class="kw-2">&amp;mut </span><span class="self">self</span>, imm: <span class="kw-2">&amp;</span>i64, dst: Reg, size: OperandSize) {
+        <span class="self">self</span>.mov_ir(<span class="kw-2">*</span>imm <span class="kw">as </span>u64, dst, size);
+    }
+
+    <span class="kw">fn </span>handle_invalid_operand_combination(src: Operand, dst: Operand) {
+        <span class="macro">panic!</span>(<span class="string">&quot;Invalid operand combination; src={:?}, dst={:?}&quot;</span>, src, dst);
     }
 }
 </code></pre></div>
