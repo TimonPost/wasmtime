@@ -547,6 +547,10 @@
 <a href="#547" id="547">547</a>
 <a href="#548" id="548">548</a>
 <a href="#549" id="549">549</a>
+<a href="#550" id="550">550</a>
+<a href="#551" id="551">551</a>
+<a href="#552" id="552">552</a>
+<a href="#553" id="553">553</a>
 </pre><pre class="rust"><code><span class="doccomment">//! ISLE integration glue code for riscv64 lowering.
 
 </span><span class="comment">// Pull in the ISLE generated code.
@@ -814,6 +818,10 @@
     <span class="attr">#[inline]
     </span><span class="kw">fn </span>uimm5_from_u8(<span class="kw-2">&amp;mut </span><span class="self">self</span>, arg0: u8) -&gt; <span class="prelude-ty">Option</span>&lt;UImm5&gt; {
         UImm5::maybe_from_u8(arg0)
+    }
+    <span class="attr">#[inline]
+    </span><span class="kw">fn </span>uimm5_from_u64(<span class="kw-2">&amp;mut </span><span class="self">self</span>, arg0: u64) -&gt; <span class="prelude-ty">Option</span>&lt;UImm5&gt; {
+        arg0.try_into().ok().and_then(UImm5::maybe_from_u8)
     }
     <span class="attr">#[inline]
     </span><span class="kw">fn </span>writable_zero_reg(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; WritableReg {

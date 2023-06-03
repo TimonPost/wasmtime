@@ -850,6 +850,16 @@
 <a href="#850" id="850">850</a>
 <a href="#851" id="851">851</a>
 <a href="#852" id="852">852</a>
+<a href="#853" id="853">853</a>
+<a href="#854" id="854">854</a>
+<a href="#855" id="855">855</a>
+<a href="#856" id="856">856</a>
+<a href="#857" id="857">857</a>
+<a href="#858" id="858">858</a>
+<a href="#859" id="859">859</a>
+<a href="#860" id="860">860</a>
+<a href="#861" id="861">861</a>
+<a href="#862" id="862">862</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Shared ISLE prelude implementation for optimization (mid-end) and
 //! lowering (backend) ISLE environments.
 
@@ -1075,6 +1085,16 @@
             <span class="macro">debug_assert_ne!</span>(ty_bits, <span class="number">0</span>);
             <span class="kw">let </span>shift = <span class="number">64_u64
                 </span>.checked_sub(ty_bits.into())
+                .expect(<span class="string">&quot;unimplemented for &gt; 64 bits&quot;</span>);
+            u64::MAX &gt;&gt; shift
+        }
+
+        <span class="attr">#[inline]
+        </span><span class="kw">fn </span>ty_lane_mask(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ty: Type) -&gt; u64 {
+            <span class="kw">let </span>ty_lane_count = ty.lane_count();
+            <span class="macro">debug_assert_ne!</span>(ty_lane_count, <span class="number">0</span>);
+            <span class="kw">let </span>shift = <span class="number">64_u64
+                </span>.checked_sub(ty_lane_count.into())
                 .expect(<span class="string">&quot;unimplemented for &gt; 64 bits&quot;</span>);
             u64::MAX &gt;&gt; shift
         }
