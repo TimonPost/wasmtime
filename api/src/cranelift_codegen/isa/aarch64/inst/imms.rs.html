@@ -1208,11 +1208,6 @@
 <a href="#1208" id="1208">1208</a>
 <a href="#1209" id="1209">1209</a>
 <a href="#1210" id="1210">1210</a>
-<a href="#1211" id="1211">1211</a>
-<a href="#1212" id="1212">1212</a>
-<a href="#1213" id="1213">1213</a>
-<a href="#1214" id="1214">1214</a>
-<a href="#1215" id="1215">1215</a>
 </pre><pre class="rust"><code><span class="doccomment">//! AArch64 ISA definitions: immediate constants.
 
 </span><span class="kw">use </span><span class="kw">crate</span>::ir::types::<span class="kw-2">*</span>;
@@ -1494,17 +1489,12 @@
 <span class="kw">impl </span>Imm12 {
     <span class="doccomment">/// Compute a Imm12 from raw bits, if possible.
     </span><span class="kw">pub fn </span>maybe_from_u64(val: u64) -&gt; <span class="prelude-ty">Option</span>&lt;Imm12&gt; {
-        <span class="kw">if </span>val == <span class="number">0 </span>{
-            <span class="prelude-val">Some</span>(Imm12 {
-                bits: <span class="number">0</span>,
-                shift12: <span class="bool-val">false</span>,
-            })
-        } <span class="kw">else if </span>val &lt; <span class="number">0xfff </span>{
+        <span class="kw">if </span>val &amp; !<span class="number">0xfff </span>== <span class="number">0 </span>{
             <span class="prelude-val">Some</span>(Imm12 {
                 bits: val <span class="kw">as </span>u16,
                 shift12: <span class="bool-val">false</span>,
             })
-        } <span class="kw">else if </span>val &lt; <span class="number">0xfff_000 </span>&amp;&amp; (val &amp; <span class="number">0xfff </span>== <span class="number">0</span>) {
+        } <span class="kw">else if </span>val &amp; !(<span class="number">0xfff </span>&lt;&lt; <span class="number">12</span>) == <span class="number">0 </span>{
             <span class="prelude-val">Some</span>(Imm12 {
                 bits: (val &gt;&gt; <span class="number">12</span>) <span class="kw">as </span>u16,
                 shift12: <span class="bool-val">true</span>,
