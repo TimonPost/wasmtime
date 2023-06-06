@@ -825,6 +825,13 @@
 <a href="#825" id="825">825</a>
 <a href="#826" id="826">826</a>
 <a href="#827" id="827">827</a>
+<a href="#828" id="828">828</a>
+<a href="#829" id="829">829</a>
+<a href="#830" id="830">830</a>
+<a href="#831" id="831">831</a>
+<a href="#832" id="832">832</a>
+<a href="#833" id="833">833</a>
+<a href="#834" id="834">834</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::ir::{BlockCall, Value, ValueList};
 <span class="kw">use </span>alloc::boxed::Box;
 <span class="kw">use </span>alloc::vec::Vec;
@@ -1167,6 +1174,13 @@
         </span><span class="kw">fn </span>u128_from_immediate(<span class="kw-2">&amp;mut </span><span class="self">self</span>, imm: Immediate) -&gt; <span class="prelude-ty">Option</span>&lt;u128&gt; {
             <span class="kw">let </span>bytes = <span class="self">self</span>.lower_ctx.get_immediate_data(imm).as_slice();
             <span class="prelude-val">Some</span>(u128::from_le_bytes(bytes.try_into().ok()<span class="question-mark">?</span>))
+        }
+
+        <span class="attr">#[inline]
+        </span><span class="kw">fn </span>vconst_from_immediate(<span class="kw-2">&amp;mut </span><span class="self">self</span>, imm: Immediate) -&gt; <span class="prelude-ty">Option</span>&lt;VCodeConstant&gt; {
+            <span class="prelude-val">Some</span>(<span class="self">self</span>.lower_ctx.use_constant(VCodeConstantData::Generated(
+                <span class="self">self</span>.lower_ctx.get_immediate_data(imm).clone(),
+            )))
         }
 
         <span class="attr">#[inline]
