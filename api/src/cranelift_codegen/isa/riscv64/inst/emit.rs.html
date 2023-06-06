@@ -3006,6 +3006,8 @@
 <a href="#3006" id="3006">3006</a>
 <a href="#3007" id="3007">3007</a>
 <a href="#3008" id="3008">3008</a>
+<a href="#3009" id="3009">3009</a>
+<a href="#3010" id="3010">3010</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Riscv64 ISA: binary code emission.
 
 </span><span class="kw">use </span><span class="kw">crate</span>::binemit::StackMap;
@@ -4713,11 +4715,13 @@
                 <span class="kw">let </span>rd = allocs.next_writable(rd);
                 <span class="kw">let </span>label_true = sink.get_label();
                 <span class="kw">let </span>label_jump_over = sink.get_label();
+                <span class="kw">let </span>ty = Inst::canonical_type_for_rc(rs1.class());
+
                 sink.use_label_at_offset(sink.cur_offset(), label_true, LabelUse::B12);
                 <span class="kw">let </span>x = condition.emit();
                 sink.put4(x);
                 <span class="comment">// here is false , use rs2
-                </span>Inst::gen_move(rd, rs2, I64).emit(<span class="kw-2">&amp;</span>[], sink, emit_info, state);
+                </span>Inst::gen_move(rd, rs2, ty).emit(<span class="kw-2">&amp;</span>[], sink, emit_info, state);
                 <span class="comment">// and jump over
                 </span>Inst::Jal {
                     dest: BranchTarget::Label(label_jump_over),
@@ -4725,7 +4729,7 @@
                 .emit(<span class="kw-2">&amp;</span>[], sink, emit_info, state);
                 <span class="comment">// here condition is true , use rs1
                 </span>sink.bind_label(label_true, <span class="kw-2">&amp;mut </span>state.ctrl_plane);
-                Inst::gen_move(rd, rs1, I64).emit(<span class="kw-2">&amp;</span>[], sink, emit_info, state);
+                Inst::gen_move(rd, rs1, ty).emit(<span class="kw-2">&amp;</span>[], sink, emit_info, state);
                 sink.bind_label(label_jump_over, <span class="kw-2">&amp;mut </span>state.ctrl_plane);
             }
             <span class="kw-2">&amp;</span>Inst::FcvtToInt {
