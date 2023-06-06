@@ -20,7 +20,7 @@
         ty: <a class="struct" href="ir/types/struct.Type.html" title="struct cranelift_codegen::ir::types::Type">Type</a>
     ) -&gt; <a class="type" href="type.CodegenResult.html" title="type cranelift_codegen::CodegenResult">CodegenResult</a>&lt;(&amp;'static [RegClass], &amp;'static [<a class="struct" href="ir/types/struct.Type.html" title="struct cranelift_codegen::ir::types::Type">Type</a>])&gt;;
 <span class="item-spacer"></span>    fn <a href="#tymethod.canonical_type_for_rc" class="fn">canonical_type_for_rc</a>(rc: RegClass) -&gt; <a class="struct" href="ir/types/struct.Type.html" title="struct cranelift_codegen::ir::types::Type">Type</a>;
-<span class="item-spacer"></span>    fn <a href="#tymethod.gen_jump" class="fn">gen_jump</a>(target: MachLabel) -&gt; Self;
+<span class="item-spacer"></span>    fn <a href="#tymethod.gen_jump" class="fn">gen_jump</a>(target: <a class="struct" href="struct.MachLabel.html" title="struct cranelift_codegen::MachLabel">MachLabel</a>) -&gt; Self;
 <span class="item-spacer"></span>    fn <a href="#tymethod.gen_nop" class="fn">gen_nop</a>(preferred_size: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.usize.html">usize</a>) -&gt; Self;
 <span class="item-spacer"></span>    fn <a href="#tymethod.worst_case_size" class="fn">worst_case_size</a>() -&gt; <a class="type" href="binemit/type.CodeOffset.html" title="type cranelift_codegen::binemit::CodeOffset">CodeOffset</a>;
 <span class="item-spacer"></span>    fn <a href="#tymethod.ref_type_regclass" class="fn">ref_type_regclass</a>(_flags: &amp;<a class="struct" href="settings/struct.Flags.html" title="struct cranelift_codegen::settings::Flags">Flags</a>) -&gt; RegClass;
@@ -76,7 +76,7 @@ register class. This may not be the only type that maps to
 that class, but when used with <code>gen_move()</code> or the ABI trait’s
 load/spill constructors, it should produce instruction(s) that
 move the entire register contents.</p>
-</div></details><details class="toggle method-toggle" open><summary><section id="tymethod.gen_jump" class="method"><a class="srclink rightside" href="../src/cranelift_codegen/machinst/mod.rs.html#145">source</a><h4 class="code-header">fn <a href="#tymethod.gen_jump" class="fn">gen_jump</a>(target: MachLabel) -&gt; Self</h4></section></summary><div class="docblock"><p>Generate a jump to another target. Used during lowering of
+</div></details><details class="toggle method-toggle" open><summary><section id="tymethod.gen_jump" class="method"><a class="srclink rightside" href="../src/cranelift_codegen/machinst/mod.rs.html#145">source</a><h4 class="code-header">fn <a href="#tymethod.gen_jump" class="fn">gen_jump</a>(target: <a class="struct" href="struct.MachLabel.html" title="struct cranelift_codegen::MachLabel">MachLabel</a>) -&gt; Self</h4></section></summary><div class="docblock"><p>Generate a jump to another target. Used during lowering of
 control flow.</p>
 </div></details><details class="toggle method-toggle" open><summary><section id="tymethod.gen_nop" class="method"><a class="srclink rightside" href="../src/cranelift_codegen/machinst/mod.rs.html#166">source</a><h4 class="code-header">fn <a href="#tymethod.gen_nop" class="fn">gen_nop</a>(preferred_size: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.usize.html">usize</a>) -&gt; Self</h4></section></summary><div class="docblock"><p>Generate a NOP. The <code>preferred_size</code> parameter allows the caller to
 request a NOP of that size, or as close to it as possible. The machine

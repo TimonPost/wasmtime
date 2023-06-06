@@ -14,24 +14,24 @@ thrown away; but beware if many buffer objects are retained persistently.</p>
 </div></details><details class="toggle method-toggle" open><summary><section id="method.put_data" class="method"><a class="srclink rightside" href="../src/cranelift_codegen/machinst/buffer.rs.html#462-471">source</a><h4 class="code-header">pub fn <a href="#method.put_data" class="fn">put_data</a>(&amp;mut self, data: &amp;[<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u8.html">u8</a>])</h4></section></summary><div class="docblock"><p>Add a slice of bytes.</p>
 </div></details><details class="toggle method-toggle" open><summary><section id="method.get_appended_space" class="method"><a class="srclink rightside" href="../src/cranelift_codegen/machinst/buffer.rs.html#474-482">source</a><h4 class="code-header">pub fn <a href="#method.get_appended_space" class="fn">get_appended_space</a>(&amp;mut self, len: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.usize.html">usize</a>) -&gt; &amp;mut [<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u8.html">u8</a>] <a href="#" class="tooltip" data-notable-ty="&amp;mut [u8]">ⓘ</a></h4></section></summary><div class="docblock"><p>Reserve appended space and return a mutable slice referring to it.</p>
 </div></details><details class="toggle method-toggle" open><summary><section id="method.align_to" class="method"><a class="srclink rightside" href="../src/cranelift_codegen/machinst/buffer.rs.html#485-497">source</a><h4 class="code-header">pub fn <a href="#method.align_to" class="fn">align_to</a>(&amp;mut self, align_to: <a class="type" href="binemit/type.CodeOffset.html" title="type cranelift_codegen::binemit::CodeOffset">CodeOffset</a>)</h4></section></summary><div class="docblock"><p>Align up to the given alignment.</p>
-</div></details><details class="toggle method-toggle" open><summary><section id="method.get_label" class="method"><a class="srclink rightside" href="../src/cranelift_codegen/machinst/buffer.rs.html#501-510">source</a><h4 class="code-header">pub fn <a href="#method.get_label" class="fn">get_label</a>(&amp;mut self) -&gt; MachLabel</h4></section></summary><div class="docblock"><p>Allocate a <code>Label</code> to refer to some offset. May not be bound to a fixed
+</div></details><details class="toggle method-toggle" open><summary><section id="method.get_label" class="method"><a class="srclink rightside" href="../src/cranelift_codegen/machinst/buffer.rs.html#501-510">source</a><h4 class="code-header">pub fn <a href="#method.get_label" class="fn">get_label</a>(&amp;mut self) -&gt; <a class="struct" href="struct.MachLabel.html" title="struct cranelift_codegen::MachLabel">MachLabel</a></h4></section></summary><div class="docblock"><p>Allocate a <code>Label</code> to refer to some offset. May not be bound to a fixed
 offset yet.</p>
 </div></details><details class="toggle method-toggle" open><summary><section id="method.reserve_labels_for_blocks" class="method"><a class="srclink rightside" href="../src/cranelift_codegen/machinst/buffer.rs.html#513-520">source</a><h4 class="code-header">pub fn <a href="#method.reserve_labels_for_blocks" class="fn">reserve_labels_for_blocks</a>(&amp;mut self, blocks: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.usize.html">usize</a>)</h4></section></summary><div class="docblock"><p>Reserve the first N MachLabels for blocks.</p>
 </div></details><details class="toggle method-toggle" open><summary><section id="method.register_constants" class="method"><a class="srclink rightside" href="../src/cranelift_codegen/machinst/buffer.rs.html#526-535">source</a><h4 class="code-header">pub fn <a href="#method.register_constants" class="fn">register_constants</a>(&amp;mut self, constants: &amp;VCodeConstants)</h4></section></summary><div class="docblock"><p>Registers metadata in this <code>MachBuffer</code> about the <code>constants</code> provided.</p>
 <p>This will record the size/alignment of all constants which will prepare
 them for emission later on.</p>
-</div></details><details class="toggle method-toggle" open><summary><section id="method.get_label_for_constant" class="method"><a class="srclink rightside" href="../src/cranelift_codegen/machinst/buffer.rs.html#562-581">source</a><h4 class="code-header">pub fn <a href="#method.get_label_for_constant" class="fn">get_label_for_constant</a>(&amp;mut self, constant: VCodeConstant) -&gt; MachLabel</h4></section></summary><div class="docblock"><p>Returns a label that can be used to refer to the <code>constant</code> provided.</p>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.get_label_for_constant" class="method"><a class="srclink rightside" href="../src/cranelift_codegen/machinst/buffer.rs.html#562-581">source</a><h4 class="code-header">pub fn <a href="#method.get_label_for_constant" class="fn">get_label_for_constant</a>(&amp;mut self, constant: VCodeConstant) -&gt; <a class="struct" href="struct.MachLabel.html" title="struct cranelift_codegen::MachLabel">MachLabel</a></h4></section></summary><div class="docblock"><p>Returns a label that can be used to refer to the <code>constant</code> provided.</p>
 <p>This will automatically defer a new constant to be emitted for
 <code>constant</code> if it has not been previously emitted. Note that this
 function may return a different label for the same constant at
 different points in time. The label is valid to use only from the
 current location; the MachBuffer takes care to emit the same constant
 multiple times if needed so the constant is always in range.</p>
-</div></details><details class="toggle method-toggle" open><summary><section id="method.bind_label" class="method"><a class="srclink rightside" href="../src/cranelift_codegen/machinst/buffer.rs.html#584-606">source</a><h4 class="code-header">pub fn <a href="#method.bind_label" class="fn">bind_label</a>(&amp;mut self, label: MachLabel, ctrl_plane: &amp;mut <a class="struct" href="../cranelift_control/zero_sized/struct.ControlPlane.html" title="struct cranelift_control::zero_sized::ControlPlane">ControlPlane</a>)</h4></section></summary><div class="docblock"><p>Bind a label to the current offset. A label can only be bound once.</p>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.bind_label" class="method"><a class="srclink rightside" href="../src/cranelift_codegen/machinst/buffer.rs.html#584-606">source</a><h4 class="code-header">pub fn <a href="#method.bind_label" class="fn">bind_label</a>(&amp;mut self, label: <a class="struct" href="struct.MachLabel.html" title="struct cranelift_codegen::MachLabel">MachLabel</a>, ctrl_plane: &amp;mut <a class="struct" href="../cranelift_control/zero_sized/struct.ControlPlane.html" title="struct cranelift_control::zero_sized::ControlPlane">ControlPlane</a>)</h4></section></summary><div class="docblock"><p>Bind a label to the current offset. A label can only be bound once.</p>
 </div></details><details class="toggle method-toggle" open><summary><section id="method.use_label_at_offset" class="method"><a class="srclink rightside" href="../src/cranelift_codegen/machinst/buffer.rs.html#647-672">source</a><h4 class="code-header">pub fn <a href="#method.use_label_at_offset" class="fn">use_label_at_offset</a>(
     &amp;mut self,
     offset: <a class="type" href="binemit/type.CodeOffset.html" title="type cranelift_codegen::binemit::CodeOffset">CodeOffset</a>,
-    label: MachLabel,
+    label: <a class="struct" href="struct.MachLabel.html" title="struct cranelift_codegen::MachLabel">MachLabel</a>,
     kind: I::<a class="associatedtype" href="trait.MachInst.html#associatedtype.LabelUse" title="type cranelift_codegen::MachInst::LabelUse">LabelUse</a>
 )</h4></section></summary><div class="docblock"><p>Emit a reference to the given label with the given reference type (i.e.,
 branch-instruction format) at the current offset.  This is like a
@@ -42,7 +42,7 @@ not happen until an island is emitted or the buffer is finished.</p>
     &amp;mut self,
     start: <a class="type" href="binemit/type.CodeOffset.html" title="type cranelift_codegen::binemit::CodeOffset">CodeOffset</a>,
     end: <a class="type" href="binemit/type.CodeOffset.html" title="type cranelift_codegen::binemit::CodeOffset">CodeOffset</a>,
-    target: MachLabel
+    target: <a class="struct" href="struct.MachLabel.html" title="struct cranelift_codegen::MachLabel">MachLabel</a>
 )</h4></section></summary><div class="docblock"><p>Inform the buffer of an unconditional branch at the given offset,
 targetting the given label. May be used to optimize branches.
 The last added label-use must correspond to this branch.
@@ -61,7 +61,7 @@ proper sequence is:</p>
     &amp;mut self,
     start: <a class="type" href="binemit/type.CodeOffset.html" title="type cranelift_codegen::binemit::CodeOffset">CodeOffset</a>,
     end: <a class="type" href="binemit/type.CodeOffset.html" title="type cranelift_codegen::binemit::CodeOffset">CodeOffset</a>,
-    target: MachLabel,
+    target: <a class="struct" href="struct.MachLabel.html" title="struct cranelift_codegen::MachLabel">MachLabel</a>,
     inverted: &amp;[<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u8.html">u8</a>]
 )</h4></section></summary><div class="docblock"><p>Inform the buffer of a conditional branch at the given offset,
 targetting the given label. May be used to optimize branches.
@@ -72,9 +72,9 @@ The last added label-use must correspond to this branch.</p>
     &amp;mut self,
     code: <a class="enum" href="ir/enum.TrapCode.html" title="enum cranelift_codegen::ir::TrapCode">TrapCode</a>,
     stack_map: <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="struct" href="binemit/struct.StackMap.html" title="struct cranelift_codegen::binemit::StackMap">StackMap</a>&gt;
-) -&gt; MachLabel</h4></section></summary><div class="docblock"><p>Emit a trap at some point in the future with the specified code and
+) -&gt; <a class="struct" href="struct.MachLabel.html" title="struct cranelift_codegen::MachLabel">MachLabel</a></h4></section></summary><div class="docblock"><p>Emit a trap at some point in the future with the specified code and
 stack map.</p>
-<p>This function returns a [<code>MachLabel</code>] which will be the future address
+<p>This function returns a <a href="struct.MachLabel.html" title="struct cranelift_codegen::MachLabel"><code>MachLabel</code></a> which will be the future address
 of the trap. Jumps should refer to this label, likely by using the
 <a href="struct.MachBuffer.html#method.use_label_at_offset" title="method cranelift_codegen::MachBuffer::use_label_at_offset"><code>MachBuffer::use_label_at_offset</code></a> method, to get a relocation
 patched in once the address of the trap is known.</p>
