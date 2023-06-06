@@ -261,6 +261,10 @@ impl Masm for MacroAssembler {
         self.asm.cmp(src.into(), dst, size);
         self.asm.setcc(kind, dst);
     }
+
+    fn popcnt(&mut self, reg: Reg, size: OperandSize) {
+        self.asm.popcnt(reg, size)
+    }
 }
 
 impl MacroAssembler {

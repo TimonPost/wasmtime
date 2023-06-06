@@ -69,6 +69,8 @@ macro_rules! def_unsupported {
     (emit I64GeU $($rest:tt)*) => {};
     (emit I32Eqz $($rest:tt)*) => {};
     (emit I64Eqz $($rest:tt)*) => {};
+    (emit I32Popcnt $($rest:tt)*) => {};
+    (emit I64Popcnt $($rest:tt)*) => {};
     (emit LocalGet $($rest:tt)*) => {};
     (emit LocalSet $($rest:tt)*) => {};
     (emit Call $($rest:tt)*) => {};
@@ -274,7 +276,7 @@ where
         use OperandSize::*;
 
         self.context.unop(self.masm, S32, &mut |masm, reg, size| {
-            masm.cmp_with_set(RegImm::imm(0), reg, CmpKind::Eq, size);
+            masm.cmp_with_set(RegImm::imm(0), reg.into(), CmpKind::Eq, size);
         });
     }
 
@@ -282,8 +284,24 @@ where
         use OperandSize::*;
 
         self.context.unop(self.masm, S64, &mut |masm, reg, size| {
-            masm.cmp_with_set(RegImm::imm(0), reg, CmpKind::Eq, size);
+            masm.cmp_with_set(RegImm::imm(0), reg.into(), CmpKind::Eq, size);
         });
+    }
+
+    fn visit_i32_popcnt(&mut self) {
+        use OperandSize::*;
+
+        self.context.unop(self.masm, S32, &mut |masm, reg, size| {
+            masm.popcnt(reg, size);
+        })
+    }
+
+    fn visit_i64_popcnt(&mut self) {
+        use OperandSize::*;
+
+        self.context.unop(self.masm, S64, &mut |masm, reg, size| {
+            masm.popcnt(reg, size);
+        })
     }
 
     fn visit_end(&mut self) {}

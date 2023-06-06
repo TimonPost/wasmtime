@@ -102,6 +102,8 @@ pub(crate) struct Assembler {
     emit_info: EmitInfo,
     /// Emission state.
     emit_state: EmitState,
+    /// ISA Flags
+    isa_flags: x64_settings::Flags,
 }
 
 impl Assembler {
@@ -110,7 +112,8 @@ impl Assembler {
         Self {
             buffer: MachBuffer::<Inst>::new(),
             emit_state: Default::default(),
-            emit_info: EmitInfo::new(shared_flags, isa_flags),
+            emit_info: EmitInfo::new(shared_flags, isa_flags.clone()),
+            isa_flags,
         }
     }
 
@@ -515,6 +518,19 @@ impl Assembler {
             src: src.into(),
             dst: dst.into(),
         });
+    }
+
+    pub fn popcnt(&mut self, reg: Reg, size: OperandSize) {
+        assert!(
+            self.isa_flags.has_popcnt(),
+            "has_popcnt isa flag required for winch"
+        );
+        self.emit(Inst::UnaryRmR {
+            size: size.into(),
+            op: args::UnaryRmROpcode::Popcnt,
+            src: Gpr::new(reg.into()).unwrap().into(),
+            dst: Writable::from_reg(Gpr::new(reg.into()).unwrap()),
+        })
     }
 
     /// Set value in dst to `0` or `1` based on flags in status register and
