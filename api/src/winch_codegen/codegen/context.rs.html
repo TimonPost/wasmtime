@@ -406,7 +406,7 @@
     }
 
     <span class="doccomment">/// Prepares arguments for emitting an i32 binary operation.
-    </span><span class="kw">pub fn </span>i32_binop&lt;F, M&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, masm: <span class="kw-2">&amp;mut </span>M, emit: <span class="kw-2">&amp;mut </span>F)
+    </span><span class="kw">pub fn </span>i32_binop&lt;F, M&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, masm: <span class="kw-2">&amp;mut </span>M, <span class="kw-2">mut </span>emit: F)
     <span class="kw">where
         </span>F: FnMut(<span class="kw-2">&amp;mut </span>M, RegImm, RegImm, OperandSize),
         M: MacroAssembler,
@@ -436,7 +436,7 @@
     }
 
     <span class="doccomment">/// Prepares arguments for emitting an i64 binary operation.
-    </span><span class="kw">pub fn </span>i64_binop&lt;F, M&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, masm: <span class="kw-2">&amp;mut </span>M, emit: <span class="kw-2">&amp;mut </span>F)
+    </span><span class="kw">pub fn </span>i64_binop&lt;F, M&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, masm: <span class="kw-2">&amp;mut </span>M, <span class="kw-2">mut </span>emit: F)
     <span class="kw">where
         </span>F: FnMut(<span class="kw-2">&amp;mut </span>M, RegImm, RegImm, OperandSize),
         M: MacroAssembler,

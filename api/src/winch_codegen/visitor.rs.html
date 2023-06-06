@@ -344,13 +344,6 @@
 <a href="#344" id="344">344</a>
 <a href="#345" id="345">345</a>
 <a href="#346" id="346">346</a>
-<a href="#347" id="347">347</a>
-<a href="#348" id="348">348</a>
-<a href="#349" id="349">349</a>
-<a href="#350" id="350">350</a>
-<a href="#351" id="351">351</a>
-<a href="#352" id="352">352</a>
-<a href="#353" id="353">353</a>
 </pre><pre class="rust"><code><span class="doccomment">//! This module is the central place for machine code emission.
 //! It defines an implementation of wasmparser&#39;s Visitor trait
 //! for `CodeGen`; which defines a visitor per op-code,
@@ -372,15 +365,15 @@
 </span><span class="macro">macro_rules! </span>def_unsupported {
     ($( @<span class="macro-nonterminal">$proposal</span>:ident <span class="macro-nonterminal">$op</span>:ident $({ $(<span class="macro-nonterminal">$arg</span>:ident: <span class="macro-nonterminal">$argty</span>:ty),* })<span class="question-mark">? </span>=&gt; <span class="macro-nonterminal">$visit</span>:ident)<span class="kw-2">*</span>) =&gt; {
         $(
-	    <span class="macro">def_unsupported!</span>(
-		emit
-		<span class="macro-nonterminal">$op
+            <span class="macro">def_unsupported!</span>(
+                emit
+                    <span class="macro-nonterminal">$op
 
-		</span><span class="kw">fn </span><span class="macro-nonterminal">$visit</span>(<span class="kw-2">&amp;mut </span><span class="self">self </span>$($(,<span class="macro-nonterminal">$arg</span>: <span class="macro-nonterminal">$argty</span>)<span class="kw-2">*</span>)<span class="question-mark">?</span>) -&gt; <span class="self">Self</span>::Output {
-		    $($(<span class="kw">let _ </span>= <span class="macro-nonterminal">$arg</span>;)<span class="kw-2">*</span>)<span class="question-mark">?
-		    </span><span class="macro">todo!</span>(<span class="macro">stringify!</span>(<span class="macro-nonterminal">$op</span>))
-		}
-	    );
+                </span><span class="kw">fn </span><span class="macro-nonterminal">$visit</span>(<span class="kw-2">&amp;mut </span><span class="self">self </span>$($(,<span class="macro-nonterminal">$arg</span>: <span class="macro-nonterminal">$argty</span>)<span class="kw-2">*</span>)<span class="question-mark">?</span>) -&gt; <span class="self">Self</span>::Output {
+                    $($(<span class="kw">let _ </span>= <span class="macro-nonterminal">$arg</span>;)<span class="kw-2">*</span>)<span class="question-mark">?
+                        </span><span class="macro">todo!</span>(<span class="macro">stringify!</span>(<span class="macro-nonterminal">$op</span>))
+                }
+            );
         )*
     };
 
@@ -446,45 +439,39 @@
     }
 
     <span class="kw">fn </span>visit_i32_add(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-        <span class="self">self</span>.context
-            .i32_binop(<span class="self">self</span>.masm, <span class="kw-2">&amp;mut </span>|masm, dst, src, size| {
-                masm.add(dst, dst, src, size);
-            });
+        <span class="self">self</span>.context.i32_binop(<span class="self">self</span>.masm, |masm, dst, src, size| {
+            masm.add(dst, dst, src, size);
+        });
     }
 
     <span class="kw">fn </span>visit_i64_add(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-        <span class="self">self</span>.context
-            .i64_binop(<span class="self">self</span>.masm, <span class="kw-2">&amp;mut </span>|masm, dst, src, size| {
-                masm.add(dst, dst, src, size);
-            });
+        <span class="self">self</span>.context.i64_binop(<span class="self">self</span>.masm, |masm, dst, src, size| {
+            masm.add(dst, dst, src, size);
+        });
     }
 
     <span class="kw">fn </span>visit_i32_sub(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-        <span class="self">self</span>.context
-            .i32_binop(<span class="self">self</span>.masm, <span class="kw-2">&amp;mut </span>|masm, dst, src, size| {
-                masm.sub(dst, dst, src, size);
-            });
+        <span class="self">self</span>.context.i32_binop(<span class="self">self</span>.masm, |masm, dst, src, size| {
+            masm.sub(dst, dst, src, size);
+        });
     }
 
     <span class="kw">fn </span>visit_i64_sub(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-        <span class="self">self</span>.context
-            .i64_binop(<span class="self">self</span>.masm, <span class="kw-2">&amp;mut </span>|masm, dst, src, size| {
-                masm.sub(dst, dst, src, size);
-            });
+        <span class="self">self</span>.context.i64_binop(<span class="self">self</span>.masm, |masm, dst, src, size| {
+            masm.sub(dst, dst, src, size);
+        });
     }
 
     <span class="kw">fn </span>visit_i32_mul(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-        <span class="self">self</span>.context
-            .i32_binop(<span class="self">self</span>.masm, <span class="kw-2">&amp;mut </span>|masm, dst, src, size| {
-                masm.mul(dst, dst, src, size);
-            });
+        <span class="self">self</span>.context.i32_binop(<span class="self">self</span>.masm, |masm, dst, src, size| {
+            masm.mul(dst, dst, src, size);
+        });
     }
 
     <span class="kw">fn </span>visit_i64_mul(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-        <span class="self">self</span>.context
-            .i64_binop(<span class="self">self</span>.masm, <span class="kw-2">&amp;mut </span>|masm, dst, src, size| {
-                masm.mul(dst, dst, src, size);
-            });
+        <span class="self">self</span>.context.i64_binop(<span class="self">self</span>.masm, |masm, dst, src, size| {
+            masm.mul(dst, dst, src, size);
+        });
     }
 
     <span class="kw">fn </span>visit_i32_div_s(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
@@ -681,15 +668,14 @@
     </span>M: MacroAssembler,
 {
     <span class="kw">fn </span>cmp_i32s(<span class="kw-2">&amp;mut </span><span class="self">self</span>, kind: CmpKind) {
-        <span class="self">self</span>.context
-            .i32_binop(<span class="self">self</span>.masm, <span class="kw-2">&amp;mut </span>|masm, dst, src, size| {
-                masm.cmp_with_set(src, dst, kind, size);
-            });
+        <span class="self">self</span>.context.i32_binop(<span class="self">self</span>.masm, |masm, dst, src, size| {
+            masm.cmp_with_set(src, dst, kind, size);
+        });
     }
 
     <span class="kw">fn </span>cmp_i64s(<span class="kw-2">&amp;mut </span><span class="self">self</span>, kind: CmpKind) {
         <span class="self">self</span>.context
-            .i64_binop(<span class="self">self</span>.masm, <span class="kw-2">&amp;mut </span><span class="kw">move </span>|masm, dst, src, size| {
+            .i64_binop(<span class="self">self</span>.masm, <span class="kw">move </span>|masm, dst, src, size| {
                 masm.cmp_with_set(src, dst, kind, size);
             });
     }
