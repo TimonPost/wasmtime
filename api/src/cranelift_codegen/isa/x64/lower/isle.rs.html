@@ -1146,6 +1146,11 @@
 <a href="#1146" id="1146">1146</a>
 <a href="#1147" id="1147">1147</a>
 <a href="#1148" id="1148">1148</a>
+<a href="#1149" id="1149">1149</a>
+<a href="#1150" id="1150">1150</a>
+<a href="#1151" id="1151">1151</a>
+<a href="#1152" id="1152">1152</a>
+<a href="#1153" id="1153">1153</a>
 </pre><pre class="rust"><code><span class="doccomment">//! ISLE integration glue code for x64 lowering.
 
 </span><span class="comment">// Pull in the ISLE generated code.
@@ -1370,6 +1375,11 @@
     <span class="attr">#[inline]
     </span><span class="kw">fn </span>use_fma(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; bool {
         <span class="self">self</span>.backend.x64_flags.use_fma()
+    }
+
+    <span class="attr">#[inline]
+    </span><span class="kw">fn </span>use_ssse3(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; bool {
+        <span class="self">self</span>.backend.x64_flags.use_ssse3()
     }
 
     <span class="attr">#[inline]
