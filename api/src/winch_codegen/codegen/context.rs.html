@@ -268,6 +268,13 @@
 <a href="#268" id="268">268</a>
 <a href="#269" id="269">269</a>
 <a href="#270" id="270">270</a>
+<a href="#271" id="271">271</a>
+<a href="#272" id="272">272</a>
+<a href="#273" id="273">273</a>
+<a href="#274" id="274">274</a>
+<a href="#275" id="275">275</a>
+<a href="#276" id="276">276</a>
+<a href="#277" id="277">277</a>
 </pre><pre class="rust"><code><span class="kw">use crate</span>::{
     frame::Frame,
     masm::{MacroAssembler, OperandSize, RegImm},
@@ -335,6 +342,9 @@
     /// it isn&#39;t already one; spilling if there are no registers
     /// available.  Optionally the caller may specify a specific
     /// destination register.
+    /// When a named register is requested and it&#39;s not at the top of the
+    /// stack a move from register to register might happen, in which case
+    /// the source register will be freed.
     </span><span class="kw">pub fn </span>pop_to_reg&lt;M: MacroAssembler&gt;(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         masm: <span class="kw-2">&amp;mut </span>M,
@@ -362,6 +372,10 @@
             masm.pop(dst);
         } <span class="kw">else </span>{
             <span class="self">self</span>.move_val_to_reg(<span class="kw-2">&amp;</span>val, dst, masm, size);
+            <span class="comment">// Free the source value if it is a register.
+            </span><span class="kw">if </span>val.is_reg() {
+                <span class="self">self</span>.regalloc.free_gpr(val.get_reg());
+            }
         }
 
         dst
