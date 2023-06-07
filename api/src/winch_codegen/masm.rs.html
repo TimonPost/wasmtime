@@ -253,6 +253,39 @@
 <a href="#253" id="253">253</a>
 <a href="#254" id="254">254</a>
 <a href="#255" id="255">255</a>
+<a href="#256" id="256">256</a>
+<a href="#257" id="257">257</a>
+<a href="#258" id="258">258</a>
+<a href="#259" id="259">259</a>
+<a href="#260" id="260">260</a>
+<a href="#261" id="261">261</a>
+<a href="#262" id="262">262</a>
+<a href="#263" id="263">263</a>
+<a href="#264" id="264">264</a>
+<a href="#265" id="265">265</a>
+<a href="#266" id="266">266</a>
+<a href="#267" id="267">267</a>
+<a href="#268" id="268">268</a>
+<a href="#269" id="269">269</a>
+<a href="#270" id="270">270</a>
+<a href="#271" id="271">271</a>
+<a href="#272" id="272">272</a>
+<a href="#273" id="273">273</a>
+<a href="#274" id="274">274</a>
+<a href="#275" id="275">275</a>
+<a href="#276" id="276">276</a>
+<a href="#277" id="277">277</a>
+<a href="#278" id="278">278</a>
+<a href="#279" id="279">279</a>
+<a href="#280" id="280">280</a>
+<a href="#281" id="281">281</a>
+<a href="#282" id="282">282</a>
+<a href="#283" id="283">283</a>
+<a href="#284" id="284">284</a>
+<a href="#285" id="285">285</a>
+<a href="#286" id="286">286</a>
+<a href="#287" id="287">287</a>
+<a href="#288" id="288">288</a>
 </pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::abi::{<span class="self">self</span>, align_to, LocalSlot};
 <span class="kw">use </span><span class="kw">crate</span>::codegen::CodeGenContext;
 <span class="kw">use </span><span class="kw">crate</span>::isa::reg::Reg;
@@ -302,6 +335,22 @@
     </span>GeS,
     <span class="doccomment">/// Unsigned greater than or equal.
     </span>GeU,
+}
+
+<span class="doccomment">/// Kinds of shifts in WebAssembly.The [`masm`] implementation for each ISA is
+/// responsible for emitting the correct sequence of instructions when
+/// lowering to machine code.
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">enum </span>ShiftKind {
+    <span class="doccomment">/// Left shift.
+    </span>Shl,
+    <span class="doccomment">/// Signed right shift.
+    </span>ShrS,
+    <span class="doccomment">/// Unsigned right shift.
+    </span>ShrU,
+    <span class="doccomment">/// Left rotate.
+    </span>Rotl,
+    <span class="doccomment">/// Right rotate.
+    </span>Rotr,
 }
 
 <span class="doccomment">/// Operand size, in bits.
@@ -430,6 +479,23 @@
 
     <span class="doccomment">/// Perform multiplication operation.
     </span><span class="kw">fn </span>mul(<span class="kw-2">&amp;mut </span><span class="self">self</span>, dst: RegImm, lhs: RegImm, rhs: RegImm, size: OperandSize);
+
+    <span class="doccomment">/// Perform logical and operation.
+    </span><span class="kw">fn </span>and(<span class="kw-2">&amp;mut </span><span class="self">self</span>, dst: RegImm, lhs: RegImm, rhs: RegImm, size: OperandSize);
+
+    <span class="doccomment">/// Perform logical or operation.
+    </span><span class="kw">fn </span>or(<span class="kw-2">&amp;mut </span><span class="self">self</span>, dst: RegImm, lhs: RegImm, rhs: RegImm, size: OperandSize);
+
+    <span class="doccomment">/// Perform logical exclusive or operation.
+    </span><span class="kw">fn </span>xor(<span class="kw-2">&amp;mut </span><span class="self">self</span>, dst: RegImm, lhs: RegImm, rhs: RegImm, size: OperandSize);
+
+    <span class="doccomment">/// Perform a shift operation.
+    /// Shift is special in that some architectures have specific expectations
+    /// regarding the location of the instruction arguments. To free the
+    /// caller from having to deal with the architecture specific constraints
+    /// we give this function access to the code generation context, allowing
+    /// each implementation to decide the lowering path.
+    </span><span class="kw">fn </span>shift(<span class="kw-2">&amp;mut </span><span class="self">self</span>, context: <span class="kw-2">&amp;mut </span>CodeGenContext, kind: ShiftKind, size: OperandSize);
 
     <span class="doccomment">/// Perform division operation.
     /// Division is special in that some architectures have specific
