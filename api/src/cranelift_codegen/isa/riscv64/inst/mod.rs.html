@@ -1983,6 +1983,15 @@
 <a href="#1983" id="1983">1983</a>
 <a href="#1984" id="1984">1984</a>
 <a href="#1985" id="1985">1985</a>
+<a href="#1986" id="1986">1986</a>
+<a href="#1987" id="1987">1987</a>
+<a href="#1988" id="1988">1988</a>
+<a href="#1989" id="1989">1989</a>
+<a href="#1990" id="1990">1990</a>
+<a href="#1991" id="1991">1991</a>
+<a href="#1992" id="1992">1992</a>
+<a href="#1993" id="1993">1993</a>
+<a href="#1994" id="1994">1994</a>
 </pre><pre class="rust"><code><span class="doccomment">//! This module defines riscv64-specific machine instruction types.
 
 </span><span class="comment">// Some variants are not constructed, but we still want them as options in the future.
@@ -2685,7 +2694,16 @@
             <span class="macro">debug_assert_eq!</span>(vs.class(), op.src_regclass());
 
             collector.reg_use(vs);
-            collector.reg_def(vd);
+
+            <span class="comment">// If the operation forbids source/destination overlap, then we must
+            // register it as an early_def. This encodes the constraint that
+            // these must not overlap.
+            </span><span class="kw">if </span>op.forbids_src_dst_overlaps() {
+                collector.reg_early_def(vd);
+            } <span class="kw">else </span>{
+                collector.reg_def(vd);
+            }
+
             vec_mask_operands(mask, collector);
         }
         <span class="kw-2">&amp;</span>Inst::VecAluRImm5 { vd, <span class="kw-2">ref </span>mask, .. } =&gt; {
